@@ -87,6 +87,32 @@ const User = () => {
     navigate(`/editTechnician/${userId}`);
   };
 
+  const handleEditCustomer = (userId) => {
+    navigate(`/editCustomer/${userId}`);
+  }
+
+  const handleDeleteTechnician = async (id) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteTechnician/${id}`);
+      console.log('Delete response:', response.data);
+      window.location.reload(); // Refresh the page to reflect changes
+      alert("Delete technician successfully");
+    } catch (error) {
+      console.error('Error deleting technician:', error);
+    }
+  }
+
+  const handleDeleteCustomer = async (id) => {
+    try {
+      const response =await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`);
+      console.log('Delete response:', response.data);
+      alert("Delete customer successfully");
+      window.location.reload(); // Refresh the page to reflect changes
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="container mx-auto px-4 py-8">
@@ -197,12 +223,14 @@ const User = () => {
                             <button
                               className="text-blue-500 hover:text-blue-700 mr-3"
                               title="แก้ไข"
+                              onClick={() => handleEditCustomer(customer.id)}
                             >
                               <UserPen className="inline-block" />
                             </button>
                             <button
                               className="text-red-500 hover:text-red-700"
                               title="ลบ"
+                              onClick={() => handleDeleteCustomer(customer.id)}
                             >
                               <Trash2 className="inline-block" />
                             </button>
@@ -290,6 +318,7 @@ const User = () => {
                               <button
                                 className="text-red-500 hover:text-red-700"
                                 title="ลบ"
+                                onClick={() => handleDeleteTechnician(tech.id)}
                               >
                                 <Trash2 className="inline-block" />
                               </button>

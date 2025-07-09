@@ -97,7 +97,7 @@ const CreateCustomer = () => {
       } else if (activeTab === 'technician') {
         await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createTechnician`, technicianData);
         alert('สร้างช่างสำเร็จ');
-        navigate('/technician');
+        navigate('/user');
       }
     } catch (error) {
       console.error(error);

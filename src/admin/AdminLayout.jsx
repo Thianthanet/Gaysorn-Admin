@@ -21,7 +21,10 @@ const AdminLayout = ({ children }) => {
                 </div>
                 <nav className='flex flex-col p-4 space-y-2'>
                     <a href="/dashboard" className='hover:bg-[#BC9D72] p-2 rounded'>Dashboard</a>
+                    <a href="/job" className='hover:bg-[#BC9D72] p-2 rounded'>Job</a>
+                    <a href="/report" className='hover:bg-[#BC9D72] p-2 rounded'>Report</a>
                     <a href="/user" className='hover:bg-[#BC9D72] p-2 rounded'>User</a>
+                    <a href="/setting" className='hover:bg-[#BC9D72] p-2 rounded'>Setting</a>
                 </nav>
             </aside>
 
