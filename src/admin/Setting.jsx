@@ -6,7 +6,7 @@ const Setting = () => {
   return (
     <AdminLayout>
         <div>Setting</div>
-        <div>
+        <div className='flex gap-4'>
             <Building />
         </div>
     </AdminLayout>
