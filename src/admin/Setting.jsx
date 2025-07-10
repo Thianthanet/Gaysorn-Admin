@@ -2,6 +2,8 @@ import React from 'react';
 import AdminLayout from './AdminLayout';
 import Building from '../component/Building';
 import GroupChoices from '../component/GroupChoices';
+import Company from '../component/Company';
+import Unit from '../component/Unit';
 
 const Setting = () => {
   return (
@@ -13,6 +15,12 @@ const Setting = () => {
         </div>
         <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
           <GroupChoices />
+        </div>
+        <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
+          <Company />
+        </div>
+        <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
+          <Unit />
         </div>
       </div>
     </AdminLayout>

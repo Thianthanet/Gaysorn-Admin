@@ -67,7 +67,7 @@ const GroupChoices = () => {
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-md">
-      <h2 className="text-lg font-semibold mb-4">กลุ่มงาน</h2>
+      <h2 className="text-2xl font-semibold mb-4">กลุ่มงาน</h2>
 
       {/* Form สร้างกลุ่มงาน */}
       <div className="flex items-center gap-2 mb-4">
