@@ -64,7 +64,7 @@ const Company = () => {
 
       {/* ✅ ฟอร์มสร้างบริษัท */}
       <div className="mb-6 p-4 border rounded-lg bg-white shadow-md">
-        <h2 className="text-lg font-semibold mb-2">เพิ่มบริษัทใหม่</h2>
+        <h2 className="text-lg font-semibold mb-2">เพิ่มบริษัท</h2>
         <div className="flex flex-col gap-4">
           <input
             type="text"
