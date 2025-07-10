@@ -88,7 +88,7 @@ const Building = () => {
   return (
     <div className="p-8 bg-white shadow-lg rounded-xl max-w-xl mx-auto">
       <h1 className="text-2xl font-bold mb-6 border-b pb-2 text-gray-800">
-        ข้อมูลอาคาร
+        อาคาร
       </h1>
 
       {/* ฟอร์มสร้าง */}
