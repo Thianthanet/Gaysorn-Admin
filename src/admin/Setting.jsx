@@ -1,16 +1,22 @@
-import React from 'react'
-import AdminLayout from './AdminLayout'
-import Building from '../component/Building'
+import React from 'react';
+import AdminLayout from './AdminLayout';
+import Building from '../component/Building';
+import GroupChoices from '../component/GroupChoices';
 
 const Setting = () => {
   return (
     <AdminLayout>
-        <div>Setting</div>
-        <div className='flex gap-4'>
-            <Building />
+      <div className="text-2xl font-semibold mb-6">Setting</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
+          <Building />
         </div>
+        <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
+          <GroupChoices />
+        </div>
+      </div>
     </AdminLayout>
-  )
-}
+  );
+};
 
-export default Setting
+export default Setting;
