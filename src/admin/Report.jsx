@@ -110,7 +110,7 @@ const Report = () => {
                   <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">ลำดับ</th>
                   <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">ชื่อพนักงาน</th>
                   <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">สังกัด</th>
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">จำนวนงานที่รับผิดชอบ</th>
+                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">จำนวนงานที่เสร็จสิ้น</th>
                 </tr>
               </thead>
               <tbody>
