@@ -2,19 +2,19 @@ import React, { useEffect, useState } from 'react'
 import moment from 'moment'
 import 'moment/locale/th'
 
-const TimeDisplay = () => {
+const TimeDisplay = ({ isMobile }) => {
     const [currentTime, setCurrentTime] = useState('')
-    const [isMobile, setIsMobile] = useState(false);
+    // const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        const handleResize = () => { //1024
-            setIsMobile(window.innerWidth < 1030);
-        };
+    // useEffect(() => {
+    //     const handleResize = () => { //1024
+    //         setIsMobile(window.innerWidth < 1030);
+    //     };
 
-        handleResize();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, [isMobile]);
+    //     handleResize();
+    //     window.addEventListener("resize", handleResize);
+    //     return () => window.removeEventListener("resize", handleResize);
+    // }, [isMobile]);
 
     useEffect(() => {
         const updateTime = () => {

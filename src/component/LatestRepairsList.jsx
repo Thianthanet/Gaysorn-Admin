@@ -3,7 +3,7 @@ import moment from 'moment'
 import 'moment/locale/th'
 moment.locale('th')
 
-const LatestRepairsList = ({ repairs, STATUS_LABELS }) => {
+const LatestRepairsList = ({ repairs, STATUS_LABELS, isMobile }) => {
 
     const formatThaiDate = (date) => {
         const formatter = new Intl.DateTimeFormat('th-TH', {
@@ -18,17 +18,17 @@ const LatestRepairsList = ({ repairs, STATUS_LABELS }) => {
         return formatter.format(new Date(date)) + ' น.';
     };
 
-    const [isMobile, setIsMobile] = useState(false);
+    // const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        const handleResize = () => { //1024
-            setIsMobile(window.innerWidth < 1030);
-        };
+    // useEffect(() => {
+    //     const handleResize = () => { //1024
+    //         setIsMobile(window.innerWidth < 1030);
+    //     };
 
-        handleResize();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, [isMobile]);
+    //     handleResize();
+    //     window.addEventListener("resize", handleResize);
+    //     return () => window.removeEventListener("resize", handleResize);
+    // }, [isMobile]);
 
     return (
         <div className="bg-[#F4F2ED] rounded-2xl border-[1px] border-[#BC9D72]/90 shadow p-4">

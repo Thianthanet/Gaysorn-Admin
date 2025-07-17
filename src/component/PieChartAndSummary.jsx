@@ -8,19 +8,19 @@ import {
     ResponsiveContainer,
 } from "recharts";
 
-const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap }) => {
+const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) => {
     const [activeIndex, setActiveIndex] = useState(null);
-    const [isMobile, setIsMobile] = useState(false);
+    // const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        const handleResize = () => { //1024
-            setIsMobile(window.innerWidth < 1030);
-        };
+    // useEffect(() => {
+    //     const handleResize = () => { //1024
+    //         setIsMobile(window.innerWidth < 1030);
+    //     };
 
-        handleResize();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, [isMobile]);
+    //     handleResize();
+    //     window.addEventListener("resize", handleResize);
+    //     return () => window.removeEventListener("resize", handleResize);
+    // }, [isMobile]);
 
     const CustomTooltipPie = ({ active, payload }) => {
         if (active && payload && payload.length) {
@@ -40,9 +40,9 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap }) => {
             {/* ----- PIE CHART ----- */}
             <div className="col-span-1 md:col-span-8 bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 pt-4 shadow">
                 <h2 className={`font-semibold text-[#837958] mb-2 pl-4 ${isMobile ? "text-[24px]": "text-[28px]"}`}>
-                    สรุปสถานะของงาน
+                    สรุปสถานะของงานประจำ...
                 </h2>
-                <div className="w-full h-[200px] sm:h-[250px] md:h-[280px] lg:h-[300px]">
+                <div className={`w-full ${isMobile ? "h-[200px]" : "h-[300px]"}`}>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <defs>
@@ -108,8 +108,7 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap }) => {
                                 align={isMobile ? "center" : "right"}
                                 layout={isMobile ? "horizontal" : "vertical"}
                                 iconType="circle"
-                                wrapperStyle={{ fontSize: "20px", color: "#837958", right: isMobile ? "2px" : "72px" }}
-                                className="block sm:block md:block"
+                                wrapperStyle={{ fontSize: "20px", color: "#837958", right: isMobile ? "2px" : "72px"}}
                             />
 
                             <Tooltip content={<CustomTooltipPie />} cursor={{ fill: "#f9f9f9" }} />

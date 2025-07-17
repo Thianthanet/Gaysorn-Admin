@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from "react";
 
-const TopCompaniesList = ({ companies }) => {
+const TopCompaniesList = ({ companies, isMobile }) => {
 
-    const [isMobile, setIsMobile] = useState(false);
+    // const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        const handleResize = () => { //1024
-            setIsMobile(window.innerWidth < 1030);
-        };
+    // useEffect(() => {
+    //     const handleResize = () => { //1024
+    //         setIsMobile(window.innerWidth < 1030);
+    //     };
 
-        handleResize();
-        window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
-    }, [isMobile]);
+    //     handleResize();
+    //     window.addEventListener("resize", handleResize);
+    //     return () => window.removeEventListener("resize", handleResize);
+    // }, [isMobile]);
 
     return (
-        <div className="bg-[#F4F2ED] rounded-2xl border-[1px] border-[#BC9D72]/90 shadow p-6">
+        <div className="bg-[#F4F2ED] rounded-2xl border-[1px] border-[#BC9D72]/90 shadow p-4">
             <h2 className={`font-semibold mb-4 text-[#837958] ${isMobile ? "text-[24px]" : "text-[28px]"}`}>
                 10 อันดับลูกค้าแจ้งซ่อม
             </h2>

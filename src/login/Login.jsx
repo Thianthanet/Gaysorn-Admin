@@ -12,6 +12,17 @@ const Login = () => {
   const formRef = useRef(null)
   const [popupStatus, setPopupStatus] = useState("");
   const [popupAlert, setPopupAlert] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => { //1024
+      setIsMobile(window.innerWidth < 1030);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!document.getElementById('turnstile-script')) {
@@ -107,7 +118,7 @@ const Login = () => {
 
   return (
     //bg-[#F5F3EE]
-    <div className="min-h-screen bg-contain bg-center bg-[url('/images/bg-adminLogin.png')] flex items-center justify-center">
+    <div className={`min-h-screen bg-center bg-[url('/images/bg-adminLogin.png')] flex items-center justify-center ${isMobile ? "bg-cover": "bg-contain"}`}>
       <form
         ref={formRef}
         onSubmit={handleLogin}

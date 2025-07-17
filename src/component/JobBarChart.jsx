@@ -46,18 +46,18 @@ const CustomXAxisTick = ({ x, y, payload }) => {
   );
 };
 
-const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS }) => {
-  const [isMobile, setIsMobile] = useState(false);
+const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
+  // const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const handleResize = () => { //1024
-      setIsMobile(window.innerWidth < 1030);
-    };
+  // useEffect(() => {
+  //   const handleResize = () => { //1024
+  //     setIsMobile(window.innerWidth < 1030);
+  //   };
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isMobile]);
+  //   handleResize();
+  //   window.addEventListener("resize", handleResize);
+  //   return () => window.removeEventListener("resize", handleResize);
+  // }, [isMobile]);
 
   // const filteredData = useMemo(() => {
   //   return isMobile ? data.slice(0, 3) : data;

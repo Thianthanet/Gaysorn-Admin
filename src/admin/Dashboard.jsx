@@ -37,7 +37,18 @@ const iconMap = {
 
 export default function Dashboard() {
   const [dashboard, setDashboard] = useState(null)
-  const [activeIndex, setActiveIndex] = useState(null);
+  // const [activeIndex, setActiveIndex] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => { //1024
+      setIsMobile(window.innerWidth < 1030);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isMobile]);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -129,26 +140,32 @@ export default function Dashboard() {
 
   return (
     <AdminLayout>
-      <TimeDisplay />
+      <TimeDisplay
+        isMobile={isMobile}
+      />
       <PieChartAndSummary
         statusPieData={statusPieData}
         summaryCards={summaryCards}
         iconMap={iconMap}
+        isMobile={isMobile}
       />
       <JobBarChart
         data={sortedData}
         STATUS_LABELS={STATUS_LABELS}
         STATUS_COLORS={STATUS_COLORS}
+        isMobile={isMobile}
       />
 
-      <div className="grid md:grid-cols-2 gap-4 mb-16">
+      <div className="grid md:grid-cols-2 gap-4 mb-4">
         <LatestRepairsList
           repairs={dashboard.latestRepairs}
           STATUS_LABELS={STATUS_LABELS}
+          isMobile={isMobile}
         />
 
         <TopCompaniesList
           companies={dashboard.topCompanies}
+          isMobile={isMobile}
         />
       </div>
     </AdminLayout >
