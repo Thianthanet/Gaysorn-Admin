@@ -5,7 +5,11 @@ export default {
     "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Prompt', 'sans-serif'], // หรือเปลี่ยนชื่อเป็นอะไรก็ได้
+      },
+    },
   },
   plugins: [],
 }

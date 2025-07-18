@@ -1,40 +1,140 @@
 import axios from 'axios'
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { CircleCheck, CircleX } from "lucide-react";
+import Swal from 'sweetalert2'
 
 const Login = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const formRef = useRef(null)
+  const [popupStatus, setPopupStatus] = useState("");
+  const [popupAlert, setPopupAlert] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => { //1024
+      setIsMobile(window.innerWidth < 1030);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isMobile]);
+
+  useEffect(() => {
+    if (!document.getElementById('turnstile-script')) {
+      const script = document.createElement('script');
+      script.id = 'turnstile-script';
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      script.async = true;
+      script.defer = true;
+      // script.onload = renderTurnstile;
+      document.head.appendChild(script);
+    }
+  }, []);
 
   const handleLogin = async (event) => {
     event.preventDefault()
+
+    if (!username || !password) {
+      // Swal.fire({
+      //   icon: 'warning',
+      //   title: 'ข้อมูลไม่ครบ',
+      //   text: 'กรุณากรอกชื่อผู้ใช้ และรหัสผ่าน',
+      //   confirmButtonColor: '#837958'
+      // })
+      setPopupStatus("empty");
+      setTimeout(() => setPopupStatus(null), 3000);
+      return
+    }
+
+    // ดึง token จาก hidden input
+    const formData = new FormData(formRef.current)
+    const captchaToken = formData.get('cf-turnstile-response')
+
+    if (!captchaToken) {
+      alert('Please complete CAPTCHA verification.')
+      setPopupStatus("error");
+      setTimeout(() => setPopupStatus(null), 3000);
+      return
+    }
+
+    setPopupStatus("loading");
+    // console.log("captchaToken in login react: ", captchaToken)
+
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/login`, {
         username,
-        password
-      })
+        password,
+        'cf-turnstile-response': captchaToken,
+      },
+        {
+          headers: { "Content-Type": "application/json" }
+        }
+      )
+      setPopupStatus("success");
+      setTimeout(() => {
+        // alert('Login successful!');
+        // console.log("token: ", captchaToken)
 
-      localStorage.setItem('token', response.data.token)
-      console.log('Login success:', response.data)
-      navigate('/dashboard')
+        localStorage.setItem('token', response.data?.token)
+        setTimeout(() => setPopupStatus(null), 3000);
+        // กรอกครบแล้ว ทำการ login
+        // Swal.fire({
+        //   icon: 'success',
+        //   title: 'เข้าสู่ระบบสำเร็จ',
+        //   showConfirmButton: false,
+        //   timer: 1500
+        // })
+        console.log('Login success:', response.data)
+        navigate('/dashboard')
+      }, 2000);
     } catch (error) {
-      console.error('Login failed:', error)
-      alert('Login failed. Please check your credentials.')
+      setPopupStatus("error");
+      // กรอกครบแล้ว ทำการ login
+      // Swal.fire({
+      //   icon: 'error',
+      //   title: 'เข้าสู่ระบบล้มเหลว',
+      //   text: 'กรุณาตรวจสอบชื่อผู้ใช้ และรหัสผ่านอีกครั้ง',
+      //   confirmButtonText: 'ลองใหม่',
+      //   confirmButtonColor: '#837958'
+      // })
+
+      // console.error('Login failed:', error)
+
+      setTimeout(() => setPopupStatus(null), 3000);
+
+      // ✅ Reset Turnstile widget เมื่อ login ผิด
+      if (window.turnstile) {
+        window.turnstile.reset();
+      }
+
+      // alert('Login failed. Please check your credentials.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F3EE] flex items-center justify-center px-4">
-      <form 
-        onSubmit={handleLogin} 
-        className="bg-[#F5F3EE] max-w-xs w-full"
+    //bg-[#F5F3EE]
+    <div className={`min-h-screen bg-center bg-[url('/images/bg-adminLogin.png')] flex items-center justify-center ${isMobile ? "bg-cover" : "bg-contain"}`}>
+      <form
+        ref={formRef}
+        onSubmit={handleLogin}
+        //max-w-xs //backdrop-blur-lg
+        className="bg-[#E5E5E5]/10 backdrop-blur-[2px] w-[368px] shadow-2xl rounded-2xl border border-white flex flex-col p-8"
         style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
       >
-        <h2 className="text-center font-bold text-[#837958] mb-6 text-xl">เข้าสู่ระบบ</h2>
+        <img src="/images/logo-gaysorn.png" alt="Logo" className="w-12 mx-auto mb-4" />
+        <h2 className="text-center font-bold text-[28px] mb-2 bg-gradient-to-r from-[#4f4833] to-[#fff1c7] bg-clip-text text-transparent">
+          เข้าสู่ระบบ
+        </h2>
 
-        <label className="block text-[10px] mb-1 text-[#BC9D72] font-semibold" htmlFor="username">
-          Username<span className="text-[#BC9D72]">*</span>
+        <label className="block text-[12px] mb-1 text-white font-semibold" htmlFor="username">
+          Username<span className="text-red-500"> *</span>
         </label>
         <input
           id="username"
@@ -42,12 +142,12 @@ const Login = () => {
           placeholder="Username"
           value={username}
           onChange={e => setUsername(e.target.value)}
-          required
-          className="w-full text-xs p-2 rounded border border-[#BC9D72] mb-4 focus:outline-none focus:ring-1 focus:ring-[#837958]"
+          // required
+          className="w-full text-xs p-3 rounded-full border border-[#837958] bg-white/50 mb-4 focus:outline-none focus:ring-1 focus:ring-[#837958] placeholder-[#BC9D72]"
         />
 
-        <label className="block text-[10px] mb-1 text-[#BC9D72] font-semibold" htmlFor="password">
-          Password<span className="text-[#BC9D72]">*</span>
+        <label className="block text-[12px] mb-1 text-white font-semibold" htmlFor="password">
+          Password<span className="text-red-500"> *</span>
         </label>
         <input
           id="password"
@@ -55,17 +155,61 @@ const Login = () => {
           placeholder="Password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          required
-          className="w-full text-xs p-2 rounded border border-[#BC9D72] mb-6 focus:outline-none focus:ring-1 focus:ring-[#837958]"
+          // required
+          className="w-full text-xs p-3 rounded-full border border-[#837958] bg-white/50 mb-4 focus:outline-none focus:ring-1 focus:ring-[#837958] placeholder-[#BC9D72]"
         />
 
-        <button
-          type="submit"
-          className="w-full bg-[#837958] text-[#F5F3EE] text-xs font-semibold py-2 rounded"
-        >
-          เข้าสู่ระบบ
-        </button>
+        {/* Cloudflare Turnstile */}
+        <div className="flex items-center justify-center mb-4">
+          <div
+            className="cf-turnstile"
+            data-sitekey={import.meta.env.VITE_API_SITE_KEY}
+            // data-sitekey="3x00000000000000000000FF"
+            data-theme="light" F
+          />
+        </div>
+        <div className='flex items-center justify-center'>
+          <button
+            type="submit"
+            // disabled={loading}
+
+            className="w-[104px] bg-white/60 text-[#837958] text-xs font-semibold py-3 shadow-2xl rounded-full hover:bg-[#837958] hover:text-white hover:shadow-2xl transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#837958] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            เข้าสู่ระบบ
+          </button>
+        </div>
       </form>
+
+      {popupStatus && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] text-center">
+            {popupStatus === "loading" ? (
+              <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                {/* ไอคอนหรือวงกลม loading */}
+                <div className="animate-spin rounded-full border-4 border-t-[#837958] border-gray-200 h-12 w-12 mb-4"></div>
+                <h2 className="text-lg font-semibold">Loading...</h2>
+              </div>
+            ) : popupStatus === "empty" ? (
+              <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                <CircleX size={50} className="mb-2" />
+                <h2 className="text-lg font-semibold">Please enter your</h2>
+                <h2 className="text-lg font-semibold">username and password.</h2>
+              </div>
+            ) : popupStatus === "success" ? (
+                <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                  <CircleCheck size={50} className="mb-2" />
+                  <h2 className="text-lg font-semibold">Login Success.</h2>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                  <CircleX size={50} className="mb-2" />
+                  <h2 className="text-lg font-semibold">Login failed.</h2>
+                  <h2 className="text-lg font-semibold">Please check your credentials.</h2>
+                </div>
+              )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

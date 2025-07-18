@@ -1,8 +1,20 @@
 import { Menu, X } from 'lucide-react'
 import React, { useState } from 'react'
+import { useLocation } from 'react-router-dom';
 
 const AdminLayout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false)
+    const location = useLocation();
+    const currentPath = location.pathname;
+
+    const navItems = [
+        { label: 'Dashboard', href: '/dashboard' },
+        { label: 'Job', href: '/job' },
+        { label: 'Report', href: '/report' },
+        { label: 'User', href: '/user' },
+        { label: 'Setting', href: '/setting' },
+    ];
+
     return (
         <div className='flex flex-col md:flex-row h-screen'>
             {/* Mobile Topbar */}
@@ -12,34 +24,41 @@ const AdminLayout = ({ children }) => {
                     {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                 </button>
             </div>
+
             {/* Sidebar */}
             <aside
                 className={`${sidebarOpen ? 'block' : 'hidden'} 
-        md:block w-full md:w-64 bg-[#F5F3EE] border-r border-[#BC9D72] p-4 text-[#837958] flex-shrink-0 h-auto md:h-screen`}>
-                <div className="p-4 text-2xl font-bold border-b border-gray-700 hidden md:block">
-                    Admin
-                </div>
-                <nav className='flex flex-col p-4 space-y-2'>
-                    <a href="/dashboard" className='hover:bg-[#BC9D72] p-2 rounded'>Dashboard</a>
-                    <a href="/job" className='hover:bg-[#BC9D72] p-2 rounded'>Job</a>
-                    <a href="/report" className='hover:bg-[#BC9D72] p-2 rounded'>Report</a>
-                    <a href="/user" className='hover:bg-[#BC9D72] p-2 rounded'>User</a>
-                    <a href="/setting" className='hover:bg-[#BC9D72] p-2 rounded'>Setting</a>
+                            md:block w-full md:w-64 bg-[#F5F3EE] border-r pt-4 text-[#837958] flex-shrink-0 h-auto md:h-screen`}>
+                <img src="/images/logo-gaysorn+name.png" alt="Logo" className="w-18 mx-auto mb-2 mt-2" />
+                <nav className='flex flex-col pt-4 pb-4'>
+                    {navItems.map((item) => (
+                        <a
+                            key={item.href}
+                            href={item.href}
+                            className={`p-2 pl-8 rounded transition-colors duration-300 font-bold text-[20px]
+                                ${currentPath === item.href
+                                    ? 'bg-[#837958]/100 text-white'
+                                    : 'hover:bg-[#c9bd99] hover:text-white'}
+                                `}
+                        >
+                        {item.label}
+                        </a>
+                    ))}
                 </nav>
             </aside>
 
             {/* Main */}
-            <div className="flex-1 flex flex-col bg-gray-100 overflow-auto">
+            <div className="flex-1 flex flex-col bg-white overflow-auto">
                 {/* Navbar */}
-                <header className="bg-white shadow py-4 px-5 flex justify-between items-center">
+                {/* <header className="bg-white shadow py-4 px-5 flex justify-between items-center">
                     <h1 className="text-xl font-semibold">Admin Panel</h1>
-                </header>
+                </header> */}
 
                 {/* Content */}
                 <main className="flex-1 p-6 overflow-y-auto">{children}</main>
 
                 {/* Footer */}
-                <footer className="bg-white shadow p-4 text-center text-sm text-gray-600">
+                <footer className="bg-white shadow p-4 text-center text-sm text-gray-600 border-t-[2px]">
                     © 2025 DevX (Thailand) Co., Ltd.
                 </footer>
             </div>
