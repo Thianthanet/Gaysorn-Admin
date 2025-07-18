@@ -14,6 +14,8 @@ import JobBarChart from '../component/JobBarChart'
 import LatestRepairsList from '../component/LatestRepairsList'
 import TopCompaniesList from '../component/TopCompaniesList'
 
+//prompt
+
 moment.locale('th')
 
 const STATUS_LABELS = {
@@ -66,25 +68,9 @@ export default function Dashboard() {
     fetchDashboard()
   }, [])
 
-  // useEffect(() => {
-  //   const fetchDashboard = async () => {
-  //     try {
-  //       const res = await axios.get(
-  //         `${import.meta.env.VITE_API_BASE_URL}/api/getAllRepair`
-  //       )
-  //       console.log('Dashboard data:', res.data)
-  //       console.table(res.data.latestRepairs)
-  //       setDashboard(res.data)
-  //     } catch (err) {
-  //       console.error('Error fetching dashboard:', err)
-  //     }
-  //   }
-  //   fetchDashboard()
-  // }, [])
-
   const statusPieData = useMemo(() => {
     if (!dashboard) return []
-    console.log("dashboard.statusCounts: ", dashboard.statusCounts)
+    // console.log("dashboard.statusCounts: ", dashboard.statusCounts)
     const counts = dashboard.statusCounts.reduce((acc, cur) => {
       acc[cur.status] = cur._count.status
       return acc
@@ -113,7 +99,7 @@ export default function Dashboard() {
 
   const barData = useMemo(() => {
     if (!dashboard) return []
-    console.log("dashboard.choicesDetails: ", dashboard.choicesDetails)
+    // console.log("dashboard.choicesDetails: ", dashboard.choicesDetails)
     return dashboard.choicesDetails.map(ch => ({
       name: ch.choiceName,
       pending: ch.pending,
@@ -141,6 +127,7 @@ export default function Dashboard() {
   return (
     <AdminLayout>
       <TimeDisplay
+        statusPieData={statusPieData}
         isMobile={isMobile}
       />
       <PieChartAndSummary

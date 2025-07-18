@@ -38,15 +38,16 @@ const Login = () => {
 
   const handleLogin = async (event) => {
     event.preventDefault()
-    setLoading(true)
 
     if (!username || !password) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'ข้อมูลไม่ครบ',
-        text: 'กรุณากรอกชื่อผู้ใช้ และรหัสผ่าน',
-        confirmButtonColor: '#837958'
-      })
+      // Swal.fire({
+      //   icon: 'warning',
+      //   title: 'ข้อมูลไม่ครบ',
+      //   text: 'กรุณากรอกชื่อผู้ใช้ และรหัสผ่าน',
+      //   confirmButtonColor: '#837958'
+      // })
+      setPopupStatus("empty");
+      setTimeout(() => setPopupStatus(null), 3000);
       return
     }
 
@@ -56,11 +57,12 @@ const Login = () => {
 
     if (!captchaToken) {
       alert('Please complete CAPTCHA verification.')
-
-      setLoading(false)
+      setPopupStatus("error");
+      setTimeout(() => setPopupStatus(null), 3000);
       return
     }
 
+    setPopupStatus("loading");
     // console.log("captchaToken in login react: ", captchaToken)
 
     try {
@@ -73,35 +75,35 @@ const Login = () => {
           headers: { "Content-Type": "application/json" }
         }
       )
-      // setPopupStatus("success");
+      setPopupStatus("success");
       setTimeout(() => {
         // alert('Login successful!');
         // console.log("token: ", captchaToken)
 
         localStorage.setItem('token', response.data?.token)
-        // setTimeout(() => setPopupStatus(null), 3000);
+        setTimeout(() => setPopupStatus(null), 3000);
         // กรอกครบแล้ว ทำการ login
-        Swal.fire({
-          icon: 'success',
-          title: 'เข้าสู่ระบบสำเร็จ',
-          showConfirmButton: false,
-          timer: 1500
-        })
+        // Swal.fire({
+        //   icon: 'success',
+        //   title: 'เข้าสู่ระบบสำเร็จ',
+        //   showConfirmButton: false,
+        //   timer: 1500
+        // })
         console.log('Login success:', response.data)
         navigate('/dashboard')
       }, 2000);
     } catch (error) {
-      // setPopupStatus("error");
+      setPopupStatus("error");
       // กรอกครบแล้ว ทำการ login
-      Swal.fire({
-        icon: 'error',
-        title: 'เข้าสู่ระบบล้มเหลว',
-        text: 'กรุณาตรวจสอบชื่อผู้ใช้ และรหัสผ่านอีกครั้ง',
-        confirmButtonText: 'ลองใหม่',
-        confirmButtonColor: '#837958'
-      })
+      // Swal.fire({
+      //   icon: 'error',
+      //   title: 'เข้าสู่ระบบล้มเหลว',
+      //   text: 'กรุณาตรวจสอบชื่อผู้ใช้ และรหัสผ่านอีกครั้ง',
+      //   confirmButtonText: 'ลองใหม่',
+      //   confirmButtonColor: '#837958'
+      // })
 
-      console.error('Login failed:', error)
+      // console.error('Login failed:', error)
 
       setTimeout(() => setPopupStatus(null), 3000);
 
@@ -118,7 +120,7 @@ const Login = () => {
 
   return (
     //bg-[#F5F3EE]
-    <div className={`min-h-screen bg-center bg-[url('/images/bg-adminLogin.png')] flex items-center justify-center ${isMobile ? "bg-cover": "bg-contain"}`}>
+    <div className={`min-h-screen bg-center bg-[url('/images/bg-adminLogin.png')] flex items-center justify-center ${isMobile ? "bg-cover" : "bg-contain"}`}>
       <form
         ref={formRef}
         onSubmit={handleLogin}
@@ -180,29 +182,34 @@ const Login = () => {
 
       {popupStatus && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
-          <div className="bg-white rounded-2xl shadow-lg p-6 w-[320px] text-center">
-            {popupStatus === "success" ? (
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] text-center">
+            {popupStatus === "loading" ? (
               <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                <CircleCheck size={50} className="mb-2" />
-                <h2 className="text-lg font-semibold">
-                  Login Success.
-                </h2>
+                {/* ไอคอนหรือวงกลม loading */}
+                <div className="animate-spin rounded-full border-4 border-t-[#837958] border-gray-200 h-12 w-12 mb-4"></div>
+                <h2 className="text-lg font-semibold">Loading...</h2>
               </div>
-            ) : (
+            ) : popupStatus === "empty" ? (
               <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                 <CircleX size={50} className="mb-2" />
-                <h2 className="text-lg font-semibold">
-                  Login failed.
-                </h2>
-                <h2 className="text-lg font-semibold">
-                  Please check your credentials.
-                </h2>
+                <h2 className="text-lg font-semibold">Please enter your</h2>
+                <h2 className="text-lg font-semibold">username and password.</h2>
               </div>
-            )}
+            ) : popupStatus === "success" ? (
+                <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                  <CircleCheck size={50} className="mb-2" />
+                  <h2 className="text-lg font-semibold">Login Success.</h2>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                  <CircleX size={50} className="mb-2" />
+                  <h2 className="text-lg font-semibold">Login failed.</h2>
+                  <h2 className="text-lg font-semibold">Please check your credentials.</h2>
+                </div>
+              )}
           </div>
         </div>
       )}
-
     </div>
   )
 }

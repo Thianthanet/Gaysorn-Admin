@@ -1,4 +1,5 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     PieChart,
     Pie,
@@ -7,9 +8,11 @@ import {
     Tooltip,
     ResponsiveContainer,
 } from "recharts";
+import BuildingFilter from "./BuildingFilter";
 
 const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) => {
     const [activeIndex, setActiveIndex] = useState(null);
+    const navigate = useNavigate()
     // const [isMobile, setIsMobile] = useState(false);
 
     // useEffect(() => {
@@ -38,10 +41,13 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) 
     return (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
             {/* ----- PIE CHART ----- */}
-            <div className="col-span-1 md:col-span-8 bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 pt-4 shadow">
-                <h2 className={`font-semibold text-[#837958] mb-2 pl-4 ${isMobile ? "text-[24px]": "text-[28px]"}`}>
-                    สรุปสถานะของงานประจำ...
-                </h2>
+            <div className="col-span-1 md:col-span-8 bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 pt-4 pb-2 pl-2 shadow">
+                <div className="flex justify-between">
+                    <h2 className={`font-semibold text-[#837958] mb-2 pl-4 ${isMobile ? "text-[24px]" : "text-[28px]"}`}>
+                        สรุปสถานะของงานประจำ
+                    </h2>
+                    <BuildingFilter isMobile={isMobile} />
+                </div>
                 <div className={`w-full ${isMobile ? "h-[200px]" : "h-[300px]"}`}>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
@@ -108,7 +114,7 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) 
                                 align={isMobile ? "center" : "right"}
                                 layout={isMobile ? "horizontal" : "vertical"}
                                 iconType="circle"
-                                wrapperStyle={{ fontSize: "20px", color: "#837958", right: isMobile ? "2px" : "72px"}}
+                                wrapperStyle={{ fontSize: "20px", color: "#837958", right: isMobile ? "2px" : "68px" }}
                             />
 
                             <Tooltip content={<CustomTooltipPie />} cursor={{ fill: "#f9f9f9" }} />
@@ -120,8 +126,9 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) 
             {/* ----- SUMMARY CARDS ----- */}
             <div className="col-span-1 md:col-span-4 grid grid-cols-2 sm:grid-cols-2 gap-4">
                 {summaryCards.map((card) => (
-                    <div
+                    <button
                         key={card.key}
+                        onClick={() => navigate('/job')}
                         className="flex flex-col justify-center items-center p-2 bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 hover:shadow-xl transition-shadow duration-300"
                     >
                         <div className="text-[#BC9D72]/90 transform transition-transform duration-300 hover:scale-110">
@@ -133,7 +140,7 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) 
                         <span className="text-[#837958] sm:text-[12px] md:text-[12px]">
                             {card.label}
                         </span>
-                    </div>
+                    </button>
                 ))}
             </div>
         </div>

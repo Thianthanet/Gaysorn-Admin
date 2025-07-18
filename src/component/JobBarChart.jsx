@@ -47,26 +47,10 @@ const CustomXAxisTick = ({ x, y, payload }) => {
 };
 
 const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
-  // const [isMobile, setIsMobile] = useState(false);
-
-  // useEffect(() => {
-  //   const handleResize = () => { //1024
-  //     setIsMobile(window.innerWidth < 1030);
-  //   };
-
-  //   handleResize();
-  //   window.addEventListener("resize", handleResize);
-  //   return () => window.removeEventListener("resize", handleResize);
-  // }, [isMobile]);
-
-  // const filteredData = useMemo(() => {
-  //   return isMobile ? data.slice(0, 3) : data;
-  // }, [data, isMobile]);
-
   return (
-    <div className="bg-[#F4F2ED] border-[1px] border-[#BC9D72] rounded-2xl pl-4 pr-4 pt-4 pb-4 mb-10" >
+    <div className="bg-[#F4F2ED] border-[1px] border-[#BC9D72] rounded-2xl p-6 mb-4" >
       <h2 className={`font-semibold mb-4 text-[#837958] ${isMobile ? "text-[18px]" : "text-[28px]"}`}>
-        จำนวนงานตามกลุ่มงาน และสถานะ
+        จำนวนงานทั้งหมดแยกตามกลุ่มงานและสถานะของงาน
       </h2>
       <div className="overflow-x-auto">
         <div style={{ width: `${data.length * 80}px` }}>
