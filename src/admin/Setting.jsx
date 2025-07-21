@@ -4,6 +4,7 @@ import Building from '../component/Building';
 import GroupChoices from '../component/GroupChoices';
 import Company from '../component/Company';
 import Unit from '../component/Unit';
+import Draft from '../component/Draft';
 
 const Setting = () => {
   return (
@@ -16,11 +17,14 @@ const Setting = () => {
         <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
           <GroupChoices />
         </div>
-        <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
+        {/* <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
           <Company />
         </div>
         <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
           <Unit />
+        </div> */}
+        <div className='bg-white shadow-md rounded-2xl border border-gray-200 p-6'>
+          <Draft />
         </div>
       </div>
     </AdminLayout>

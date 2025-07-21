@@ -10,20 +10,31 @@ import {
 } from "recharts";
 import BuildingFilter from "./BuildingFilter";
 
-const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) => {
+const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, activeButton, setBuildingName }) => {
     const [activeIndex, setActiveIndex] = useState(null);
     const navigate = useNavigate()
-    // const [isMobile, setIsMobile] = useState(false);
 
-    // useEffect(() => {
-    //     const handleResize = () => { //1024
-    //         setIsMobile(window.innerWidth < 1030);
-    //     };
+    const statusLabelMap = {
+        today: 'วันนี้',
+        yesterday: 'เมื่อวาน',
+        thisWeek: 'สัปดาห์นี้',
+        thisMonth: 'เดือนนี้',
+        thisYear: 'ปีนี้',
+    };
 
-    //     handleResize();
-    //     window.addEventListener("resize", handleResize);
-    //     return () => window.removeEventListener("resize", handleResize);
-    // }, [isMobile]);
+    // console.log("statusPieData in PieChart: ", statusPieData)
+
+    const hasValidData = statusPieData.some(item => item.value > 0);
+
+    // console.log("hasValidData in PieChart: ", hasValidData)
+
+    const pieData = hasValidData
+        ? statusPieData
+        : statusPieData.map((item, index) =>
+            index === 3 ? { ...item, value: 1 } : item
+        );
+
+    const activeLabel = statusLabelMap[activeButton] || '';
 
     const CustomTooltipPie = ({ active, payload }) => {
         if (active && payload && payload.length) {
@@ -31,37 +42,51 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) 
             return (
                 <div className="bg-white/90 backdrop-blur-md border border-[#BC9D72]/80 rounded-xl p-3 shadow-xl text-sm">
                     <p className="font-semibold text-[#837958]">{data.name}</p>
-                    <p className="text-[#555]">จำนวน: {data.value} งาน</p>
+                    <p className="text-[#555]">
+                        จำนวน :{" "}
+                        {data.name === "ไม่มีงาน" ? data.value - 1 : data.value} งาน
+                    </p>
                 </div>
+
             );
         }
         return null;
     };
 
+    const renderCustomLegend = (props) => {
+        const { payload } = props;
+        return (
+            <ul className={`list-none m-0 ${isMobile ? "pr-12" : "pr-16"}`}>
+                {payload.map((entry, index) => (
+                    <li key={`item-${index}`} className="flex items-center mb-1">
+                        <span
+                            className="inline-block w-[20px] h-[20px] rounded-full mr-2"
+                            style={{ backgroundColor: entry.color }}
+                        />
+                        <span className={`text-[#837958] font-medium ${isMobile ? "text-[14px]" : "text-[20px]"}`}>
+                            {entry.value}
+                        </span>
+                    </li>
+                ))}
+            </ul>
+        );
+    };
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
-            {/* ----- PIE CHART ----- */}
-            <div className="col-span-1 md:col-span-8 bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 pt-4 pb-2 pl-2 shadow">
+        <div className={`mb-4 ${isMobile ? "flex flex-col gap-4" : "grid grid-cols-12 gap-2"}`}>
+            {/* ----- PIE CHART ----- สมดุลคือ ไม่กำหนดความสูง h */}
+            <div className={`${isMobile ? "h-[210px]" : "md:col-span-8 h-[310px]"} bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 pt-2 pl-2 shadow`}>
                 <div className="flex justify-between">
-                    <h2 className={`font-semibold text-[#837958] mb-2 pl-4 ${isMobile ? "text-[24px]" : "text-[28px]"}`}>
-                        สรุปสถานะของงานประจำ
+                    <h2 className={`font-semibold text-[#837958] pl-4 ${isMobile ? "text-[18px]" : "text-[28px]"}`}>
+                        สรุปสถานะของงานประจำ{activeLabel}
                     </h2>
-                    <BuildingFilter isMobile={isMobile} />
-                </div>
-                <div className={`w-full ${isMobile ? "h-[200px]" : "h-[300px]"}`}>
+                    <BuildingFilter isMobile={isMobile} setBuildingName={setBuildingName}/>
+                </div> {/*สมดุลคือ ไม่กำหนดความสูง h */}
+                <div className={`w-full ${isMobile ? "h-[180px]" : "ml-[10px] h-[280px]"}`}>
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                            <defs>
-                                {statusPieData.map((d, idx) => (
-                                    <linearGradient id={`activeGradient-${idx}`} key={idx} x1="0" y1="0" x2="1" y2="1">
-                                        <stop offset="0%" stopColor={d.color} stopOpacity={0.8} />
-                                        <stop offset="100%" stopColor="#F4F2ED" stopOpacity={0.9} />
-                                    </linearGradient>
-                                ))}
-                            </defs>
-
                             <Pie
-                                data={statusPieData}
+                                data={pieData}
                                 dataKey="value"
                                 nameKey="name"
                                 cx="45%"
@@ -72,32 +97,26 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) 
                                 label={false}
                                 isAnimationActive={true}
                                 animationDuration={500}
-                                activeIndex={activeIndex}
-                                onClick={(_, idx) => setActiveIndex(idx === activeIndex ? null : idx)}
+                                activeIndex={hasValidData ? activeIndex : null}
+                                onClick={(_, idx) => {
+                                    if (hasValidData) {
+                                        setActiveIndex(idx === activeIndex ? null : idx);
+                                    }
+                                }}
                             >
-                                {statusPieData.map((d, idx) => (
+                                {pieData.map((d, idx) => (
                                     <Cell
                                         key={`cell-${idx}`}
-                                        fill={idx === activeIndex ? `url(#activeGradient-${idx})` : d.color}
-                                        stroke={idx === activeIndex ? "#837958" : "#fff"}
-                                        strokeWidth={idx === activeIndex ? 1 : 0}
+                                        fill={d.color}
                                         style={{
-                                            transition: "transform .3s ease, box-shadow .3s ease",
-                                            transform: idx === activeIndex ? "scale(1.08)" : "scale(1)",
-                                            boxShadow: idx === activeIndex ? "0 0 10px rgba(131,121,88,0.5)" : "none",
-                                            cursor: "pointer",
-                                        }}
-                                        onMouseOver={(e) => {
-                                            e.target.style.transform = "scale(1.08)";
-                                            e.target.style.boxShadow = "0 0 10px rgba(131,121,88,0.5)";
-                                        }}
-                                        onMouseOut={(e) => {
-                                            e.target.style.transform = "scale(1)";
-                                            e.target.style.boxShadow = "none";
+                                            transition: "filter 0.3s ease",
+                                            filter: "none",
+                                            cursor: hasValidData ? "pointer" : "default",
                                         }}
                                     />
                                 ))}
                             </Pie>
+
                             {/* Legend สำหรับมือถือ */}
                             {/* <Legend
                                 verticalAlign="bottom"
@@ -110,11 +129,10 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) 
 
                             {/* Legend สำหรับ PC */}
                             <Legend
-                                verticalAlign={isMobile ? "bottom" : "middle"}
-                                align={isMobile ? "center" : "right"}
-                                layout={isMobile ? "horizontal" : "vertical"}
-                                iconType="circle"
-                                wrapperStyle={{ fontSize: "20px", color: "#837958", right: isMobile ? "2px" : "68px" }}
+                                verticalAlign="middle"
+                                align="right"
+                                layout="vertical"
+                                content={renderCustomLegend}
                             />
 
                             <Tooltip content={<CustomTooltipPie />} cursor={{ fill: "#f9f9f9" }} />
@@ -124,22 +142,18 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile }) 
             </div>
 
             {/* ----- SUMMARY CARDS ----- */}
-            <div className="col-span-1 md:col-span-4 grid grid-cols-2 sm:grid-cols-2 gap-4">
+            <div className={`${isMobile ? "" : "md:col-span-4"} grid grid-cols-2 gap-2`}>
                 {summaryCards.map((card) => (
                     <button
                         key={card.key}
-                        onClick={() => navigate('/job')}
-                        className="flex flex-col justify-center items-center p-2 bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 hover:shadow-xl transition-shadow duration-300"
+                        onClick={() => navigate('/job')} //ถ้าสมดุล จะไม่กำหนดความสูง h p-2
+                        className="flex flex-col justify-center items-center h-[150px] bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 hover:shadow-xl transition-shadow duration-300"
                     >
-                        <div className="text-[#BC9D72]/90 transform transition-transform duration-300 hover:scale-110">
+                        <div className="text-[#BC9D72] opacity-60 transform transition-transform duration-300 hover:scale-110">
                             {iconMap[card.key]}
-                        </div>
-                        <span className={`text-[48px] font-bold text-[#837958]`}>
-                            {card.value}
-                        </span>
-                        <span className="text-[#837958] sm:text-[12px] md:text-[12px]">
-                            {card.label}
-                        </span>
+                        </div> {/* ถ้าสมดุล text-[48px] */}
+                        <span className="text-[32px] font-bold text-[#837958]">{card.value} </span>
+                        <span className="text-[#837958] text-[12px]">{card.label}</span>
                     </button>
                 ))}
             </div>
