@@ -1,16 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from './AdminLayout';
 import axios from 'axios';
-import { FaLine } from 'react-icons/fa';
+import { FaLine, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { UserPen, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const User = () => {
   const [customers, setCustomers] = useState([]);
   const [technicians, setTechnicians] = useState([]);
+  const [admin, setAdmin] = useState([])
   const [activeTab, setActiveTab] = useState('customers');
   const [waitForApprove, setWaitForApprove] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({})
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -25,6 +27,8 @@ const User = () => {
           setTechnicians(response.data.data);
         } else if (activeTab === 'waitForApprove') {
           await handleGetWaitForApprove()
+        } else if (activeTab === 'admin') {
+          handleGetAdmin()
         }
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -47,6 +51,16 @@ const User = () => {
       setWaitForApprove(response.data.data);
     } catch (error) {
       console.error('Error fetching wait for approve data:', error);
+    }
+  }
+
+  const handleGetAdmin = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getAdmin`)
+      console.log("Get admin", response.data.data)
+      setAdmin(response.data.data)
+    } catch (error) {
+      console.log(error)
     }
   }
 
@@ -91,6 +105,10 @@ const User = () => {
     navigate(`/editCustomer/${userId}`);
   }
 
+  const handleEditAdmin = (id) => {
+    navigate(`/editAdmin/${id}`)
+  }
+
   const handleDeleteTechnician = async (id) => {
     try {
       const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteTechnician/${id}`);
@@ -104,7 +122,7 @@ const User = () => {
 
   const handleDeleteCustomer = async (id) => {
     try {
-      const response =await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`);
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`);
       console.log('Delete response:', response.data);
       alert("Delete customer successfully");
       window.location.reload(); // Refresh the page to reflect changes
@@ -112,6 +130,24 @@ const User = () => {
       console.error('Error deleting customer:', error);
     }
   };
+
+  const handleDeleteAdmin = async (id) => {
+    try {
+      const response = await axios.delete(`${import.meta.VITE_API_BASE_URL}/api/deleteAdmin/${id}`)
+      console.log("Delete admin success", response.data)
+      alert("Delete admin successfully")
+      window.location.reload()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const toggleShowPassword = (id) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }))
+  }
 
   return (
     <AdminLayout>
@@ -137,6 +173,12 @@ const User = () => {
             onClick={() => setActiveTab('technicians')}
           >
             พนักงาน
+          </button>
+          <button
+            className={`py-2 px-4 font-medium ${activeTab === 'admin' ? 'text-[#BC9D72] border-b-2 border-[#BC9D72]' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('admin')}
+          >
+            แอดมิน
           </button>
           <button
             className="ml-auto py-2 px-4 bg-[#BC9D72] text-white font-medium rounded hover:bg-[#a88f5c]"
@@ -400,10 +442,10 @@ const User = () => {
                           </td>
                           <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {user.userId ? (
-                                <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
-                              ) : (
-                                <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
-                              )}
+                              <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
+                            ) : (
+                              <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
+                            )}
                           </td>
                           <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             <button
@@ -427,6 +469,77 @@ const User = () => {
               </div>
             )}
 
+            {/* Admin */}
+            {
+              activeTab === "admin" && (
+                <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                  <table className="min-w-full leading-normal">
+                    <thead>
+                      <tr>
+                        <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                          ลำดับ
+                        </th>
+                        <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                          ชื่อผู้ใช้งาน
+                        </th>
+                        <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                          รหัสผ่าน
+                        </th>
+                        <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                          จัดการ
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        admin.length > 0 ? (
+                          admin.map((admin, index) => (
+                            <tr key={admin.id}>
+                              <td className="px-5 py-5 border-b border-gray-200 text-sm">
+                                {index + 1}
+                              </td>
+                              <td className="px-5 py-5 border-b border-gray-200 text-sm">
+                                {admin.username}
+                              </td>
+                              <td className="px-5 py-5 border-b border-gray-200 text-sm">
+                                <span className='mx-2'>
+                                  {showPasswords[admin.id] ? admin.password : "********"}
+                                </span>
+                                <button onClick={() => toggleShowPassword(admin.id)} className="focus:outline-none">
+                                  {showPasswords[admin.id] ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                              </td>
+                              <td className="px-5 py-5 border-b border-gray-200 text-sm">
+                                <button
+                                  className="text-blue-500 hover:text-blue-700 mr-3"
+                                  title="แก้ไข"
+                                  onClick={() => handleEditAdmin(admin.id)}
+                                >
+                                  <UserPen className="inline-block" />
+                                </button>
+                                <button
+                                  className="text-red-500 hover:text-red-700"
+                                  title="ลบ"
+                                  onClick={() => handleDeleteAdmin(admin.id)}
+                                >
+                                  <Trash2 className="inline-block" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="4" className="text-center py-5 text-gray-500">
+                              ไม่มีข้อมูลผู้ใช้งาน
+                            </td>
+                          </tr>
+                        )
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
           </>
         )}
       </div>
