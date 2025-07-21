@@ -35,26 +35,26 @@ const LatestRepairsList = ({ repairs, STATUS_LABELS, isMobile }) => {
     return (
         <button
             onClick={() => navigate('/job')}
-            className="bg-[#F4F2ED] rounded-2xl border-[1px] border-[#BC9D72]/90 shadow pl-6 pr-4 pt-6 pb-6">
-            <div className="flex flex-col justify-start h-full">
-                <h2 className={`flex items-start font-semibold mb-4 text-[#837958] ${isMobile ? "text-[24px]" : "text-[28px]"}`}>
+            className="bg-[#F4F2ED] rounded-2xl border-[1px] border-[#BC9D72]/90 shadow pr-2 pl-6 pt-4">
+            <div className="flex flex-col justify-start h-full pb-4">
+                <h2 className={`flex items-start font-semibold mb-2 text-[#837958] ${isMobile ? "text-[18px]" : "text-[28px]"}`}>
                     10 งานล่าสุด
                 </h2>
 
-                <ul className="space-y-3">
+                <ul className="space-y-2">
                     {repairs.slice(0, 10).map((item) => {
                         const companyName = item.companyName?.trim() || "-";
                         return (
-                            <li key={item.id} className={`flex pb-2 ${isMobile ? "gap-x-4" : "gap-x-20"}`}>
+                            <li key={item.id} className="grid grid-cols-2 items-start gap-4 text-[#837958]">
                                 <div className="flex flex-col items-start">
-                                    <span className={`font-medium text-[#BC9D72] ${isMobile ? "text-[16px]" : "text-[24px]"} `}>
+                                    <span className={`font-medium text-[#BC9D72] ${isMobile ? "text-[12px]" : "text-[20px]"} `}>
                                         {companyName}
                                     </span>
-                                    <div className={`text-xs text-gray-600 ${isMobile ? "text-[12px]" : "text-[18px]"}`}>
+                                    <div className={`text-gray-600 ${isMobile ? "text-[6px]" : "text-[12px]"}`}>
                                         <span>{formatThaiDate(item.createDate)}</span>
                                     </div>
                                 </div>
-                                <span className={`font-medium text-[#BC9D72] ${isMobile ? "text-[13px]" : "text-[22px]"}`}>
+                                <span className={`font-medium flex items-start text-[#BC9D72] ${isMobile ? "text-[10px]" : "text-[20px]"}`}>
                                     {STATUS_LABELS[item.status] ?? item.status}
                                 </span>
                             </li>

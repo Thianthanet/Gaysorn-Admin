@@ -17,7 +17,7 @@ const CustomTooltipBar = ({ active, payload, label }) => {
         <p className="font-semibold text-[#837958]">{label}</p>
         {payload.map((entry, idx) => (
           <p key={idx} className="text-[#555]">
-            {entry.name}: {entry.value} งาน
+            {entry.name} : {entry.value} งาน
           </p>
         ))}
       </div>
@@ -37,7 +37,7 @@ const CustomXAxisTick = ({ x, y, payload }) => {
           y={index * 14}
           textAnchor="middle"
           fill="#837958"
-          fontSize={10}
+          fontSize={8}
         >
           {line}
         </text>
@@ -47,75 +47,105 @@ const CustomXAxisTick = ({ x, y, payload }) => {
 };
 
 const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
+
+  const CustomLegend = () => {
+    const legendItems = [
+      { label: STATUS_LABELS.pending, color: STATUS_COLORS.pending },
+      { label: STATUS_LABELS.in_progress, color: STATUS_COLORS.in_progress },
+      { label: STATUS_LABELS.completed, color: STATUS_COLORS.completed },
+    ];
+
+    return (
+      <div className="flex justify-end w-full pr-6 pb-2">
+        <ul className="flex flex-col gap-1">
+          {legendItems.map((item, index) => (
+            <li key={index} className="flex items-center gap-2">
+              <span
+                className="w-4 h-4 inline-block rounded-sm"
+                style={{ backgroundColor: item.color }}
+              ></span>
+              <span className="text-[12px] text-[#837958]">{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
   return (
-    <div className="bg-[#F4F2ED] border-[1px] border-[#BC9D72] rounded-2xl p-6 mb-4" >
-      <h2 className={`font-semibold mb-4 text-[#837958] ${isMobile ? "text-[18px]" : "text-[28px]"}`}>
+    <div className="bg-[#F4F2ED] border-[1px] border-[#BC9D72] rounded-2xl pl-6 pt-4 mb-4 relative">
+      <h2 className={`font-semibold text-[#837958] ${isMobile ? "text-[18px]" : "text-[28px]"}`}>
         จำนวนงานทั้งหมดแยกตามกลุ่มงานและสถานะของงาน
       </h2>
+
+      {/* ✅ Legend ที่ลอยมุมขวาบน */}
+      {/* <div className="absolute top-6 right-6 z-10">
+        <CustomLegend />
+      </div> */}
+      <CustomLegend />
+
       <div className="overflow-x-auto">
-        <div style={{ width: `${data.length * 80}px` }}>
-          <ResponsiveContainer width="100%" height={360}>
+        <div style={{ width: `${data.length * 110}px` }}>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart
               data={data}
               margin={{ top: 0, right: 0, bottom: 30, left: 0 }}
-              barCategoryGap={70}
+              barCategoryGap="100%"
               barGap={0}
             >
-              {/* เส้นกริด */}
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e2e2" />
 
-              {/* แกน X ปรับเอียง + font */}
               <XAxis
                 dataKey="name"
                 interval={0}
                 tick={<CustomXAxisTick />}
               />
 
-              {/* แกน Y */}
               <YAxis
                 allowDecimals={false}
                 tick={{ fontSize: 14, fill: "#837958" }}
               />
 
-              {/* กล่องลอย tooltip */}
               <Tooltip content={<CustomTooltipBar />} cursor={{ fill: "#f9f9f9" }} />
 
-              {/* คำอธิบายด้านขวา */}
-              <Legend
+              {/* <Legend
                 verticalAlign="top"
                 align="right"
                 iconType="square"
-                layout="centric"
+                content={<CustomLegend />}
                 wrapperStyle={{
-                  fontSize: "14px",
-                  color: "#837958",
+                  paddingTop: 10,
+                  paddingRight: 10,
                 }}
-              />
+              /> */}
 
-              {/* แท่งกราฟ */}
               <Bar
                 dataKey="pending"
-                barSize={20}
+                barSize={28}
                 name={STATUS_LABELS.pending}
                 fill={STATUS_COLORS.pending}
+                radius={[2, 2, 0, 0]}
               />
               <Bar
                 dataKey="in_progress"
-                barSize={20}
+                barSize={28}
                 name={STATUS_LABELS.in_progress}
                 fill={STATUS_COLORS.in_progress}
+                radius={[2, 2, 0, 0]}
               />
               <Bar
                 dataKey="completed"
-                barSize={20}
+                barSize={28}
                 name={STATUS_LABELS.completed}
                 fill={STATUS_COLORS.completed}
+                radius={[2, 2, 0, 0]}
               />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
-    </div >
+    </div>
+
   );
 };
 
