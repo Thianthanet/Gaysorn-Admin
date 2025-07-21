@@ -17,6 +17,7 @@ const Report = () => {
   const handleGetCompanyReport = async () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getCompanyRepairCount`)
+      console.log(response.data.data)
       setCustomer(response.data.data)
     } catch (error) {
       console.error('Error fetching company report:', error)
@@ -91,7 +92,7 @@ const Report = () => {
                     <td className="py-2 px-4 border-b">{index + 1}</td>
                     <td className="py-2 px-4 border-b">{item.companyName}</td>
                     <td className="py-2 px-4 border-b">{item.buildingName}</td>
-                    <td className="py-2 px-4 border-b">{item.repairCount}</td>
+                    <td className="py-2 px-4 border-b">{item.total}</td>
                   </tr>
                 ))}
                 {customer.length === 0 && (
