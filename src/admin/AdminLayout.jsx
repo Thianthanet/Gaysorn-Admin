@@ -29,7 +29,7 @@ const AdminLayout = ({ children }) => {
             <aside
                 className={`${sidebarOpen ? 'block' : 'hidden'} 
                             md:block w-full md:w-64 bg-[#F5F3EE] border-r pt-4 text-[#837958] flex-shrink-0 h-auto md:h-screen`}>
-                <img src="/images/logo-gaysorn+name.png" alt="Logo" className="w-18 mx-auto mb-2 mt-2" />
+                <img src="/images/logo-gaysorn+name.png" alt="Logo" className="w-16 mx-auto mb-2 mt-2" />
                 <nav className='flex flex-col pt-4 pb-4'>
                     {navItems.map((item) => (
                         <a
@@ -37,7 +37,7 @@ const AdminLayout = ({ children }) => {
                             href={item.href}
                             className={`p-2 pl-8 rounded transition-colors duration-300 font-bold text-[20px]
                                 ${currentPath === item.href
-                                    ? 'bg-[#837958]/100 text-white'
+                                    ? 'bg-[#837958] bg-opacity-50 text-white'
                                     : 'hover:bg-[#c9bd99] hover:text-white'}
                                 `}
                         >
@@ -55,10 +55,10 @@ const AdminLayout = ({ children }) => {
                 </header> */}
 
                 {/* Content */}
-                <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+                <main className="flex-1 p-4 overflow-y-auto">{children}</main>
 
                 {/* Footer */}
-                <footer className="bg-white shadow p-4 text-center text-sm text-gray-600 border-t-[2px]">
+                <footer className="bg-white shadow p-3 text-center text-sm text-gray-600 border-t-[2px]">
                     © 2025 DevX (Thailand) Co., Ltd.
                 </footer>
             </div>
