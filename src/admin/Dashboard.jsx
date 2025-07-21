@@ -96,15 +96,24 @@ export default function Dashboard() {
     const fetchChoices = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getChoices`);
-        console.log("GET /getChoices result:", res.data); // ดูโครงสร้างจริงๆ
+        let data = res.data.data;
 
-        // สมมุติ backend ส่งแบบ { choices: [...] }
-        const choicesArray = res.data.choices ?? res.data; // รองรับทั้งแบบมี .choices หรือไม่มีก็ได้
+        if (!Array.isArray(data)) {
+          console.error("Invalid choices data:", data);
+          return;
+        }
 
-        const choices = Array.isArray(choicesArray)
-          ? choicesArray.map(choice => choice.name?.trim() || choice.choiceName?.trim())
-          : [];
+        const sorted = data.sort((a, b) => {
+          const norm = str => str.replace(/\s/g, '');
+          const aName = norm(a.choiceName);
+          const bName = norm(b.choiceName);
 
+          if (aName === 'อื่นๆ') return 1;
+          if (bName === 'อื่นๆ') return -1;
+          return 0; // ไม่เรียงเพิ่ม
+        });
+
+        const choices = sorted.map(choice => choice.choiceName);
         setChoices(choices);
       } catch (error) {
         console.error("Error fetching choices:", error);
@@ -165,40 +174,49 @@ export default function Dashboard() {
   }
 
   // 🔹 ลำดับตามที่ต้องการ
-  const preferredOrder = [
-    "ระบบแอร์ไม่เย็น / มีน้ำหยด",
-    "ไฟฟ้าดับ / ไฟกระพริบ",
-    "หลอดไฟ / โคมไฟเสีย",
-    "น้ำรั่ว / ท่อตัน / น้ำไม่ไหล",
-    "สุขภัณฑ์ชำรุด",
-    "ปัญหาสัตว์รบกวน",
-    "ปัญหาระบบสื่อสาร / อินเทอร์เน็ต",
-    "อื่น ๆ", // รวมแล้วเป็นชื่อเดียว
-  ];
+  // const preferredOrder = [
+  //   "ระบบแอร์ไม่เย็น / มีน้ำหยด",
+  //   "ไฟฟ้าดับ / ไฟกระพริบ",
+  //   "หลอดไฟ / โคมไฟเสีย",
+  //   "น้ำรั่ว / ท่อตัน / น้ำไม่ไหล",
+  //   "สุขภัณฑ์ชำรุด",
+  //   "ปัญหาสัตว์รบกวน",
+  //   "ปัญหาระบบสื่อสาร / อินเทอร์เน็ต",
+  //   "อื่น ๆ",
+  // ];
 
   // console.log("barData: ", barData)
 
-  // 🔹 Normalize 'อื่น ๆ' ให้กลายเป็น 'อื่นๆ'
-  const normalizedBarData = barData.map(item => ({
-    ...item,
-    name: item.name.replace(/\s/g, '') === "อื่น ๆ" ? "อื่น ๆ" : item.name,
-  }));
+  // กรณี choices มาจาก preferredOrder
+  // const finalBarData = preferredOrder.map(name => {
+  //     const matched = barData.find(
+  //       item => item.name.replace(/\s/g, '') === name.replace(/\s/g, '')
+  //     );
 
-  // 🔹 สร้าง finalBarData ให้มีครบทุกหัวข้อจาก preferredOrder
-  const finalBarData = preferredOrder.map(name => {
-    // หา item ที่ตรงกับชื่อ (หลังลบช่องว่าง)
-    const matched = normalizedBarData.find(
+  // กรณี choices มาจาก /api/getChoices 
+  const finalBarData = choices.map(name => {
+    const matched = barData.find(
       item => item.name.replace(/\s/g, '') === name.replace(/\s/g, '')
     );
 
-    // ถ้าเจอให้ใช้ข้อมูลเดิม, ถ้าไม่เจอให้เติมด้วยค่า 0
-    return matched || {
-      name,
-      pending: 0,
-      in_progress: 0,
-      completed: 0,
-    };
+    if (matched) {
+      return {
+        name,
+        pending: matched.pending ?? 0,
+        in_progress: matched.in_progress ?? 0,
+        completed: matched.completed ?? 0,
+      };
+    } else {
+      return {
+        name,
+        pending: 0,
+        in_progress: 0,
+        completed: 0,
+      };
+    }
   });
+
+  // console.log("choices: ", choices)
 
   return (
     <AdminLayout>
