@@ -116,7 +116,7 @@ const Report = () => {
               </thead>
               <tbody>
                 {technician.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-50" onClick={() => handleNavigateToTechnicianReport(item.techCompleteUserId)}>
+                  <tr key={index} className="hover:bg-gray-50" onClick={() => handleNavigateToTechnicianReport(item.techUserId)}>
                     <td className="py-2 px-4 border-b">{index + 1}</td>
                     <td className="py-2 px-4 border-b">{item.technicianName}</td>
                     <td className="py-2 px-4 border-b">{Array.isArray(item.buildings) ? item.buildings.join(', ') : item.buildings}</td>
