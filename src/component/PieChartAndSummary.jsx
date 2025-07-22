@@ -63,7 +63,7 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, ac
                             className="inline-block w-[20px] h-[20px] rounded-full mr-2"
                             style={{ backgroundColor: entry.color }}
                         />
-                        <span className={`text-[#837958] font-medium ${isMobile ? "text-[14px]" : "text-[20px]"}`}>
+                        <span className={`text-[#837958] font-medium ${isMobile ? "text-[14px]" : "text-[18px]"}`}>
                             {entry.value}
                         </span>
                     </li>
@@ -77,10 +77,10 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, ac
             {/* ----- PIE CHART ----- สมดุลคือ ไม่กำหนดความสูง h */}
             <div className={`${isMobile ? "h-[210px]" : "md:col-span-8 h-[310px]"} bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 pt-2 pl-2 shadow`}>
                 <div className="flex justify-between">
-                    <h2 className={`font-semibold text-[#837958] pl-4 ${isMobile ? "text-[18px]" : "text-[28px]"}`}>
+                    <h2 className={`font-semibold text-[#837958] pl-4 ${isMobile ? "text-[20px]" : "text-[26px]"}`}>
                         สรุปสถานะของงานประจำ{activeLabel}
                     </h2>
-                    <BuildingFilter isMobile={isMobile} setBuildingName={setBuildingName}/>
+                    <BuildingFilter isMobile={isMobile} setBuildingName={setBuildingName} />
                 </div> {/*สมดุลคือ ไม่กำหนดความสูง h */}
                 <div className={`w-full ${isMobile ? "h-[180px]" : "ml-[10px] h-[280px]"}`}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -98,6 +98,7 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, ac
                                 isAnimationActive={true}
                                 animationDuration={500}
                                 activeIndex={hasValidData ? activeIndex : null}
+                                stroke="none"
                                 onClick={(_, idx) => {
                                     if (hasValidData) {
                                         setActiveIndex(idx === activeIndex ? null : idx);
@@ -152,8 +153,8 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, ac
                         <div className="text-[#BC9D72] opacity-60 transform transition-transform duration-300 hover:scale-110">
                             {iconMap[card.key]}
                         </div> {/* ถ้าสมดุล text-[48px] */}
-                        <span className="text-[32px] font-bold text-[#837958]">{card.value} </span>
-                        <span className="text-[#837958] text-[12px]">{card.label}</span>
+                        <span className="text-[30px] font-bold text-[#837958]">{card.value} </span>
+                        <span className="text-[#837958] text-[14px]">{card.label}</span>
                     </button>
                 ))}
             </div>
