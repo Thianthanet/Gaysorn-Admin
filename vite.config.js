@@ -16,6 +16,11 @@ export default defineConfig({
   resolve: {
     alias: {
       crypto: 'crypto-browserify',
+      stream: 'stream-browserify',
     },
   },
+  define: {
+    global: 'globalThis', // สำคัญสำหรับ crypto-browserify
+  },
 })
+
