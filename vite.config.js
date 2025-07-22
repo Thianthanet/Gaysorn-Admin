@@ -10,9 +10,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import rollupNodePolyFill from 'rollup-plugin-node-polyfills'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+  ],
   resolve: {
     alias: {
       crypto: 'crypto-browserify',
@@ -20,7 +23,24 @@ export default defineConfig({
     },
   },
   define: {
-    global: 'globalThis', // สำคัญสำหรับ crypto-browserify
+    global: 'globalThis',
+    'process.env': {},
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+      plugins: [],
+    },
+  },
+  build: {
+    rollupOptions: {
+      plugins: [
+        rollupNodePolyFill(),
+      ],
+    },
   },
 })
+
 
