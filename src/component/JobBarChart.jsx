@@ -37,7 +37,7 @@ const CustomXAxisTick = ({ x, y, payload }) => {
           y={index * 14}
           textAnchor="middle"
           fill="#837958"
-          fontSize={8}
+          fontSize={"12px"}
         >
           {line}
         </text>
@@ -64,7 +64,7 @@ const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
                 className="w-4 h-4 inline-block rounded-sm"
                 style={{ backgroundColor: item.color }}
               ></span>
-              <span className="text-[12px] text-[#837958]">{item.label}</span>
+              <span className="text-[14px] text-[#837958]">{item.label}</span>
             </li>
           ))}
         </ul>
@@ -74,7 +74,7 @@ const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
 
   return (
     <div className="bg-[#F4F2ED] border-[1px] border-[#BC9D72] rounded-2xl pl-6 pt-4 mb-4 relative">
-      <h2 className={`font-semibold text-[#837958] ${isMobile ? "text-[18px]" : "text-[28px]"}`}>
+      <h2 className={`font-semibold text-[#837958] ${isMobile ? "text-[20px]" : "text-[26px]"}`}>
         จำนวนงานทั้งหมดแยกตามกลุ่มงานและสถานะของงาน
       </h2>
 
@@ -103,7 +103,7 @@ const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
 
               <YAxis
                 allowDecimals={false}
-                tick={{ fontSize: 14, fill: "#837958" }}
+                tick={{ fontSize: 12, fill: "#837958" }}
               />
 
               <Tooltip content={<CustomTooltipBar />} cursor={{ fill: "#f9f9f9" }} />
@@ -121,21 +121,21 @@ const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
 
               <Bar
                 dataKey="pending"
-                barSize={28}
+                barSize={30}
                 name={STATUS_LABELS.pending}
                 fill={STATUS_COLORS.pending}
                 radius={[2, 2, 0, 0]}
               />
               <Bar
                 dataKey="in_progress"
-                barSize={28}
+                barSize={30}
                 name={STATUS_LABELS.in_progress}
                 fill={STATUS_COLORS.in_progress}
                 radius={[2, 2, 0, 0]}
               />
               <Bar
                 dataKey="completed"
-                barSize={28}
+                barSize={30}
                 name={STATUS_LABELS.completed}
                 fill={STATUS_COLORS.completed}
                 radius={[2, 2, 0, 0]}

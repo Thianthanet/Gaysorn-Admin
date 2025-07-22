@@ -7,11 +7,11 @@ const TopCompaniesList = ({ companies, isMobile }) => {
     return (
         <button
             onClick={() => navigate('/job')}
-            className="bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 shadow pt-4 pb-4 pr-4 pl-6 w-full text-left hover:shadow-lg transition"
+            className="bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 shadow pt-4 pb-4 pr-6 pl-6 w-full text-left hover:shadow-lg transition"
         >
             <div className="flex flex-col justify-start h-full">
                 <h2
-                    className={`font-semibold text-[#837958] mb-2 ${isMobile ? 'text-[18px]' : 'text-[28px]'
+                    className={`font-semibold text-[#837958] mb-2 ${isMobile ? 'text-[18px]' : 'text-[26px]'
                         }`}
                 >
                     10 อันดับลูกค้าแจ้งซ่อม
@@ -24,13 +24,13 @@ const TopCompaniesList = ({ companies, isMobile }) => {
                             className={`grid grid-cols-2 items-start ${isMobile ? 'gap-18' : 'gap-32'}  text-[#837958]`}
                         >
                             <span
-                                className={`font-medium text-[#BC9D72] truncate ${isMobile ? 'text-[12px]' : 'text-[20px]'
+                                className={`font-medium text-[#BC9D72] truncate ${isMobile ? 'text-[12px]' : 'text-[18px]'
                                     }`}
                             >
                                 {c.companyName ?? 'ไม่ระบุ'}
                             </span>
                             <span
-                                className={`font-medium text-[#BC9D72] ${isMobile ? 'text-[12px]' : 'text-[20px]'
+                                className={`font-medium flex justify-end text-[#BC9D72] ${isMobile ? 'text-[12px]' : 'text-[18px]'
                                     }`}
                             >
                                 {c._count.id} งาน
