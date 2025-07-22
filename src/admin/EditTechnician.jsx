@@ -1,25 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import AdminLayout from './AdminLayout'; // Make sure this path is correct
-import { useParams } from 'react-router-dom';
+import AdminLayout from './AdminLayout';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const EditTechnician = () => {
     const { userId } = useParams();
     const [technician, setTechnician] = useState(null);
+    const [name, setName] = useState('');
+    const [phone, setPhone] = useState('');
     const [buildings, setBuildings] = useState([]);
     const [selectedBuildings, setSelectedBuildings] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const navigate = useNavigate()
 
-    // Fetch technician data and building data on component mount
     useEffect(() => {
         handleGetTechnician();
         handleGetBuilding();
     }, []);
 
-    // Effect to pre-select checkboxes once both technician and building data are loaded
     useEffect(() => {
         if (technician && buildings.length > 0) {
-            // Determine which buildings the technician is associated with
+            setName(technician.name);
+            setPhone(technician.phone);
+
             const matchedBuildingIds = buildings
                 .filter(building =>
                     technician.techBuilds.some(techBuild =>
@@ -29,21 +32,19 @@ const EditTechnician = () => {
                 .map(building => building.id);
 
             setSelectedBuildings(matchedBuildingIds);
-            setIsLoading(false); // Set loading to false after initial selection
+            setIsLoading(false);
         }
-    }, [technician, buildings]); // Rerun when technician or buildings data changes
+    }, [technician, buildings]);
 
     const handleGetTechnician = async () => {
         try {
             const response = await axios.get(
                 `${import.meta.env.VITE_API_BASE_URL}/api/getUser/${userId}`
             );
-            console.log('Technician data:', response.data.data);
             setTechnician(response.data.data);
         } catch (error) {
             console.error('Error fetching technician data:', error);
-            // Handle error display to user if needed
-            setIsLoading(false); // Ensure loading is stopped even on error
+            setIsLoading(false);
         }
     };
 
@@ -52,43 +53,46 @@ const EditTechnician = () => {
             const response = await axios.get(
                 `${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`
             );
-            console.log('Building data:', response.data.data);
             setBuildings(response.data.data);
         } catch (error) {
             console.error('Error fetching building data:', error);
-            // Handle error display to user if needed
-            setIsLoading(false); // Ensure loading is stopped even on error
+            setIsLoading(false);
         }
     };
 
     const handleBuildingToggle = buildingId => {
-        setSelectedBuildings(prev => {
-            if (prev.includes(buildingId)) {
-                // If already selected, remove it
-                return prev.filter(id => id !== buildingId);
-            } else {
-                // If not selected, add it
-                return [...prev, buildingId];
-            }
-        });
+        setSelectedBuildings(prev =>
+            prev.includes(buildingId)
+                ? prev.filter(id => id !== buildingId)
+                : [...prev, buildingId]
+        );
     };
 
     const handleSubmit = async e => {
         e.preventDefault();
+
         try {
-            const response = await axios.post(
+            // อัปเดตชื่อและเบอร์
+            await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/updateTechnician`, {
+                id: technician.id,
+                name,
+                phone
+            });
+
+            // อัปเดตอาคาร
+            await axios.post(
                 `${import.meta.env.VITE_API_BASE_URL}/api/techUpdateBuilding`,
                 {
-                    techId: technician.userId, // Assuming technician.userId is the correct ID to send
+                    techId: technician.userId,
                     buildingIds: selectedBuildings,
                 }
             );
-            console.log('Update successful:', response.data);
-            alert('Technician buildings updated successfully!');
-            // Optionally, redirect or refresh data after successful update
+
+            alert('บันทึกข้อมูลเรียบร้อยแล้ว');
+            navigate('/user')
         } catch (error) {
-            console.error('Error updating technician buildings:', error);
-            alert('Failed to update technician buildings. Please try again.');
+            console.error('Error updating data:', error);
+            alert('เกิดข้อผิดพลาดในการบันทึก');
         }
     };
 
@@ -100,7 +104,6 @@ const EditTechnician = () => {
         );
     }
 
-    // Ensure technician data is available before rendering details
     if (!technician) {
         return (
             <AdminLayout>
@@ -119,42 +122,54 @@ const EditTechnician = () => {
                 </h1>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="p-5 border border-[#BC9D72] rounded-lg shadow-sm bg-gray-50">
-                        {/* ข้อมูลช่าง */}
-                        <p className="text-gray-700 mb-1">
-                            <span className="font-semibold text-gray-800">ชื่อ:</span> {technician.name}
-                        </p>
-                        <p className="text-gray-700 mb-4">
-                            <span className="font-semibold text-gray-800">เบอร์โทรศัพท์:</span> {technician.phone}
-                        </p>
+                    <div className="p-5 border border-[#BC9D72] rounded-lg shadow-sm bg-gray-50 space-y-4">
+                        {/* Input ชื่อ */}
+                        <div>
+                            <label className="block text-gray-700 font-semibold mb-1">ชื่อช่าง</label>
+                            <input
+                                type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="w-full px-4 py-2 border rounded-md"
+                                required
+                            />
+                        </div>
+
+                        {/* Input เบอร์โทร */}
+                        <div>
+                            <label className="block text-gray-700 font-semibold mb-1">เบอร์โทรศัพท์</label>
+                            <input
+                                type="text"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                className="w-full px-4 py-2 border rounded-md"
+                                required
+                            />
+                        </div>
 
                         {/* อาคาร */}
-                        <h2 className="text-xl font-semibold text-[#BC9D72] mb-3">อาคาร</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-1 lg:grid-cols-1 xl:grid-cols-1 gap-5">
-                            {buildings.map(building => (
-                                <label
-                                    key={building.id}
-                                    className=""
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedBuildings.includes(building.id)}
-                                        onChange={() => handleBuildingToggle(building.id)}
-                                        className="h-5 w-5 text-[#BC9D72] accent-[#BC9D72] focus:ring-[#BC9D72] rounded"
-                                    />
-                                    <span className="ml-3 text-lg font-medium text-gray-800">
-                                        {building.buildingName}
-                                    </span>
-                                </label>
-                            ))}
+                        <div>
+                            <h2 className="text-xl font-semibold text-[#BC9D72] mb-3">อาคาร</h2>
+                            <div className="grid grid-cols-1 gap-3">
+                                {buildings.map(building => (
+                                    <label key={building.id} className="flex items-center space-x-3">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedBuildings.includes(building.id)}
+                                            onChange={() => handleBuildingToggle(building.id)}
+                                            className="h-5 w-5 text-[#BC9D72] accent-[#BC9D72]"
+                                        />
+                                        <span className="text-lg text-gray-800">{building.buildingName}</span>
+                                    </label>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
-                    {/* ปุ่ม Submit */}
                     <div>
                         <button
                             type="submit"
-                            className="px-8 py-3 rounded-lg text-white text-lg font-semibold bg-[#BC9D72] hover:bg-[#a88c60] transition-colors duration-300 ease-in-out shadow-md focus:outline-none focus:ring-2 focus:ring-[#BC9D72] focus:ring-opacity-50"
+                            className="px-8 py-3 rounded-lg text-white text-lg font-semibold bg-[#BC9D72] hover:bg-[#a88c60] transition-colors duration-300 ease-in-out shadow-md"
                         >
                             บันทึก
                         </button>
@@ -162,7 +177,6 @@ const EditTechnician = () => {
                 </form>
             </div>
         </AdminLayout>
-
     );
 };
 

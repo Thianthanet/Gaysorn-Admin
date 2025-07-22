@@ -133,7 +133,7 @@ const User = () => {
 
   const handleDeleteAdmin = async (id) => {
     try {
-      const response = await axios.delete(`${import.meta.VITE_API_BASE_URL}/api/deleteAdmin/${id}`)
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteAdmin/${id}`)
       console.log("Delete admin success", response.data)
       alert("Delete admin successfully")
       window.location.reload()
@@ -233,35 +233,35 @@ const User = () => {
                     {customers.length > 0 ? (
                       customers.map((customer, index) => (
                         <tr key={customer.id} className="hover:bg-gray-50">
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             {index + 1}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             {customer.unit?.company?.building?.buildingName || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             {customer.unit?.company?.companyName || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             {customer.unit?.unitName || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             {customer.name || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             {customer.phone || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             {customer.email || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             {customer.userId ? (
                               <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
                             ) : (
                               <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
                             )}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                             <button
                               className="text-blue-500 hover:text-blue-700 mr-3"
                               title="แก้ไข"
@@ -324,23 +324,23 @@ const User = () => {
 
                         return (
                           <tr key={tech.id} className="hover:bg-gray-50">
-                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                               {index + 1}
                             </td>
-                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                               {tech.name || '-'}
                             </td>
-                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                               {tech.phone || '-'}
                             </td>
-                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                               {tech.userId ? (
-                                <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
+                                <FaLine className="text-green-500 text-xl " title="เชื่อมต่อ Line แล้ว" />
                               ) : (
                                 <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
                               )}
                             </td>
-                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                               {uniqueBuildings.length > 0 ? (
                                 <div className="flex flex-col space-y-1">
                                   {uniqueBuildings.map((building, i) => (
@@ -349,7 +349,7 @@ const User = () => {
                                 </div>
                               ) : '-'}
                             </td>
-                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm align-text-top">
                               <button
                                 className="text-blue-500 hover:text-blue-700 mr-3"
                                 title="แก้ไข"
