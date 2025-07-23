@@ -25,7 +25,7 @@ const CreateCustomer = () => {
 
   const handleCustomerChange = async (e) => {
     const { name, value } = e.target;
-    
+
     setCustomerData(prev => ({
       ...prev,
       [name]: value
@@ -36,7 +36,7 @@ const CreateCustomer = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getRelatedByUnit/${value}`);
         const { company, building } = response.data;
-        
+
         setCustomerData(prev => ({
           ...prev,
           companyName: company || '',
@@ -53,7 +53,7 @@ const CreateCustomer = () => {
       try {
         const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getRelatedByCompany/${value}`);
         const { building, units } = response.data;
-        
+
         setCustomerData(prev => ({
           ...prev,
           buildingName: building || '',
@@ -114,21 +114,19 @@ const CreateCustomer = () => {
           {/* Tabs */}
           <div className="flex mb-6 rounded-full overflow-hidden border border-[#BC9D72] w-fit mx-auto">
             <button
-              className={`px-6 py-2 font-semibold ${
-                activeTab === 'customer'
+              className={`px-6 py-2 font-semibold ${activeTab === 'customer'
                   ? 'bg-[#BC9D72] text-white'
                   : 'bg-[#f5f5f5] text-[#837958]'
-              }`}
+                }`}
               onClick={() => setActiveTab('customer')}
             >
               ผู้ใช้
             </button>
             <button
-              className={`px-6 py-2 font-semibold ${
-                activeTab === 'technician'
+              className={`px-6 py-2 font-semibold ${activeTab === 'technician'
                   ? 'bg-[#BC9D72] text-white'
                   : 'bg-[#f5f5f5] text-[#837958]'
-              }`}
+                }`}
               onClick={() => setActiveTab('technician')}
             >
               เจ้าหน้าที่
