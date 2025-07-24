@@ -1,6 +1,7 @@
 import { Menu, X } from 'lucide-react'
 import React, { useState } from 'react'
 import { useLocation } from 'react-router-dom';
+import LogoHeader from '../assets/LogoHeader.png';
 
 const AdminLayout = ({ children }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -29,7 +30,7 @@ const AdminLayout = ({ children }) => {
             <aside
                 className={`${sidebarOpen ? 'block' : 'hidden'} 
                             md:block w-full md:w-64 bg-[#F5F3EE] border-r pt-4 text-[#837958] flex-shrink-0 h-auto md:h-screen`}>
-                <img src="/logo-gaysorn+name.png" alt="Logo" className="w-16 mx-auto mb-2 mt-2" />
+                <img src={LogoHeader} alt="Logo" className="w-16 mx-auto mb-2 mt-2" />
                 <nav className='flex flex-col pt-4 pb-4'>
                     {navItems.map((item) => (
                         <a

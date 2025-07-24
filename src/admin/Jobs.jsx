@@ -7,6 +7,7 @@ import { formatDateTimeThaiShort } from "../component/Date";
 import { TiStarFullOutline } from "react-icons/ti";
 //components
 import { Pagination } from "../component/Pagination";
+import JobCard from "../component/JobCard";
 
 const Jobs = () => {
   const [jobs, setJobs] = useState([]);
