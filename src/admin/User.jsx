@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import AdminLayout from './AdminLayout';
 import axios from 'axios';
-import { FaLine } from 'react-icons/fa';
-import { UserPen, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { BiSearchAlt2 } from "react-icons/bi";
 import { CircleCheck, CircleX } from "lucide-react";
+import { HiChevronDown } from "react-icons/hi";
+import { FaLine, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { UserPen, Trash2 } from 'lucide-react';
 
 const User = () => {
   const [customers, setCustomers] = useState([]);
@@ -13,6 +14,8 @@ const User = () => {
   const [activeTab, setActiveTab] = useState('customers');
   const [waitForApprove, setWaitForApprove] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [admin, setAdmin] = useState([])
+  const [showPasswords, setShowPasswords] = useState({})
   const navigate = useNavigate()
 
   const [isMobile, setIsMobile] = useState(false);
@@ -41,19 +44,18 @@ const User = () => {
   const [technicianData, setTechnicianData] = useState({
     name: '',
     phone: '',
-    buildings: [] // ต้องมี! เพื่อให้ includes() และ map/filter ใช้งานได้
   });
 
-  const [userAdmin, setUserAdmin] = useState({
+  const [adminData, setAdminData] = useState({
     username: '',
     password: '',
   });
 
-  const buildings_tech = [
-    "Gaysorn Tower",
-    "Gaysorn Center",
-    "Gaysorn Amarin"
-  ];
+  // const buildings_tech = [
+  //   "Gaysorn Tower",
+  //   "Gaysorn Center",
+  //   "Gaysorn Amarin"
+  // ];
 
   // const handleCheckboxChange = (e) => {
   //   const { name, value, checked } = e.target;
@@ -75,30 +77,30 @@ const User = () => {
     setUserAdmin((prev) => ({ ...prev, [name]: value }));
   };
 
-  const validateAdminCredentials = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getAdmin`);
-      const adminList = response.data.data;
+  // const validateAdminCredentials = async () => {
+  //   try {
+  //     const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getAdmin`);
+  //     const adminList = response.data.data;
 
-      const found = adminList.find(
-        (admin) =>
-          !admin.isDelete &&
-          admin.username === userAdmin.username &&
-          admin.password === userAdmin.password
-      );
+  //     const found = adminList.find(
+  //       (admin) =>
+  //         !admin.isDelete &&
+  //         admin.username === userAdmin.username &&
+  //         admin.password === userAdmin.password
+  //     );
 
-      if (!found) {
-        alert("ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้อง");
-        return false;
-      }
+  //     if (!found) {
+  //       alert("ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้อง");
+  //       return false;
+  //     }
 
-      return true;
-    } catch (error) {
-      console.error("เกิดข้อผิดพลาดขณะตรวจสอบแอดมิน", error);
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
-      return false;
-    }
-  };
+  //     return true;
+  //   } catch (error) {
+  //     console.error("เกิดข้อผิดพลาดขณะตรวจสอบแอดมิน", error);
+  //     alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+  //     return false;
+  //   }
+  // };
 
   const handleCustomerChange = async (e) => {
     const { name, value } = e.target;
@@ -151,6 +153,23 @@ const User = () => {
     }));
   };
 
+  const handleGetAdmin = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getAdmin`)
+      console.log("Get admin", response.data.data)
+      setAdmin(response.data.data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const toggleShowPassword = (id) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }))
+  }
+
   useEffect(() => {
     handleGetBuilding();
   }, []);
@@ -167,22 +186,37 @@ const User = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setPopupStatus("loading");
+    const hasTechnicianData = technicianData.name.trim() !== '' || technicianData.phone.trim() !== '';
+    const hasAdminData = adminData.username.trim() !== '' && adminData.password.trim() !== '';
+
+    console.log("technicianData: ", technicianData)
+    console.log("adminData: ", adminData)
 
     try {
       if (activeTab === 'customers') {
         await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createCustomer`, customerData);
-
-      } else if (activeTab === 'technicians') {
-        const isValidAdmin = await validateAdminCredentials();
-        if (!isValidAdmin) {
-          setTimeout(() => {
-            setPopupStatus(null);
-            // setPopupCreateUser(false);
-            // s(prev => prev + 1); // รีโหลดข้อมูลใหม่
-          }, 2000);
-          return;
+      }
+      if (activeTab === 'technicians') {
+        // console.log("is comming technicians")
+        // console.log("hasTechnicianData is: ", hasTechnicianData)
+        if (hasTechnicianData) {
+          await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createTechnician`, technicianData);
+          // console.log("res technician: ", res.data)
+          // alert('สร้างเจ้าหน้าที่สำเร็จ');
+          // navigate('/user');
+          // return;
         }
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createTechnician`, technicianData);
+        if (hasAdminData) {
+          await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createAdmin`, adminData);
+          // console.log("res admin: ", res.data)
+          // if (res.data.data) {
+          //   alert('สร้างแอดมินสำเร็จ');
+          //   navigate('/user')
+          // } else {
+          //   alert('Username หรือ Password ของแอดมินไม่ถูกต้อง');
+          // }
+          // return;
+        }
       }
 
       setTimeout(() => {
@@ -228,17 +262,38 @@ const User = () => {
         if (activeTab === 'customers') {
           const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/allCustomer`);
           let customerData = response.data.data;
+          console.log("customerData: ", customerData)
 
           if (searchTerm.trim() !== "") {
             const term = searchTerm.toLowerCase();
             customerData = customerData.filter(c =>
               c.name?.toLowerCase().includes(term) ||
-              c.phone?.toLowerCase().includes(term)
-              // c.techBuilds?.buildingName?.toLowerCase().includes(term)
-              // console.log("c.techBuilds?.buildingName?.toLowerCase().includes(term): ", c.techBuilds?.buildingName?.toLowerCase().includes(term)),
-              // console.log("c.techBuilds?.buildingName?.toLowerCase().includes(term): ", c.techBuilds?.buildingName?.toLowerCase().includes(term))
+              c.phone?.toLowerCase().includes(term) ||
+              c.unit?.company?.companyName?.toLowerCase().includes(term) ||
+              c.unit?.company?.companyName?.building?.toLowerCase().includes(term) ||
+              c.unit?.unitName?.toLowerCase().includes(term)
+              // const nameMatch = t.name?.toLowerCase().includes(term);
+              // const phoneMatch = t.phone?.toLowerCase().includes(term);
+              // ตรวจสอบว่ามี techBuilds ที่ buildingName ตรงกับคำค้นไหม
+              // const buildingMatch = t.techBuilds?.some(b =>
+              // b.building?.buildingName?.toLowerCase().includes(term)
             );
           }
+          // if (searchTerm.trim() !== "") {
+          //   const term = searchTerm.toLowerCase();
+          //   techData = techData.filter(t => {
+          //     const nameMatch = t.name?.toLowerCase().includes(term);
+          //     const phoneMatch = t.phone?.toLowerCase().includes(term);
+          //     // ตรวจสอบว่ามี techBuilds ที่ buildingName ตรงกับคำค้นไหม
+          //     const buildingMatch = t.techBuilds?.some(b =>
+          //       b.building?.buildingName?.toLowerCase().includes(term)
+          //     );
+
+          //     // console.log("ชื่อ:", t.name, "| อาคารที่ดูแล:", t.techBuilds?.map(b => b.building?.buildingName), "| Match:", buildingMatch);
+
+          //     return nameMatch || phoneMatch || buildingMatch;
+          //   });
+          // }
 
           setCustomers(customerData);
 
@@ -268,6 +323,8 @@ const User = () => {
 
         } else if (activeTab === 'waitForApprove') {
           await handleGetWaitForApprove(searchTerm); // ส่ง searchTerm เข้าไปให้ด้วย ถ้าอยากให้ฟิลเตอร์ฝั่งนั้น
+        } else if (activeTab === 'admin') {
+          handleGetAdmin()
         }
 
       } catch (error) {
@@ -335,6 +392,10 @@ const User = () => {
     navigate(`/editCustomer/${userId}`);
   }
 
+  const handleEditAdmin = (id) => {
+    navigate(`/editAdmin/${id}`)
+  }
+
   const handleDeleteTechnician = async (id) => {
     try {
       // setPopupStatus("loading");
@@ -371,6 +432,17 @@ const User = () => {
     }
   };
 
+  const handleDeleteAdmin = async (id) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteAdmin/${id}`)
+      console.log("Delete admin success", response.data)
+      alert("Delete admin successfully")
+      window.location.reload()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   const confirmDelete = (id) => {
     setConfirmDeleteId(id); // เก็บ ID ที่จะลบไว้ก่อน
     setShowConfirmPopup(true); // แสดง popup
@@ -391,12 +463,10 @@ const User = () => {
 
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8">
-        {/* <h1 className="text-2xl font-bold mb-6">User Management</h1> */}
-
-        <div className="flex gap-2 mb-4">
-          {/* ช่องค้นหาพร้อมไอคอน */}
-          <div className="flex items-center flex-1 border-b-[1px] border-[#837958]">
+      <div className="container mx-auto px-4 py-2">
+        <div className="flex items-center gap-2 flex-wrap mb-6">
+          {/* ช่องค้นหา */}
+          <div className="flex items-center flex-1 min-w-[250px] border-b-[1px] border-[#837958]">
             <BiSearchAlt2 size={20} className="text-[#837958] ml-2" />
             <input
               type="text"
@@ -410,43 +480,63 @@ const User = () => {
           {/* ปุ่มค้นหา */}
           <button
             onClick={handleSearch}
-            className="px-4 py-1 bg-[#837958] text-white rounded-full"
+            className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
           >
+            <BiSearchAlt2 size={18} className="text-white mr-1" />
             ค้นหา
           </button>
 
+          {/* ปุ่มอาคาร */}
           <button
-            // onClick={handleSearch}
-            className="px-4 py-1 bg-[#837958] text-white rounded-full"
+            className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center gap-[2px] shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
           >
             อาคาร
+            <HiChevronDown size={18} className="text-white" />
           </button>
-        </div>
 
-
-        {/* Tab Navigation */}
-        <div className="flex mb-6 border-b border-gray-200">
+          {/* ปุ่มต่าง ๆ */}
           <button
-            className={`py-2 px-4 font-medium ${activeTab === 'customers' ? 'text-[#BC9D72] border-b-2 border-[#BC9D72]' : 'text-gray-500'}`}
+            className="px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
+            onClick={() => console.log("ส่งข้อมูลออก")}
+          >
+            ส่งข้อมูลออก
+          </button>
+
+          <button
+            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
+              ${activeTab === 'customers'
+                ? 'bg-[#BC9D72] text-white'
+                : 'bg-[#F4F2ED] text-black'
+              }`}
             onClick={() => setActiveTab('customers')}
           >
             ลูกค้า
           </button>
+
           <button
-            className={`py-2 px-4 font-medium ${activeTab === 'waitApprove' ? 'text-[#BC9D72] border-b-2 border-[#BC9D72]' : 'text-gray-500'}`}
-            onClick={() => setActiveTab('waitApprove')}
-          >
-            รออนุมัติ ({waitForApprove.length})
-          </button>
-          <button
-            className={`py-2 px-4 font-medium ${activeTab === 'technicians' ? 'text-[#BC9D72] border-b-2 border-[#BC9D72]' : 'text-gray-500'}`}
+            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
+              ${activeTab === 'technicians'
+                ? 'bg-[#BC9D72] text-white'
+                : 'bg-[#F4F2ED] text-black'
+              }`}
             onClick={() => setActiveTab('technicians')}
           >
             เจ้าหน้าที่
           </button>
+
           <button
-            className="ml-auto py-2 px-4 bg-[#BC9D72] text-white font-medium rounded hover:bg-[#a88f5c]"
-            // onClick={() => window.location.href = '/createCustomer'}
+            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
+              ${activeTab === 'admin'
+                ? 'bg-[#BC9D72] text-white'
+                : 'bg-[#F4F2ED] text-black'
+              }`}
+            onClick={() => setActiveTab('admin')}
+          >
+            แอดมิน
+          </button>
+
+          <button
+            className="px-4 h-[36px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-[#a88f5c]"
             onClick={() => setPopupCreateUser(true)}
           >
             เพิ่มผู้ใช้งาน
@@ -460,16 +550,16 @@ const User = () => {
         {popupCreateUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
             <div className="relative w-[520px] h-[620px] bg-white border border-[#BC9D72] rounded-xl p-4 shadow-lg overflow-y-auto">
-              <h2 className="text-[18px] font-black text-[#837958] text-center mb-2 mt-4">
-                {activeTab === 'customers' ? "เพิ่มข้อมูลลูกค้า" : "เพิ่มข้อมูลเจ้าหน้าที่"}
+              <h2 className="text-[18px] font-black text-[#837958] text-center mb-4 mt-4">
+                {activeTab === 'customers' ? "เพิ่มข้อมูลลูกค้า" : activeTab === 'technicians' ? "เพิ่มข้อมูลเจ้าหน้าที่" : "เพิ่มข้อมูลแอดมิน"}
               </h2>
 
               {/* Tabs */}
               <div className="flex mb-2 rounded-lg overflow-hidden border border-[#BC9D72] w-fit mx-auto text-sm">
                 <button
-                  className={`px-5 py-1.5 font-medium w-[160px] rounded-lg transition-all duration-200 
-      ${activeTab === 'customers'
-                      ? 'bg-[#837958] text-white outline outline-2'
+                  className={`px-5 py-1.5 font-medium w-[160px] transition-all duration-200 
+                  ${activeTab === 'customers'
+                      ? 'bg-[#837958] text-white outline outline-2 outline-[#837958]'
                       : 'bg-[#F4F2ED] text-[#837958]'
                     }`}
                   onClick={() => setActiveTab('customers')}
@@ -477,9 +567,9 @@ const User = () => {
                   ลูกค้า
                 </button>
                 <button
-                  className={`px-5 py-1.5 font-medium w-[160px] rounded-lg transition-all duration-200 
-      ${activeTab === 'technicians'
-                      ? 'bg-[#837958] text-white outline outline-2'
+                  className={`px-5 py-1.5 font-medium w-[160px] transition-all duration-200 
+                  ${activeTab === 'technicians'
+                      ? 'bg-[#837958] text-white outline outline-2 outline-[#837958]'
                       : 'bg-[#F4F2ED] text-[#837958]'
                     }`}
                   onClick={() => setActiveTab('technicians')}
@@ -554,11 +644,11 @@ const User = () => {
                       <div className="mb-2">
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
                         <input name="name" value={technicianData.name} onChange={handleTechnicianChange}
-                          placeholder="ชื่อ-สกุล" required
+                          placeholder="ชื่อ-สกุล"
                           className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
                       </div>
 
-                      <div className="mb-8">
+                      <div className="mb-12">
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
                         <input name="phone" value={technicianData.phone} onChange={handleTechnicianChange}
                           placeholder="เบอร์โทรศัพท์"
@@ -566,61 +656,77 @@ const User = () => {
                       </div>
 
                       <div className="mb-[64px]">
-                        {/* <label className="block text-[#BC9D72] mb-1 text-[12px]">
-                          อาคาร<span className="text-red-500">*</span>
-                        </label> */}
-
-                        {/* <div className="flex flex-col space-y-2 text-[#BC9D72] text-[12px]">
-                          {buildings_tech.map((building) => (
-                            <label key={building} className="inline-flex items-center">
-                              <input
-                                type="checkbox"
-                                name="buildings"
-                                value={building}   // ค่านี้คือชื่อแต่ละอาคาร
-                                className="mr-2"
-                                onChange={handleCheckboxChange}
-                                checked={technicianData.buildings.includes(building)}  // ถ้า array มีค่านี้จะถูกติ๊ก
-                              />
-                              {building}
-                            </label>
-                          ))}
-                        </div> */}
-
                         <div className="flex items-center justify-center mb-4">
                           <div className="w-[120px] h-px bg-[#837958]" />
                           <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
                           <div className="w-[120px] h-px bg-[#837958]" />
                         </div>
 
-                        <div className="mb-4">
+                        <div className="mb-2">
                           <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
                           <input
+                            type="text"
                             name="username"
-                            value={userAdmin.username}
-                            onChange={handleAdminChange}
+                            value={adminData.username}
+                            onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
                             placeholder="Username"
                             className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
                           />
                         </div>
 
-                        <div className="mb-[72px]">
+                        <div className="mb-2">
                           <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
                           <input
-                            name="password"
-                            value={userAdmin.password}
-                            onChange={handleAdminChange}
-                            placeholder="Password"
                             type="password"
-                            className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
-                          />
+                            name="password"
+                            value={adminData.password}
+                            onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
+                            placeholder="Password"
+                            className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
                         </div>
                       </div>
                     </>
                   )}
+
+                  {activeTab === 'admin' && (
+                    <>
+                      <div className="mb-[64px]">
+                        {/* <div className="flex items-center justify-center mb-4">
+                          <div className="w-[120px] h-px bg-[#837958]" />
+                          <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
+                          <div className="w-[120px] h-px bg-[#837958]" />
+                        </div> */}
+
+                        <div className="mb-2">
+                          <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
+                          <input
+                            type="text"
+                            name="username"
+                            value={adminData.username}
+                            onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
+                            placeholder="Username"
+                            className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
+                          />
+                        </div>
+
+                        <div className="mb-2">
+                          <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
+                          <input
+                            type="password"
+                            name="password"
+                            value={adminData.password}
+                            onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
+                            placeholder="Password"
+                            className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                   <div className={`flex flex-col`}>
                     <button
                       type="submit"
-                      className="w-full mt-4 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition"
+                      className="w-full mt-2 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition"
                     >
                       {activeTab === 'customers' ? 'เพิ่มข้อมูลลูกค้า' : 'เพิ่มข้อมูลเจ้าหน้าที่'}
                     </button>
@@ -830,7 +936,7 @@ const User = () => {
             )}
 
             {/* Wait Approve Table */}
-            {activeTab === 'waitApprove' && (
+            {/* {activeTab === 'waitApprove' && (
               <div className="bg-white shadow-md rounded-lg overflow-hidden">
                 <table className="min-w-full leading-normal">
                   <thead>
@@ -916,13 +1022,85 @@ const User = () => {
                   </tbody>
                 </table>
               </div>
-            )}
+            )} */}
+
+            {/* Admin */}
+            {
+              activeTab === "admin" && (
+                <div className="bg-white shadow-md overflow-hidden">
+                  <table className="min-w-full leading-normal">
+                    <thead>
+                      <tr>
+                        <th className="w-1 px-4 py-2 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                          ลำดับ
+                        </th>
+                        <th className="px-4 py-2 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                          ชื่อผู้ใช้งาน
+                        </th>
+                        <th className="w-48 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                          รหัสผ่าน
+                        </th>
+                        <th className="w-28 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                          จัดการ
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        admin.length > 0 ? (
+                          admin.map((admin, index) => (
+                            <tr key={admin.id} className="hover:bg-gray-50">
+                              <td className="px-4 border-b border-gray-200 bg-white text-sm text-center">
+                                {index + 1}
+                              </td>
+                              <td className="px-4 border-b border-gray-200 bg-white text-sm text-center">
+                                {admin.username}
+                              </td>
+                              <td className="px-4 border-b border-gray-200 bg-white text-sm text-center">
+                                <span className='mx-2'>
+                                  {showPasswords[admin.id] ? admin.password : "********"}
+                                </span>
+                                <button onClick={() => toggleShowPassword(admin.id)} className="focus:outline-none">
+                                  {showPasswords[admin.id] ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                              </td>
+                              <td className="h-[16px] px-4 py-2 border-b border-gray-200 text-sm">
+                                <button
+                                  className="text-blue-500 hover:text-blue-700 mr-3"
+                                  title="แก้ไข"
+                                  onClick={() => handleEditAdmin(admin.id)}
+                                >
+                                  <UserPen className="inline-block" />
+                                </button>
+                                <button
+                                  className="text-red-500 hover:text-red-700"
+                                  title="ลบ"
+                                  onClick={() => confirmDelete(admin.id)}
+                                >
+                                  <Trash2 className="inline-block" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="4" className="text-center py-4 text-gray-500">
+                              ไม่มีข้อมูลผู้ใช้งาน
+                            </td>
+                          </tr>
+                        )
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
 
             {/* Popup ยืนยันการลบ */}
             {showConfirmPopup && (
               <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
                 <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] h-[128px] text-center">
-                  <p className="text-lg font-semibold text-[#837958]">ยืนยันการลบ{activeTab === 'customers' ? "ลูกค้า" : "เจ้าหน้าที่"}</p>
+                  <p className="text-lg font-semibold text-[#837958]">ยืนยันการลบ{activeTab === 'customers' ? "ลูกค้า" : activeTab === 'technicians' ? "เจ้าหน้าที่" : "แอดมิน"}</p>
                   <div className="flex flex-rows items-center justify-center text-[#837958] text-center mt-6 gap-x-4">
                     <button onClick={cancelDelete} className="bg-white text-[12px] text-[#BC9D72] border-[1px] w-64 h-6 border-[#BC9D72] rounded hover:opacity-80">
                       ยกเลิก
@@ -954,21 +1132,21 @@ const User = () => {
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                       <CircleCheck size={50} className="mb-2" />
                       <h2 className="text-lg font-semibold">
-                        {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าสำเร็จ" : "เพิ่มข้อมูลเจ้าหน้าที่สำเร็จ"}
+                        {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "เพิ่มข้อมูลเจ้าหน้าที่สำเร็จ" : "เพิ่มข้อมูลแอดมินสำเร็จ"}
                       </h2>
                     </div>
                   ) : popupStatus === "delete" ? (
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                       <CircleCheck size={50} className="mb-2" />
                       <h2 className="text-lg font-semibold">
-                        {activeTab === "customers" ? "ลบข้อมูลลูกค้าสำเร็จ" : "ลบข้อมูลเจ้าหน้าที่สำเร็จ"}
+                        {activeTab === "customers" ? "ลบข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "ลบข้อมูลเจ้าหน้าที่สำเร็จ" : "ลบข้อมูลแอดมินสำเร็จ"}
                       </h2>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                       <CircleX size={50} className="mb-2" />
                       <h2 className="text-lg font-semibold">
-                        {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าไม่สำเร็จ" : "เพิ่มข้อมูลเจ้าหน้าที่ไม่สำเร็จ"}
+                        {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าไม่สำเร็จ" : activeTab === "technicians" ? "เพิ่มข้อมูลเจ้าหน้าที่ไม่สำเร็จ" : "เพิ่มข้อมูลแอดมินไม่สำเร็จ"}
                       </h2>
                     </div>
                   )}
@@ -979,7 +1157,7 @@ const User = () => {
           </>
         )}
       </div>
-    </AdminLayout>
+    </AdminLayout >
   );
 };
 
