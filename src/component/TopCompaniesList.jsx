@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 const TopCompaniesList = ({ companies, isMobile }) => {
     const navigate = useNavigate()
 
+    console.log("companies", companies)
+
     return (
         <button
             onClick={() => navigate('/job')}
