@@ -381,24 +381,25 @@ const User = () => {
     return uniqueBuildings.slice(0, 3);
   };
 
-  // const handleEditCustomer = (userId) => {
-  //   navigate(`/editCustomer/${userId}`);
-  // }
   const handleEditCustomer = (userId) => {
-    const customer = customers.find((c) => c.id === userId);
-    if (customer) {
-      setFormData({
-        name: customer.name || '',
-        phone: customer.phone || '',
-        buildingId: customer.buildingId || '',
-        companyId: customer.unit?.companyId || '',
-        companyName: customer.companyName || '',
-        unitId: customer.unitId || '',
-        unitName: customer.unit?.unitName || '',
-      });
-      setPopupEditUser(true);
-    }
-  };
+    navigate(`/editCustomer/${userId}`);
+  }
+  
+  // const handleEditCustomer = (userId) => {
+  //   const customer = customers.find((c) => c.id === userId);
+  //   if (customer) {
+  //     setFormData({
+  //       name: customer.name || '',
+  //       phone: customer.phone || '',
+  //       buildingId: customer.buildingId || '',
+  //       companyId: customer.unit?.companyId || '',
+  //       companyName: customer.companyName || '',
+  //       unitId: customer.unitId || '',
+  //       unitName: customer.unit?.unitName || '',
+  //     });
+  //     setPopupEditUser(true);
+  //   }
+  // };
 
 
   const handleEditTechnician = (userId) => {
