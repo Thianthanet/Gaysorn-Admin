@@ -111,12 +111,12 @@ const Report = () => {
                   <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">ลำดับ</th>
                   <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">ชื่อพนักงาน</th>
                   <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">สังกัด</th>
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">จำนวนงานที่รับผิดชอบ</th>
+                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">จำนวนงานที่เสร็จสิ้น</th>
                 </tr>
               </thead>
               <tbody>
                 {technician.map((item, index) => (
-                  <tr key={index} className="hover:bg-gray-50" onClick={() => handleNavigateToTechnicianReport(item.techCompleteUserId)}>
+                  <tr key={index} className="hover:bg-gray-50" onClick={() => handleNavigateToTechnicianReport(item.techUserId)}>
                     <td className="py-2 px-4 border-b">{index + 1}</td>
                     <td className="py-2 px-4 border-b">{item.technicianName}</td>
                     <td className="py-2 px-4 border-b">{Array.isArray(item.buildings) ? item.buildings.join(', ') : item.buildings}</td>

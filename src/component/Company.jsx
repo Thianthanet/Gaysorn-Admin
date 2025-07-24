@@ -46,7 +46,7 @@ const Company = () => {
 
     try {
       await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createCompany`, {
-        companyName: name, // ชื่อต้องตรงกับ backend
+        name: name, // ชื่อต้องตรงกับ backend
         buildingId: Number(buildingId)
       })
       alert('สร้างบริษัทสำเร็จ')

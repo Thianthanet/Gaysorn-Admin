@@ -35,7 +35,7 @@ const AdminLayout = ({ children }) => {
                         <a
                             key={item.href}
                             href={item.href}
-                            className={`p-2 pl-8 rounded transition-colors duration-300 font-bold text-[20px]
+                            className={`p-2 pl-8 rounded transition-colors duration-300 font-bold text-[16px]
                                 ${currentPath === item.href
                                     ? 'bg-[#837958] bg-opacity-50 text-white'
                                     : 'hover:bg-[#c9bd99] hover:text-white'}

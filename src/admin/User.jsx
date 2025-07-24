@@ -1087,7 +1087,7 @@ const User = () => {
                                   {showPasswords[admin.id] ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                               </td>
-                              <td className="h-[16px] px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] text-sm">
+                              <td className="h-[16px] px-4 py-2 border-rb-[1px] border-b-[1px] border-[#837958] text-sm">
                                 <button
                                   className="text-blue-500 hover:text-blue-700 mr-3"
                                   title="แก้ไข"
