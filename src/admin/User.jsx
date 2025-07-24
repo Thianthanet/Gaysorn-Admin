@@ -384,7 +384,7 @@ const User = () => {
   const handleEditCustomer = (userId) => {
     navigate(`/editCustomer/${userId}`);
   }
-  
+
   // const handleEditCustomer = (userId) => {
   //   const customer = customers.find((c) => c.id === userId);
   //   if (customer) {
@@ -575,22 +575,22 @@ const User = () => {
               </h2>
 
               {/* Tabs */}
-              <div className="flex mb-2 rounded-xl overflow-hidden border border-[#837958] w-fit mx-auto text-sm">
+              <div className="flex w-fit mx-auto mb-2 rounded-xl border border-[#837958] overflow-hidden text-sm bg-[#F4F2ED]">
                 <button
-                  className={`px-5 py-1.5 font-medium w-[160px] transition-all duration-200 
-                  ${activeTab === 'customers'
-                      ? 'bg-[#837958] text-white outline outline-2 outline-[#837958]'
-                      : 'bg-[#F4F2ED] text-[#837958]'
+                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-200 
+      ${activeTab === 'customers'
+                      ? 'bg-[#837958] text-white rounded-r-xl'
+                      : 'text-[#837958]'
                     }`}
                   onClick={() => setActiveTab('customers')}
                 >
                   ลูกค้า
                 </button>
                 <button
-                  className={`px-5 py-1.5 font-medium w-[160px] transition-all duration-200 
-                  ${activeTab === 'technicians'
-                      ? 'bg-[#837958] text-white outline outline-2 outline-[#837958]'
-                      : 'bg-[#F4F2ED] text-[#837958]'
+                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-200 
+      ${activeTab === 'technicians'
+                      ? 'bg-[#837958] text-white rounded-l-xl'
+                      : 'text-[#837958]'
                     }`}
                   onClick={() => setActiveTab('technicians')}
                 >
@@ -606,21 +606,21 @@ const User = () => {
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
                         <input name="name" value={customerData.name} onChange={handleCustomerChange}
                           placeholder="ชื่อ-สกุล" required
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
                       </div>
 
                       <div className="mb-2">
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
                         <input name="phone" value={customerData.phone} onChange={handleCustomerChange}
                           placeholder="เบอร์โทรศัพท์"
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
                       </div>
 
                       <div className="mb-2">
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">บริษัท<span className="text-red-500">*</span></label>
                         <input name="companyName" value={customerData.companyName} onChange={handleCustomerChange}
                           placeholder="บริษัท"
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
                       </div>
 
                       {/* <div className="mb-3">
@@ -634,13 +634,13 @@ const User = () => {
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">ยูนิต</label>
                         <input name="unitName" value={customerData.unitName} onChange={handleCustomerChange}
                           placeholder="ยูนิต"
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
                       </div>
 
                       <div className="mb-2">
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">อาคาร<span className="text-red-500">*</span></label>
                         <select name="buildingName" value={customerData.buildingName} onChange={handleCustomerChange}
-                          required className="w-[320px] text-[#BC9D72]/50 text-[12px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm focus:outline-none">
+                          required className="w-[320px] text-[#BC9D72]/50 text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none">
                           <option className="" value="">เลือกอาคาร</option>
                           {buildings.map((building) => (
                             <option key={building.id} value={building.buildingName}>
@@ -654,7 +654,7 @@ const User = () => {
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">อีเมล</label>
                         <input type="email" name="email" value={customerData.email} onChange={handleCustomerChange}
                           placeholder="อีเมล"
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
                       </div>
                     </>
                   )}
@@ -665,14 +665,14 @@ const User = () => {
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
                         <input name="name" value={technicianData.name} onChange={handleTechnicianChange}
                           placeholder="ชื่อ-สกุล"
-                          className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
+                          className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
                       </div>
 
                       <div className="mb-12">
                         <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
                         <input name="phone" value={technicianData.phone} onChange={handleTechnicianChange}
                           placeholder="เบอร์โทรศัพท์"
-                          className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
+                          className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
                       </div>
 
                       <div className="mb-[64px]">
@@ -690,7 +690,7 @@ const User = () => {
                             value={adminData.username}
                             onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
                             placeholder="Username"
-                            className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
+                            className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
                           />
                         </div>
 
@@ -702,7 +702,7 @@ const User = () => {
                             value={adminData.password}
                             onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
                             placeholder="Password"
-                            className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
+                            className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
                         </div>
                       </div>
                     </>
