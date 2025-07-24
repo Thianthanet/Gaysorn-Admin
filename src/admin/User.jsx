@@ -23,13 +23,16 @@ const User = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [popupCreateUser, setPopupCreateUser] = useState(false);
   const [buildings, setBuildings] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [units, setUnits] = useState([]);
   const [popupStatus, setPopupStatus] = useState();
-  // const, s] = useState(0);
-  // const formRef = useRef(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null); // สำหรับเก็บ ID ที่จะลบ
   const [showConfirmPopup, setShowConfirmPopup] = useState(false); // คุมการแสดง popup
+  const [popupEditUser, setPopupEditUser] = useState(false); // คุมการแสดง popup
+  // const [popupUserVisible, setPopupUserVisible] = useState(false);   // เปิด/ปิด popup
+  // const [isEditMode, setIsEditMode] = useState(false);               // true = กำลังแก้ไข
+  // const [editingId, setEditingId] = useState(null);
 
-  // const [selectedBuildings, setSelectedBuildings] = useState([]);
 
   const [customerData, setCustomerData] = useState({
     name: '',
@@ -40,6 +43,16 @@ const User = () => {
     buildingName: '',
     email: '',
   });
+
+  // const [formData, setFormData] = useState({
+  //   name: '',
+  //   phone: '',
+  //   buildingId: '',
+  //   companyId: '',
+  //   companyName: '',
+  //   unitId: '',
+  //   unitName: '',
+  // });
 
   const [technicianData, setTechnicianData] = useState({
     name: '',
@@ -74,7 +87,7 @@ const User = () => {
 
   const handleAdminChange = (e) => {
     const { name, value } = e.target;
-    setUserAdmin((prev) => ({ ...prev, [name]: value }));
+    setAdmin((prev) => ({ ...prev, [name]: value }));
   };
 
   // const validateAdminCredentials = async () => {
@@ -266,34 +279,18 @@ const User = () => {
 
           if (searchTerm.trim() !== "") {
             const term = searchTerm.toLowerCase();
-            customerData = customerData.filter(c =>
-              c.name?.toLowerCase().includes(term) ||
-              c.phone?.toLowerCase().includes(term) ||
-              c.unit?.company?.companyName?.toLowerCase().includes(term) ||
-              c.unit?.company?.companyName?.building?.toLowerCase().includes(term) ||
-              c.unit?.unitName?.toLowerCase().includes(term)
-              // const nameMatch = t.name?.toLowerCase().includes(term);
-              // const phoneMatch = t.phone?.toLowerCase().includes(term);
-              // ตรวจสอบว่ามี techBuilds ที่ buildingName ตรงกับคำค้นไหม
-              // const buildingMatch = t.techBuilds?.some(b =>
-              // b.building?.buildingName?.toLowerCase().includes(term)
-            );
+            customerData = customerData.filter(c => {
+              const nameMatch = c.name?.toLowerCase().includes(term);
+              const phoneMatch = c.phone?.toLowerCase().includes(term);
+              const buildingNameMatch = c.unit?.company?.building?.buildingName?.toLowerCase().includes(term)
+              const unitMatch = c.unit?.unitName?.toLowerCase().includes(term)
+              const companyNameMatch = c.unit?.company?.companyName?.toLowerCase().includes(term)
+
+              // console.log("ชื่อ:", t.name, "| อาคารที่ดูแล:", t.techBuilds?.map(b => b.building?.buildingName), "| Match:", buildingMatch);
+
+              return nameMatch || phoneMatch || buildingNameMatch || unitMatch || companyNameMatch;
+            });
           }
-          // if (searchTerm.trim() !== "") {
-          //   const term = searchTerm.toLowerCase();
-          //   techData = techData.filter(t => {
-          //     const nameMatch = t.name?.toLowerCase().includes(term);
-          //     const phoneMatch = t.phone?.toLowerCase().includes(term);
-          //     // ตรวจสอบว่ามี techBuilds ที่ buildingName ตรงกับคำค้นไหม
-          //     const buildingMatch = t.techBuilds?.some(b =>
-          //       b.building?.buildingName?.toLowerCase().includes(term)
-          //     );
-
-          //     // console.log("ชื่อ:", t.name, "| อาคารที่ดูแล:", t.techBuilds?.map(b => b.building?.buildingName), "| Match:", buildingMatch);
-
-          //     return nameMatch || phoneMatch || buildingMatch;
-          //   });
-          // }
 
           setCustomers(customerData);
 
@@ -384,17 +381,50 @@ const User = () => {
     return uniqueBuildings.slice(0, 3);
   };
 
+  // const handleEditCustomer = (userId) => {
+  //   navigate(`/editCustomer/${userId}`);
+  // }
+  const handleEditCustomer = (userId) => {
+    const customer = customers.find((c) => c.id === userId);
+    if (customer) {
+      setFormData({
+        name: customer.name || '',
+        phone: customer.phone || '',
+        buildingId: customer.buildingId || '',
+        companyId: customer.unit?.companyId || '',
+        companyName: customer.companyName || '',
+        unitId: customer.unitId || '',
+        unitName: customer.unit?.unitName || '',
+      });
+      setPopupEditUser(true);
+    }
+  };
+
+
   const handleEditTechnician = (userId) => {
     navigate(`/editTechnician/${userId}`);
   };
 
-  const handleEditCustomer = (userId) => {
-    navigate(`/editCustomer/${userId}`);
-  }
-
   const handleEditAdmin = (id) => {
     navigate(`/editAdmin/${id}`)
   }
+
+  const handleDeleteCustomer = async (id) => {
+    try {
+      setPopupStatus("loading");
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`);
+      console.log('Delete response:', response.data);
+      setTimeout(() => {
+        setPopupStatus("delete");
+        setTimeout(() => {
+          setPopupStatus(null);
+          window.location.reload();
+        }, 2000);
+      }, 2000);
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+    }
+  };
 
   const handleDeleteTechnician = async (id) => {
     try {
@@ -415,11 +445,11 @@ const User = () => {
     }
   }
 
-  const handleDeleteCustomer = async (id) => {
+  const handleDeleteAdmin = async (id) => {
     try {
-      setPopupStatus("loading");
-      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`);
-      console.log('Delete response:', response.data);
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteAdmin/${id}`)
+      console.log("Delete admin success", response.data)
+      // alert("Delete admin successfully")
       setTimeout(() => {
         setPopupStatus("delete");
         setTimeout(() => {
@@ -428,18 +458,7 @@ const User = () => {
         }, 2000);
       }, 2000);
     } catch (error) {
-      console.error('Error deleting customer:', error);
-    }
-  };
-
-  const handleDeleteAdmin = async (id) => {
-    try {
-      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteAdmin/${id}`)
-      console.log("Delete admin success", response.data)
-      alert("Delete admin successfully")
-      window.location.reload()
-    } catch (error) {
-      console.error(error)
+      console.error('Error deleting admin:', error);
     }
   }
 
@@ -457,7 +476,7 @@ const User = () => {
     setPopupStatus("loading");
     setShowConfirmPopup(false);
     if (confirmDeleteId !== null) {
-      activeTab === 'customers' ? handleDeleteCustomer(confirmDeleteId) : handleDeleteTechnician(confirmDeleteId);
+      activeTab === 'customers' ? handleDeleteCustomer(confirmDeleteId) : activeTab === 'technicians' ? handleDeleteTechnician(confirmDeleteId) : handleDeleteAdmin(confirmDeleteId);
     }
   };
 
@@ -549,13 +568,13 @@ const User = () => {
 
         {popupCreateUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-            <div className="relative w-[520px] h-[620px] bg-white border border-[#BC9D72] rounded-xl p-4 shadow-lg overflow-y-auto">
+            <div className="relative w-[520px] h-[620px] bg-white border border-[#BC9D72] rounded-xl p-2 shadow-lg overflow-y-auto">
               <h2 className="text-[18px] font-black text-[#837958] text-center mb-4 mt-4">
                 {activeTab === 'customers' ? "เพิ่มข้อมูลลูกค้า" : activeTab === 'technicians' ? "เพิ่มข้อมูลเจ้าหน้าที่" : "เพิ่มข้อมูลแอดมิน"}
               </h2>
 
               {/* Tabs */}
-              <div className="flex mb-2 rounded-lg overflow-hidden border border-[#BC9D72] w-fit mx-auto text-sm">
+              <div className="flex mb-2 rounded-xl overflow-hidden border border-[#837958] w-fit mx-auto text-sm">
                 <button
                   className={`px-5 py-1.5 font-medium w-[160px] transition-all duration-200 
                   ${activeTab === 'customers'
@@ -657,9 +676,9 @@ const User = () => {
 
                       <div className="mb-[64px]">
                         <div className="flex items-center justify-center mb-4">
-                          <div className="w-[120px] h-px bg-[#837958]" />
+                          <div className="w-full h-px bg-[#837958] opacity-60" />
                           <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
-                          <div className="w-[120px] h-px bg-[#837958]" />
+                          <div className="w-full h-px bg-[#837958] opacity-60" />
                         </div>
 
                         <div className="mb-2">
@@ -822,7 +841,10 @@ const User = () => {
                             <button
                               className="text-blue-500 hover:text-blue-700 mr-3"
                               title="แก้ไข"
-                              onClick={() => handleEditCustomer(customer.id)}
+                              onClick={() => {
+                                // setPopupEditUser(true)
+                                handleEditCustomer(customer.id)
+                              }}
                             >
                               <UserPen className="inline-block" />
                             </button>
@@ -866,7 +888,7 @@ const User = () => {
                       <th className="w-32 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สถานะ Line
                       </th>
-                      <th className="px-4 py-4 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สังกัด
                       </th>
                       <th className="w-28 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
@@ -1096,6 +1118,113 @@ const User = () => {
               )
             }
 
+            {popupEditUser && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                <div className="bg-white max-w-xl w-full mx-4 rounded-lg shadow-lg p-6 relative">
+
+                  {/* ปุ่มปิด */}
+                  <button
+                    className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+                    onClick={() => setPopupEditUser(false)}
+                  >
+                    &times;
+                  </button>
+                  <h2 className="text-xl font-bold mb-4 text-center text-[#726140]">แก้ไขข้อมูลผู้ใช้</h2>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block mb-1 font-medium">ชื่อ-สกุล<span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                        placeholder="ชื่อ-สกุล"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">เบอร์โทรศัพท์<span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                        placeholder="เบอร์โทรศัพท์"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">อาคาร</label>
+                      <select
+                        name="buildingId"
+                        value={formData.buildingId}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                      >
+                        <option value="">เลือกอาคาร</option>
+                        {buildings.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.buildingName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">บริษัท<span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        list="companyList"
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                        placeholder="พิมพ์หรือเลือกบริษัท"
+                        required
+                      />
+                      <datalist id="companyList">
+                        {companies.map((c) => (
+                          <option key={c.id} value={c.companyName} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">ยูนิต<span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        list="unitList"
+                        name="unitName"
+                        value={formData.unitName}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                        placeholder="พิมพ์หรือเลือกยูนิต"
+                        required
+                      />
+                      <datalist id="unitList">
+                        {units.map((u) => (
+                          <option key={u.id} value={u.unitName} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        className="w-full bg-[#a08b5f] hover:bg-[#8a784e] text-white font-medium py-2 rounded-md transition duration-200"
+                      >
+                        บันทึกการเปลี่ยนแปลง
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
             {/* Popup ยืนยันการลบ */}
             {showConfirmPopup && (
               <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
@@ -1124,27 +1253,27 @@ const User = () => {
                     </div>
                   ) : popupStatus === "empty" ? (
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleX size={50} className="mb-2" />
+                      <CircleX size={50} strokeWidth={1} className="mb-2" />
                       <h2 className="text-lg font-semibold">Please enter your</h2>
                       <h2 className="text-lg font-semibold">username and password.</h2>
                     </div>
                   ) : popupStatus === "success" ? (
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleCheck size={50} className="mb-2" />
+                      <CircleCheck size={50} strokeWidth={1} className="mb-2" />
                       <h2 className="text-lg font-semibold">
                         {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "เพิ่มข้อมูลเจ้าหน้าที่สำเร็จ" : "เพิ่มข้อมูลแอดมินสำเร็จ"}
                       </h2>
                     </div>
                   ) : popupStatus === "delete" ? (
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleCheck size={50} className="mb-2" />
+                      <CircleCheck size={50} strokeWidth={1} className="mb-2" />
                       <h2 className="text-lg font-semibold">
                         {activeTab === "customers" ? "ลบข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "ลบข้อมูลเจ้าหน้าที่สำเร็จ" : "ลบข้อมูลแอดมินสำเร็จ"}
                       </h2>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleX size={50} className="mb-2" />
+                      <CircleX size={50} strokeWidth={1} className="mb-2" />
                       <h2 className="text-lg font-semibold">
                         {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าไม่สำเร็จ" : activeTab === "technicians" ? "เพิ่มข้อมูลเจ้าหน้าที่ไม่สำเร็จ" : "เพิ่มข้อมูลแอดมินไม่สำเร็จ"}
                       </h2>
