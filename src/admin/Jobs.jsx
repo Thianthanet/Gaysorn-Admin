@@ -45,10 +45,18 @@ const Jobs = () => {
     return sorted;
   };
 
+  const getPaginatedJobs = () => {
+    const sortedJobs = getSortedJobs();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return sortedJobs.slice(startIndex, endIndex);
+  };
+
+  const totalPages = Math.ceil(jobs.length / itemsPerPage);
+
   return (
     <AdminLayout>
-      <div className="p-2">
-        <h2 className="text-xl font-bold mb-4">งานแจ้งซ่อมทั้งหมด</h2>
+      <div>
         <table className="min-w-full border border-[#837958]/50">
           <thead className="bg-[#837958]/50 ">
             <tr className="bg-[#BC9D72]/50 h-[50px] text-[14px]">
@@ -111,7 +119,7 @@ const Jobs = () => {
             </tr>
           </thead>
           <tbody>
-            {getSortedJobs().map((job, index) => (
+            {getPaginatedJobs().map((job, index) => (
               <tr key={job.id} className="text-center border-b text-[12px]">
                 <td className=" px-4 py-2 text-center  ">
                   <span
@@ -126,8 +134,7 @@ const Jobs = () => {
                     }`}
                   ></span>
                 </td>
-
-                <td className=" px-4 py-2">{index + 1}</td>
+                <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                 <td className=" px-4 py-2">{job?.workStar || "-"}</td>
                 <td className=" px-4 py-2">{job?.jobNo || "-"}</td>
                 <td className=" px-4 py-2 min-w-[160px]">
@@ -148,7 +155,7 @@ const Jobs = () => {
                 <td className=" px-4 py-2 min-w-[200px]">
                   {formatDateTimeThaiShort(job?.completeDate) || "-"}
                 </td>
-                <td className=" px-4 py-2 min-w-[160px]">
+                <td className=" px-4 py-2 min-w-[150px]">
                   {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}
                 </td>
                 <td
@@ -165,7 +172,7 @@ const Jobs = () => {
                   {job.status === "pending"
                     ? "รอดำเนินการ"
                     : job.status === "in_progress"
-                    ? "ระหว่างดำเนินการ"
+                    ? "อยู่ระหว่างดำเนินการ"
                     : job.status === "completed"
                     ? "เสร็จสิ้น"
                     : job.status}
@@ -178,6 +185,13 @@ const Jobs = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={(num) => {
+            setItemsPerPage(num);
+            setCurrentPage(1);
+          }}
+          totalItems={jobs.length}
+          advancedPagination={true}
         />
       </div>
     </AdminLayout>
