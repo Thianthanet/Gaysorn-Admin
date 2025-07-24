@@ -11,10 +11,10 @@ const Setting = () => {
     <AdminLayout>
       <div className="text-2xl font-semibold mb-6">Setting</div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
+        <div className="bg-[#F4F2ED] shadow-md rounded-2xl border border-[#837958] p-6">
           <Building />
         </div>
-        <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
+        <div className="bg-[#F4F2ED] shadow-md rounded-2xl border border-[#837958] p-6">
           <GroupChoices />
         </div>
         {/* <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
@@ -23,7 +23,7 @@ const Setting = () => {
         <div className="bg-white shadow-md rounded-2xl border border-gray-200 p-6">
           <Unit />
         </div> */}
-        <div className='bg-white shadow-md rounded-2xl border border-gray-200 p-6'>
+        <div className='bg-[#F4F2ED] shadow-md rounded-2xl border border-[#837958] p-6'>
           <Draft />
         </div>
       </div>

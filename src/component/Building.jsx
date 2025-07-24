@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { Edit, Trash2 } from 'lucide-react'; // ใช้ไอคอนจาก lucide-react
+import { Edit, Trash2, SquarePlus } from 'lucide-react'; // ใช้ไอคอนจาก lucide-react
 
 const Building = () => {
   const [buildings, setBuildings] = useState([]);
@@ -86,7 +86,7 @@ const Building = () => {
   };
 
   return (
-    <div className="p-8 bg-white shadow-lg rounded-xl max-w-xl mx-auto">
+    <div >
       <h1 className="text-2xl font-bold mb-6 border-b pb-2 text-gray-800">
         อาคาร
       </h1>
@@ -104,8 +104,8 @@ const Building = () => {
             type="text"
             value={buildingName}
             onChange={(e) => setBuildingName(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-400"
-            placeholder="ระบุชื่ออาคาร"
+            className="w-full border border-[#837958] rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-400"
+            placeholder="ชื่ออาคาร"
             required
           />
         </div>
@@ -118,16 +118,16 @@ const Building = () => {
             type="text"
             value={groupId}
             onChange={(e) => setGroupId(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-400"
+            className="w-full border border-[#837958] rounded-md px-3 py-2 focus:outline-none focus:ring focus:border-blue-400"
             placeholder="ใส่หรือเว้นว่างได้"
           />
         </div>
 
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-semibold transition"
+          className="w-full bg-[#837958] hover:bg-[#BC9D72] text-white py-2 rounded-md font-semibold transition flex items-center justify-center gap-2"
         >
-          สร้างตึก
+         <SquarePlus /> สร้างตึก
         </button>
       </form>
 
@@ -196,7 +196,7 @@ const Building = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => handleEdit(building)}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-[#837958] hover:text-[#BC9D72]"
               >
                 <Edit size={18} />
               </button>

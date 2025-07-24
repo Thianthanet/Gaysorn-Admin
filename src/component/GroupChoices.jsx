@@ -1,6 +1,6 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
-import { Edit, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Edit, SquarePlus, ToggleLeft, ToggleRight } from 'lucide-react'
 
 const GroupChoices = () => {
   const [groupChoices, setGroupChoices] = useState([])
@@ -66,7 +66,7 @@ const GroupChoices = () => {
   }
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
+    <div>
       <h2 className="text-2xl font-semibold mb-4">กลุ่มงาน</h2>
 
       {/* Form สร้างกลุ่มงาน */}
@@ -76,13 +76,13 @@ const GroupChoices = () => {
           value={newChoiceName}
           onChange={(e) => setNewChoiceName(e.target.value)}
           placeholder="ชื่อกลุ่มงานใหม่"
-          className="border px-3 py-2 rounded w-72"
+          className="border px-3 py-2 rounded w-72 flex-1"
         />
         <button
           onClick={handleCreateChoice}
-          className="bg-green-500 text-white px-2 py-2 rounded hover:bg-green-600"
+          className="bg-[#837958] text-white px-2 py-2 rounded hover:bg-[#BC9D72] flex gap-2"
         >
-          เพิ่มกลุ่มงาน
+        <SquarePlus />  เพิ่มกลุ่มงาน
         </button>
       </div>
 
@@ -91,9 +91,9 @@ const GroupChoices = () => {
         <table className="min-w-full border border-gray-200">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="px-4 py-2 text-left border-b">ลำดับ</th>
-              <th className="px-4 py-2 text-left border-b">ชื่อกลุ่มงาน</th>
-              <th className="px-4 py-2 text-center border-b">การจัดการ</th>
+              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]">ลำดับ</th>
+              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]">ชื่อกลุ่มงาน</th>
+              <th className="px-4 py-2 text-center border-b bg-[#BC9D72]">การจัดการ</th>
             </tr>
           </thead>
           <tbody>
@@ -124,7 +124,7 @@ const GroupChoices = () => {
                     ) : (
                       <button
                         onClick={() => handleEdit(choice.id, choice.choiceName)}
-                        className="text-blue-500 hover:text-blue-700"
+                        className="text-[#837958] hover:text-[#BC9D72]"
                       >
                         <Edit size={20} />
                       </button>
