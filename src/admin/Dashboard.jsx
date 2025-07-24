@@ -10,7 +10,7 @@ import 'moment/locale/th'
 import { FiClock, FiTool, FiClipboard } from 'react-icons/fi'
 import { BsCheckSquare } from "react-icons/bs";
 import { LuClipboardList } from "react-icons/lu";
-import TimeDisplay from '../component/TimeDIsPlay'
+import TimeDisplay from '../component/TimeDisPlay'
 import PieChartAndSummary from '../component/PieChartAndSummary'
 import JobBarChart from '../component/JobBarChart'
 import LatestRepairsList from '../component/LatestRepairsList'
