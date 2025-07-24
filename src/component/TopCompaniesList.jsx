@@ -33,7 +33,7 @@ const TopCompaniesList = ({ companies, isMobile }) => {
                                 className={`font-medium flex justify-end text-[#BC9D72] ${isMobile ? 'text-[12px]' : 'text-[18px]'
                                     }`}
                             >
-                                {c._count.id} งาน
+                                {c._count?.id} งาน
                             </span>
                         </li>
                     ))}
