@@ -578,7 +578,7 @@ const User = () => {
               <div className="flex w-fit mx-auto mb-2 rounded-xl border border-[#837958] overflow-hidden text-sm bg-[#F4F2ED]">
                 <button
                   className={`px-6 py-2 font-medium w-[160px] transition-all duration-200 
-      ${activeTab === 'customers'
+                    ${activeTab === 'customers'
                       ? 'bg-[#837958] text-white rounded-r-xl'
                       : 'text-[#837958]'
                     }`}
@@ -588,7 +588,7 @@ const User = () => {
                 </button>
                 <button
                   className={`px-6 py-2 font-medium w-[160px] transition-all duration-200 
-      ${activeTab === 'technicians'
+                    ${activeTab === 'technicians'
                       ? 'bg-[#837958] text-white rounded-l-xl'
                       : 'text-[#837958]'
                     }`}
@@ -777,31 +777,31 @@ const User = () => {
                 <table className="min-w-full leading-normal">
                   <thead>
                     <tr>
-                      <th className="w-1 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ลำดับ
                       </th>
-                      <th className="w-52 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-52 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         อาคาร
                       </th>
-                      <th className="w-32 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-left text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-48 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         บริษัท/ร้านค้า
                       </th>
-                      <th className="w-1 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-1 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ยูนิต
                       </th>
-                      <th className="w-52 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-52 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ลูกค้า
                       </th>
-                      <th className="w-32 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         เบอร์โทรศัพท์
                       </th>
-                      {/* <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-left text-sm font-semibold text-black uppercase tracking-wider">
+                      {/* <th className="px-5 py-3 border-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         Email
                       </th> */}
-                      <th className="w-32 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สถานะ Line
                       </th>
-                      <th className="w-28 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-28 px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         จัดการ
                       </th>
                     </tr>
@@ -810,35 +810,35 @@ const User = () => {
                     {customers.length > 0 ? (
                       customers.map((customer, index) => (
                         <tr key={customer.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                          <td className="px-4 py-2 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {index + 1}
                           </td>
-                          <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {customer.unit?.company?.building?.buildingName || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {customer.unit?.company?.companyName || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {customer.unit?.unitName || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {customer.name || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {customer.phone || '-'}
                           </td>
                           {/* <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {customer.email || '-'}
                           </td> */}
-                          <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm">
                             {customer.userId ? (
                               <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
                             ) : (
                               <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
                             )}
                           </td>
-                          <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                          <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             <button
                               className="text-blue-500 hover:text-blue-700 mr-3"
                               title="แก้ไข"
@@ -877,22 +877,22 @@ const User = () => {
                 <table className="min-w-full leading-normal">
                   <thead>
                     <tr>
-                      <th className="w-1 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ลำดับ
                       </th>
-                      <th className="w-52 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-52 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         เจ้าหน้าที่
                       </th>
-                      <th className="w-32 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         เบอร์โทรศัพท์
                       </th>
-                      <th className="w-32 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สถานะ Line
                       </th>
-                      <th className="px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สังกัด
                       </th>
-                      <th className="w-28 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-28 px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         จัดการ
                       </th>
                     </tr>
@@ -904,30 +904,30 @@ const User = () => {
 
                         return (
                           <tr key={tech.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                            <td className="px-4 py-2 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               {index + 1}
                             </td>
-                            <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               {tech.name || '-'}
                             </td>
-                            <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               {tech.phone || '-'}
                             </td>
-                            <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm">
+                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm">
                               {tech.userId ? (
                                 <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
                               ) : (
                                 <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
                               )}
                             </td>
-                            <td className="px-4 py-2 border-b border-gray-200 bg-white text-[12px] text-center">
+                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-[12px] text-center">
                               {uniqueBuildings.length > 0 ? (
                                 <div className="flex flex-row space-x-2">
                                   {uniqueBuildings.join(', ')}
                                 </div>
                               ) : '-'}
                             </td>
-                            <td className="px-4 py-2 border-b border-gray-200 bg-white text-sm text-center">
+                            <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               <button
                                 className="text-blue-500 hover:text-blue-700 mr-3"
                                 title="แก้ไข"
@@ -1054,16 +1054,16 @@ const User = () => {
                   <table className="min-w-full leading-normal">
                     <thead>
                       <tr>
-                        <th className="w-1 px-4 py-2 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        <th className="w-1 px-4 py-2 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                           ลำดับ
                         </th>
-                        <th className="px-4 py-2 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        <th className="px-4 py-2 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                           ชื่อผู้ใช้งาน
                         </th>
-                        <th className="w-48 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        <th className="w-48 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                           รหัสผ่าน
                         </th>
-                        <th className="w-28 px-4 py-3 border-b-2 border-gray-200 bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        <th className="w-28 px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                           จัดการ
                         </th>
                       </tr>
@@ -1073,13 +1073,13 @@ const User = () => {
                         admin.length > 0 ? (
                           admin.map((admin, index) => (
                             <tr key={admin.id} className="hover:bg-gray-50">
-                              <td className="px-4 border-b border-gray-200 bg-white text-sm text-center">
+                              <td className="px-4 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
                                 {index + 1}
                               </td>
-                              <td className="px-4 border-b border-gray-200 bg-white text-sm text-center">
+                              <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                                 {admin.username}
                               </td>
-                              <td className="px-4 border-b border-gray-200 bg-white text-sm text-center">
+                              <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                                 <span className='mx-2'>
                                   {showPasswords[admin.id] ? admin.password : "********"}
                                 </span>
@@ -1087,7 +1087,7 @@ const User = () => {
                                   {showPasswords[admin.id] ? <FaEyeSlash /> : <FaEye />}
                                 </button>
                               </td>
-                              <td className="h-[16px] px-4 py-2 border-b border-gray-200 text-sm">
+                              <td className="h-[16px] px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] text-sm">
                                 <button
                                   className="text-blue-500 hover:text-blue-700 mr-3"
                                   title="แก้ไข"
