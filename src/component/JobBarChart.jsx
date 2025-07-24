@@ -89,7 +89,7 @@ const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
           <ResponsiveContainer width="100%" height={220}>
             <BarChart
               data={data}
-              margin={{ top: 0, right: 0, bottom: 30, left: 0 }}
+              margin={{ top: 0, right: 30, bottom: 30, left: 0 }}
               barCategoryGap="100%"
               barGap={0}
             >
