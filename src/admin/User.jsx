@@ -728,7 +728,7 @@ const User = () => {
                       type="submit"
                       className="w-full mt-2 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition"
                     >
-                      {activeTab === 'customers' ? 'เพิ่มข้อมูลลูกค้า' : 'เพิ่มข้อมูลเจ้าหน้าที่'}
+                      {activeTab === 'customers' ? 'เพิ่มข้อมูลลูกค้า' : activeTab === 'technicians' ? 'เพิ่มข้อมูลเจ้าหน้าที่' : "เพิ่มข้อมูลแอดมิน"}
                     </button>
 
                     {/* ปุ่มปิด */}
