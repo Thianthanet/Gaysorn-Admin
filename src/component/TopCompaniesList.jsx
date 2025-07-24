@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 const TopCompaniesList = ({ companies, isMobile }) => {
     const navigate = useNavigate()
 
+    console.log("companies", companies)
+
     return (
         <button
             onClick={() => navigate('/job')}
@@ -20,20 +22,20 @@ const TopCompaniesList = ({ companies, isMobile }) => {
                 <ul className="space-y-2">
                     {companies.slice(0, 10).map((c, idx) => (
                         <li
-                            key={c.id ?? `idx-${idx}`} // ใช้ index ถ้าไม่มี id
+                            key={c?.companyId ?? `idx-${idx}`} // ใช้ index ถ้าไม่มี id
                             className={`grid grid-cols-2 items-start ${isMobile ? 'gap-18' : 'gap-32'}  text-[#837958]`}
                         >
                             <span
                                 className={`font-medium text-[#BC9D72] truncate ${isMobile ? 'text-[12px]' : 'text-[18px]'
                                     }`}
                             >
-                                {c.companyName ?? 'ไม่ระบุ'}
+                                {c?.companyName ?? 'ไม่ระบุ'}
                             </span>
                             <span
                                 className={`font-medium flex justify-end text-[#BC9D72] ${isMobile ? 'text-[12px]' : 'text-[18px]'
                                     }`}
                             >
-                                {c._count?.id} งาน
+                                {c?.count ?? 0} งาน
                             </span>
                         </li>
                     ))}

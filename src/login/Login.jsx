@@ -120,7 +120,7 @@ const Login = () => {
 
   return (
     //bg-[#F5F3EE]
-    <div className={`min-h-screen bg-center bg-[url('/images/bg-adminLogin.png')] flex items-center justify-center ${isMobile ? "bg-cover" : "bg-contain"}`}>
+    <div className={`min-h-screen bg-center bg-[url('/bg-adminLogin.png')] flex items-center justify-center ${isMobile ? "bg-cover" : "bg-contain"}`}>
       <form
         ref={formRef}
         onSubmit={handleLogin}
@@ -128,7 +128,7 @@ const Login = () => {
         className="bg-[#E5E5E5]/10 backdrop-blur-[2px] w-[368px] shadow-2xl rounded-2xl border border-white flex flex-col p-8"
         style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
       >
-        <img src="/images/logo-gaysorn.png" alt="Logo" className="w-12 mx-auto mb-4" />
+        <img src="/logo-gaysorn.png" alt="Logo" className="w-12 mx-auto mb-4" />
         <h2 className="text-center font-bold text-[28px] mb-2 bg-gradient-to-r from-[#4f4833] to-[#fff1c7] bg-clip-text text-transparent">
           เข้าสู่ระบบ
         </h2>
