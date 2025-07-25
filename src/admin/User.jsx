@@ -7,6 +7,7 @@ import { CircleCheck, CircleX } from "lucide-react";
 import { HiChevronDown } from "react-icons/hi";
 import { FaLine, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { UserPen, Trash2 } from 'lucide-react';
+import * as XLSX from 'xlsx'
 
 const User = () => {
   const [customers, setCustomers] = useState([]);
@@ -114,6 +115,108 @@ const User = () => {
   //     return false;
   //   }
   // };
+
+  const exportToExcel = () => {
+    let dataToExport = [];
+    let fileName = '';
+    let columnWidths = [];
+
+    switch (activeTab) {
+      case 'customers':
+        dataToExport = customers.map((customer, index) => ({
+          'ลำดับ': index + 1,
+          'อาคาร': customer.unit?.company?.building?.buildingName || '-',
+          'บริษัท': customer.unit?.company?.companyName || '-',
+          'ยูนิต': customer.unit?.unitName || '-',
+          'ลูกค้า': customer.name || '-',
+          'เบอร์โทรศัพท์': customer.phone || '-',
+          'สถานะ Line': customer.userId ? 'ลงทะเบียนแล้ว' : 'ยังไม่ได้ลงทะเบียน'
+        }));
+        fileName = 'ลูกค้า';
+        columnWidths = [
+          { wch: 6 },   // ลำดับ
+          { wch: 25 },  // อาคาร
+          { wch: 25 },  // บริษัท
+          { wch: 12 },  // ยูนิต
+          { wch: 20 },  // ลูกค้า
+          { wch: 15 },  // เบอร์โทรศัพท์
+          { wch: 18 }   // สถานะ Line
+        ];
+        break;
+
+      case 'technicians':
+        dataToExport = technicians.map((tech, index) => ({
+          'ลำดับ': index + 1,
+          'เจ้าหน้าที่': tech.name || '-',
+          'เบอร์โทรศัพท์': tech.phone || '-',
+          'สถานะ Line': tech.userId ? 'ลงทะเบียนแล้ว' : 'ยังไม่ได้ลงทะเบียน',
+          'สังกัด': getUniqueBuildings(tech.techBuilds).join(', ') || '-'
+        }));
+        fileName = 'เจ้าหน้าที่';
+        columnWidths = [
+          { wch: 6 },   // ลำดับ
+          { wch: 20 },  // เจ้าหน้าที่
+          { wch: 15 },  // เบอร์โทรศัพท์
+          { wch: 18 },  // สถานะ Line
+          { wch: 30 }   // สังกัด
+        ];
+        break;
+
+      case 'admin':
+        dataToExport = admin.map((adminItem, index) => ({
+          'ลำดับ': index + 1,
+          'ชื่อผู้ใช้งาน': adminItem.username || '-',
+          // 'รหัสผ่าน': adminItem.password || '-'
+        }));
+        fileName = 'แอดมิน';
+        columnWidths = [
+          { wch: 6 },   // ลำดับ
+          { wch: 20 },  // ชื่อผู้ใช้งาน
+          // { wch: 15 }   // รหัสผ่าน
+        ];
+        break;
+
+      case 'waitApprove':
+        dataToExport = waitForApprove.map((user, index) => ({
+          'ลำดับ': index + 1,
+          'อาคาร': user.unit?.company?.building?.buildingName || '-',
+          'บริษัท': user.unit?.company?.companyName || '-',
+          'ยูนิต': user.unit?.unitName || '-',
+          'ผู้ใช้': user.name || '-',
+          'เบอร์โทรศัพท์': user.phone || '-',
+          'Email': user.email || '-',
+          'สถานะ Line': user.userId ? 'ลงทะเบียนแล้ว' : 'ยังไม่ได้ลงทะเบียน'
+        }));
+        fileName = 'รออนุมัติ';
+        columnWidths = [
+          { wch: 6 },   // ลำดับ
+          { wch: 15 },  // อาคาร
+          { wch: 25 },  // บริษัท
+          { wch: 12 },  // ยูนิต
+          { wch: 20 },  // ผู้ใช้
+          { wch: 15 },  // เบอร์โทรศัพท์
+          { wch: 25 },  // Email
+          { wch: 18 }   // สถานะ Line
+        ];
+        break;
+
+      default:
+        return;
+    }
+
+    // Create worksheet and workbook
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+
+    // Apply column widths
+    ws['!cols'] = columnWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+    // Export Excel file
+    XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
 
   const handleCustomerChange = async (e) => {
     const { name, value } = e.target;
@@ -517,7 +620,7 @@ const User = () => {
           {/* ปุ่มต่าง ๆ */}
           <button
             className="px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
-            onClick={() => console.log("ส่งข้อมูลออก")}
+            onClick={exportToExcel}
           >
             ส่งข้อมูลออก
           </button>
@@ -560,6 +663,21 @@ const User = () => {
             onClick={() => setPopupCreateUser(true)}
           >
             เพิ่มผู้ใช้งาน
+          </button>
+
+          <button
+            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
+              ${activeTab === 'waitApprove'
+                ? 'bg-[#BC9D72] text-white'
+                : 'bg-[#F4F2ED] text-black'
+              }`}
+            onClick={() => setActiveTab('waitApprove')}
+          >
+            รออนุมัติ {waitForApprove.length > 0 && (
+              <span className='ml-1 text-sm text-red-600 font-bold'>
+                ( {waitForApprove.length} )
+              </span>
+            )}
           </button>
         </div>
 
@@ -959,7 +1077,7 @@ const User = () => {
             )}
 
             {/* Wait Approve Table */}
-            {/* {activeTab === 'waitApprove' && (
+            {activeTab === 'waitApprove' && (
               <div className="bg-white shadow-md rounded-lg overflow-hidden">
                 <table className="min-w-full leading-normal">
                   <thead>
@@ -1045,7 +1163,7 @@ const User = () => {
                   </tbody>
                 </table>
               </div>
-            )} */}
+            )}
 
             {/* Admin */}
             {
