@@ -68,10 +68,10 @@ const User = () => {
     password: '',
   });
 
-  const handleAdminChange = (e) => {
-    const { name, value } = e.target;
-    setAdmin((prev) => ({ ...prev, [name]: value }));
-  };
+  // const handleAdminChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setAdmin((prev) => ({ ...prev, [name]: value }));
+  // };
 
   // const validateAdminCredentials = async () => {
   //   try {
@@ -131,8 +131,6 @@ const User = () => {
       ...prev,
       [name]: value
     }));
-
-    // setCustomerData({ ...customerData, phone: onlyNums.slice(0, 15) }); // จำกัด 15 ตัว
 
     // Auto-fill logic when unitName changes
     if (name === 'unitName' && value) {
@@ -198,12 +196,12 @@ const User = () => {
     }
   }
 
-  const toggleShowPassword = (id) => {
-    setShowPasswords(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }))
-  }
+  // const toggleShowPassword = (id) => {
+  //   setShowPasswords(prev => ({
+  //     ...prev,
+  //     [id]: !prev[id]
+  //   }))
+  // }
 
   useEffect(() => {
     handleGetBuilding();
@@ -448,7 +446,6 @@ const User = () => {
   //     setPopupEditUser(true);
   //   }
   // };
-
 
   const handleEditTechnician = (userId) => {
     navigate(`/editTechnician/${userId}`);
