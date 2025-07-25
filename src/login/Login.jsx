@@ -56,7 +56,7 @@ const Login = () => {
     const captchaToken = formData.get('cf-turnstile-response')
 
     if (!captchaToken) {
-      alert('Please complete CAPTCHA verification.')
+      // alert('Please complete CAPTCHA verification.')
       setPopupStatus("error");
       setTimeout(() => setPopupStatus(null), 3000);
       return
@@ -187,24 +187,24 @@ const Login = () => {
               <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                 {/* ไอคอนหรือวงกลม loading */}
                 <div className="animate-spin rounded-full border-4 border-t-[#837958] border-gray-200 h-12 w-12 mb-4"></div>
-                <h2 className="text-lg font-semibold">Loading...</h2>
+                <h2 className="text-lg font-semibold">กำลังโหลด...</h2>
               </div>
             ) : popupStatus === "empty" ? (
               <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                 <CircleX size={50} className="mb-2" />
-                <h2 className="text-lg font-semibold">Please enter your</h2>
-                <h2 className="text-lg font-semibold">username and password.</h2>
+                <h2 className="text-lg font-semibold">กรุณากรอก</h2>
+                <h2 className="text-lg font-semibold">ชื่อผู้ใช้หรือรหัสผ่าน</h2>
               </div>
             ) : popupStatus === "success" ? (
                 <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                   <CircleCheck size={50} className="mb-2" />
-                  <h2 className="text-lg font-semibold">Login Success.</h2>
+                  <h2 className="text-lg font-semibold">เข้าสู่ระบบสำเร็จ</h2>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                   <CircleX size={50} className="mb-2" />
-                  <h2 className="text-lg font-semibold">Login failed.</h2>
-                  <h2 className="text-lg font-semibold">Please check your credentials.</h2>
+                  <h2 className="text-lg font-semibold">เข้าสู่ระบบไม่สำเร็จ</h2>
+                  <h2 className="text-lg font-semibold">กรุณาลองใหม่อีกครั้งค่ะ / ครับ</h2>
                 </div>
               )}
           </div>
