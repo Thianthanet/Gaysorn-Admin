@@ -24,10 +24,16 @@ const Jobs = () => {
   const [building, setBuilding] = useState([])
   const [selectedBuilding, setSelectedBuilding] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("all")
+  const [showFilters, setShowFilters] = useState(false)
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  const [choices, setChoies] = useState([])
+  const [selectedChoice, setSelectedChoice] = useState([])
 
   useEffect(() => {
     handleGetAllJobs();
     handleGetBuilding()
+    handleGetChoices()
   }, []);
 
   const handleGetAllJobs = async () => {
@@ -40,6 +46,16 @@ const Jobs = () => {
       console.error("Error fetching jobs:", error);
     }
   };
+
+  const handleGetChoices = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getChoices`)
+      console.log(response.data.data)
+      setChoies(response.data.data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   const handleGetBuilding = async () => {
     try {
@@ -155,6 +171,24 @@ const Jobs = () => {
     }
 
     return filteredJobs;
+  };
+
+  const handleGetFilteredJobs = async () => {
+    try {
+      const params = new URLSearchParams();
+
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/getAllRepair?${params.toString()}`
+      );
+
+      setJobs(res.data.data);
+      setCurrentPage(1);
+    } catch (err) {
+      console.error("Error fetching filtered jobs:", err);
+    }
   };
 
   const requestSort = (key) => {
@@ -353,6 +387,7 @@ const Jobs = () => {
 
           <button
             className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center gap-[2px] shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
+            onClick={() => setShowFilters(!showFilters)}
           >
             <Funnel className="w-4" /> เงื่อนไข
             <HiChevronDown size={18} className="text-white" />
