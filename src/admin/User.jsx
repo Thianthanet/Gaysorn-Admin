@@ -7,6 +7,13 @@ import { CircleCheck, CircleX } from "lucide-react";
 import { HiChevronDown } from "react-icons/hi";
 import { FaLine, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { UserPen, Trash2 } from 'lucide-react';
+import UserToolbar from '../component/UserToolbar';
+import UserPopup from '../component/UserPopup';
+import CustomerTable from '../component/CustomerTable';
+import TechnicianTable from '../component/TechnicianTable';
+import AdminTable from '../component/AdminTable';
+import ConfirmDeletePopup from '../component/ConfirmDeletePopup';
+import StatusPopup from '../component/StatusPopup';
 
 const User = () => {
   const [customers, setCustomers] = useState([]);
@@ -32,31 +39,39 @@ const User = () => {
   // const [tabPopup, setTabPopup] = useState('customers');
   const [errors, setErrors] = useState({});
   const [popupMessage, setPopupMessage] = useState('');
+  const [editMode, setEditMode] = useState(false);
+  const [editingCustomerId, setEditingCustomerId] = useState(null);
 
   // const [popupUserVisible, setPopupUserVisible] = useState(false);   // เปิด/ปิด popup
   // const [isEditMode, setIsEditMode] = useState(false);               // true = กำลังแก้ไข
   // const [editingId, setEditingId] = useState(null);
 
-
   const [customerData, setCustomerData] = useState({
+    // id: '',
     name: '',
     phone: '',
     // nickname: '',
+    // buildingId: '',
+    // companyId: '',
     companyName: '',
+    // unitId: '',
     unitName: '',
     buildingName: '',
     email: '',
   });
 
-  // const [formData, setFormData] = useState({
-  //   name: '',
-  //   phone: '',
-  //   buildingId: '',
-  //   companyId: '',
-  //   companyName: '',
-  //   unitId: '',
-  //   unitName: '',
-  // });
+  const [customerDataUpdate, setCustomerDataUpdate] = useState({
+    id: '',
+    name: '',
+    phone: '',
+    email: '',
+    buildingId: '',
+    buildingName: '',
+    companyId: '',
+    companyName: '',
+    unitId: '',
+    unitName: '',
+  });
 
   const [technicianData, setTechnicianData] = useState({
     name: '',
@@ -207,14 +222,14 @@ const User = () => {
     handleGetBuilding();
   }, []);
 
-  const handleGetBuilding = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`);
-      setBuildings(response.data.data);
-    } catch (error) {
-      console.error('Error fetching building data:', error);
-    }
-  };
+  // const handleGetBuilding = async () => {
+  //   try {
+  //     const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`);
+  //     setBuildings(response.data.data);
+  //   } catch (error) {
+  //     console.error('Error fetching building data:', error);
+  //   }
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -232,11 +247,9 @@ const User = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
-      // แสดงข้อความ popup แรกที่เจอ
       const firstErrorKey = Object.keys(newErrors)[0];
       setPopupMessage(newErrors[firstErrorKey]);
 
-      // ซ่อน popup หลัง 3 วินาที
       setTimeout(() => {
         setPopupMessage('');
       }, 3000);
@@ -245,36 +258,39 @@ const User = () => {
     }
 
     setPopupStatus("loading");
+
     const hasTechnicianData = technicianData.name.trim() !== '' || technicianData.phone.trim() !== '';
     const hasAdminData = adminData.username.trim() !== '' && adminData.password.trim() !== '';
 
-    console.log("technicianData: ", technicianData)
-    console.log("adminData: ", adminData)
+    // console.log("customerDataUpdate", customerDataUpdate)
 
     try {
       if (activeTab === 'customers') {
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createCustomer`, customerData);
+        if (customerDataUpdate.id) {
+          // กำลัง "แก้ไข"
+          await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/updateCustomer`, {
+            id: customerDataUpdate.id,
+            name: customerDataUpdate.name,
+            phone: customerDataUpdate.phone,
+            buildingId: customerDataUpdate.buildingId,
+            companyId: customerDataUpdate.companyId,
+            companyName: customerDataUpdate.companyName,
+            unitId: customerDataUpdate.unitId,
+            unitName: customerDataUpdate.unitName,
+            // email: customerData.email
+          });
+        } else {
+          // ➕ เพิ่มลูกค้าใหม่
+          await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createCustomer`, customerData);
+        }
       }
+
       if (activeTab === 'technicians') {
-        // console.log("is comming technicians")
-        // console.log("hasTechnicianData is: ", hasTechnicianData)
         if (hasTechnicianData) {
           await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createTechnician`, technicianData);
-          // console.log("res technician: ", res.data)
-          // alert('สร้างเจ้าหน้าที่สำเร็จ');
-          // navigate('/user');
-          // return;
         }
         if (hasAdminData) {
           await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createAdmin`, adminData);
-          // console.log("res admin: ", res.data)
-          // if (res.data.data) {
-          //   alert('สร้างแอดมินสำเร็จ');
-          //   navigate('/user')
-          // } else {
-          //   alert('Username หรือ Password ของแอดมินไม่ถูกต้อง');
-          // }
-          // return;
         }
       }
 
@@ -283,7 +299,7 @@ const User = () => {
         setTimeout(() => {
           setPopupStatus(null);
           setPopupCreateUser(false);
-          window.location.reload();
+          window.location.reload(); // หรือ fetch ข้อมูลใหม่แทนการ reload
         }, 2000);
       }, 2000);
       navigate('/user');
@@ -296,7 +312,6 @@ const User = () => {
           setPopupStatus(null);
         }, 2000);
       }, 2000);
-      // navigate('/user');
     }
   };
 
@@ -427,9 +442,66 @@ const User = () => {
     return uniqueBuildings.slice(0, 3);
   };
 
-  const handleEditCustomer = (userId) => {
-    navigate(`/editCustomer/${userId}`);
-  }
+  // const handleEditCustomer = (userId) => {
+  //   // navigate(`/editCustomer/${userId}`);
+  //   setEditingCustomerId(id);
+  // }
+
+  const handleEditCustomer = async (userId) => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getCustomerById/${userId}`);
+      const customer = res.data.data;
+      // setEditingCustomerId(id);
+      // console.log("customer: ", customer)
+      // console.log("customer.id: ", customer.id)
+      // console.log("customer.name: ", customer.name)
+
+      setCustomerData({
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        buildingId: customer.unit?.company?.buildingId,
+        companyId: customer.unit?.companyId,
+        companyName: customer.unit?.company?.companyName,
+        unitId: customer.unitId,
+        unitName: customer.unit?.unitName,
+        buildingName: customer.unit?.company?.building?.buildingName,
+        email: customer.email,
+      });
+
+      // โหลดข้อมูล dropdown ต่าง ๆ
+      await Promise.all([
+        handleGetBuilding(),
+        handleGetCompany(),
+        handleGetUnits(),
+      ]);
+
+      console.log("customerData: ", customerData)
+      console.log("customerDataUpdate: ", customerDataUpdate)
+
+      setActiveTab('customers'); // เปลี่ยน tab เป็น customers ถ้ายังไม่อยู่
+      setPopupCreateUser(true);  // เปิด popup
+
+    } catch (err) {
+      console.error('ไม่สามารถโหลดข้อมูลลูกค้า:', err);
+    }
+  };
+
+  const handleGetBuilding = async () => {
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`);
+    setBuildings(res.data.data);
+  };
+
+  const handleGetCompany = async () => {
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getCompany`);
+    setCompanies(res.data.data);
+  };
+
+  const handleGetUnits = async () => {
+    const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getUnits`);
+    setUnits(res.data.data);
+  };
+
 
   // const handleEditCustomer = (userId) => {
   //   const customer = customers.find((c) => c.id === userId);
@@ -539,322 +611,32 @@ const User = () => {
   return (
     <AdminLayout>
       <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center gap-2 flex-wrap mb-6">
-          {/* ช่องค้นหา */}
-          <div className="flex items-center flex-1 min-w-[250px] border-b-[1px] border-[#837958]">
-            <BiSearchAlt2 size={20} className="text-[#837958] ml-2" />
-            <input
-              type="text"
-              placeholder="ค้นหา"
-              value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-              className="w-full pl-2 pr-3 py-1 outline-none"
-            />
-          </div>
-
-          {/* ปุ่มค้นหา */}
-          <button
-            onClick={handleSearch}
-            className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
-          >
-            <BiSearchAlt2 size={18} className="text-white mr-1" />
-            ค้นหา
-          </button>
-
-          {/* ปุ่มอาคาร */}
-          <button
-            className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center gap-[2px] shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
-          >
-            อาคาร
-            <HiChevronDown size={18} className="text-white" />
-          </button>
-
-          {/* ปุ่มต่าง ๆ */}
-          <button
-            className="px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
-            onClick={() => console.log("ส่งข้อมูลออก")}
-          >
-            ส่งข้อมูลออก
-          </button>
-
-          <button
-            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
-              ${activeTab === 'customers'
-                ? 'bg-[#BC9D72] text-white'
-                : 'bg-[#F4F2ED] text-black'
-              }`}
-            onClick={() => setActiveTab('customers')}
-          >
-            ลูกค้า
-          </button>
-
-          <button
-            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
-              ${activeTab === 'technicians'
-                ? 'bg-[#BC9D72] text-white'
-                : 'bg-[#F4F2ED] text-black'
-              }`}
-            onClick={() => setActiveTab('technicians')}
-          >
-            เจ้าหน้าที่
-          </button>
-
-          <button
-            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
-              ${activeTab === 'admin'
-                ? 'bg-[#BC9D72] text-white'
-                : 'bg-[#F4F2ED] text-black'
-              }`}
-            onClick={() => setActiveTab('admin')}
-          >
-            แอดมิน
-          </button>
-
-          <button
-            className="px-4 h-[36px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-[#a88f5c]"
-            onClick={() => setPopupCreateUser(true)}
-          >
-            เพิ่มผู้ใช้งาน
-          </button>
-        </div>
-
-        {
+        <UserToolbar
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+          handleSearch={handleSearch}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          setPopupCreateUser={setPopupCreateUser}
+        />
+        {/* {
           console.log("activeTab: ", activeTab)
-        }
-
-        {popupCreateUser && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-            <div className="relative w-[520px] h-[620px] bg-white border border-[#BC9D72] rounded-xl p-2 shadow-lg overflow-y-auto">
-              <h2 className="text-[18px] font-black text-[#837958] text-center mb-4 mt-4">
-                {activeTab === 'customers' ? "เพิ่มข้อมูลลูกค้า" : activeTab === 'technicians' ? "เพิ่มข้อมูลเจ้าหน้าที่" : "เพิ่มข้อมูลแอดมิน"}
-              </h2>
-
-              {/* Tabs */}
-              <div className="flex w-fit mx-auto mb-2 rounded-xl border border-[#837958] overflow-hidden text-sm bg-[#F4F2ED]">
-                <button
-                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-300 ease-in-out
-                  ${activeTab === 'customers'
-                      ? 'bg-[#837958] text-white rounded-r-xl'
-                      : 'text-[#837958] rounded-none'
-                    }`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // setTabPopup('customers');
-                    setActiveTab('customers')
-                  }}
-                >
-                  ลูกค้า
-                </button>
-                <button
-                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-300 ease-in-out
-                  ${activeTab === 'technicians'
-                      ? 'bg-[#837958] text-white rounded-l-xl'
-                      : 'text-[#837958] rounded-none'
-                    }`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // setTabPopup('technicians');
-                    setActiveTab('technicians')
-                  }}
-                >
-                  เจ้าหน้าที่
-                </button>
-              </div>
-
-              <div className='flex justify-center'>
-                <div className="relative min-h-[400px]">  {/* ปรับตามความสูงฟอร์มที่ใหญ่สุด */}
-                  <div
-                    className={`transition-all duration-300 ease-in-out
-                    ${['customers', 'technicians'].includes(activeTab)
-                        ? 'opacity-100 translate-y-0'
-                        : ''}
-                    `}
-                  >
-                    <form onSubmit={handleSubmit}>
-
-                      {(activeTab === 'customers') && (
-                        <>
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
-                            <input name="name" value={customerData.name} onChange={handleCustomerChange}
-                              placeholder="ชื่อ-สกุล"
-                              className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border rounded-lg px-3 py-1.5 text-sm focus:outline-none
-                              ${errors.name ? 'border-red-500' : 'border-[#837958]'}
-                              `}
-                            />
-                          </div>
-
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
-                            <input name="phone" value={customerData.phone} onChange={handleCustomerChange}
-                              placeholder="เบอร์โทรศัพท์"
-                              maxLength={15}
-                              inputMode="numeric"
-                              pattern="\d*"
-                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                          </div>
-
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">บริษัท<span className="text-red-500">*</span></label>
-                            <input name="companyName" value={customerData.companyName} onChange={handleCustomerChange}
-                              placeholder="บริษัท"
-                              className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none
-                              ${errors.companyName ? 'border-red-500' : 'border-[#837958]'}`} />
-                          </div>
-
-                          {/* <div className="mb-3">
-                            <label className="block text-[#BC9D72] mb-1 text-sm">ชื่อเล่น</label>
-                            <input name="nickname" value={customerData.nickname} onChange={handleCustomerChange}
-                              placeholder="ชื่อเล่น"
-                              className="w-full border border-[#BC9D72] rounded px-3 py-1.5 text-sm focus:outline-none" />
-                            </div> */}
-
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ยูนิต</label>
-                            <input name="unitName" value={customerData.unitName} onChange={handleCustomerChange}
-                              placeholder="ยูนิต"
-                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                          </div>
-
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">อาคาร<span className="text-red-500">*</span></label>
-                            <select
-                              name="buildingName"
-                              value={customerData.buildingName}
-                              onChange={handleCustomerChange}
-                              className={`w-[320px] text-[12px] text-[#BC9D72]/50 border 
-                            ${errors.buildingName ? 'border-red-500' : 'border-[#837958]'} 
-                            rounded-lg px-2 py-1.5 focus:outline-none`}
-                            >
-                              <option value="">เลือกอาคาร</option>
-                              {buildings.map((building) => (
-                                <option key={building.id} value={building.buildingName}>
-                                  {building.buildingName}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="mb-4">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">อีเมล</label>
-                            <input type="email" name="email" value={customerData.email} onChange={handleCustomerChange}
-                              placeholder="อีเมล"
-                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                          </div>
-                        </>
-                      )}
-
-                      {(activeTab === 'technicians') && (
-                        <>
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
-                            <input name="name" value={technicianData.name} onChange={handleTechnicianChange}
-                              placeholder="ชื่อ-สกุล"
-                              className={`w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none
-                              `}
-                            />
-                          </div>
-                          {/*${errors.name ? 'border-red-500' : 'border-[#837958]'}*/}
-
-                          <div className="mb-12">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
-                            <input name="phone" value={technicianData.phone} onChange={handleTechnicianChange}
-                              placeholder="เบอร์โทรศัพท์"
-
-                              className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                          </div>
-
-                          <div className="mb-[64px]">
-                            <div className="flex items-center justify-center mb-4">
-                              <div className="w-full h-px bg-[#837958] opacity-60" />
-                              <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
-                              <div className="w-full h-px bg-[#837958] opacity-60" />
-                            </div>
-
-                            <div className="mb-2">
-                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
-                              <input
-                                type="text"
-                                name="username"
-                                value={adminData.username}
-                                onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
-                                placeholder="Username"
-                                className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="mb-2">
-                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
-                              <input
-                                type="password"
-                                name="password"
-                                value={adminData.password}
-                                onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
-                                placeholder="Password"
-                                className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {(activeTab === 'admin') && (
-                        <>
-                          <div className="mb-[64px]">
-                            {/* <div className="flex items-center justify-center mb-4">
-                              <div className="w-[120px] h-px bg-[#837958]" />
-                              <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
-                              <div className="w-[120px] h-px bg-[#837958]" />
-                            </div> */}
-
-                            <div className="mb-2">
-                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
-                              <input
-                                type="text"
-                                name="username"
-                                value={adminData.username}
-                                onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
-                                placeholder="Username"
-                                className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="mb-2">
-                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
-                              <input
-                                type="password"
-                                name="password"
-                                value={adminData.password}
-                                onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
-                                placeholder="Password"
-                                className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      <div className={`flex flex-col`}>
-                        <button
-                          type="submit"
-                          className="w-full mt-2 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition"
-                        >
-                          {activeTab === 'customers' ? 'เพิ่มข้อมูลลูกค้า' : activeTab === 'technicians' ? 'เพิ่มข้อมูลเจ้าหน้าที่' : "เพิ่มข้อมูลแอดมิน"}
-                        </button>
-
-                        {/* ปุ่มปิด */}
-                        <button
-                          className="w-full mb-2 bg-white text-[#837958] text-[12px] font-bold border-[1px] border-[#837958] py-2 rounded-xl hover:opacity-90 transition"
-                          onClick={() => setPopupCreateUser(false)}
-                        >
-                          ปิดหน้าต่างนี้
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        } */}
+        <UserPopup
+          show={popupCreateUser}
+          onClose={() => setPopupCreateUser(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          handleSubmit={handleSubmit}
+          customerData={customerData}
+          technicianData={technicianData}
+          adminData={adminData}
+          handleCustomerChange={handleCustomerChange}
+          handleTechnicianChange={handleTechnicianChange}
+          buildings={buildings}
+          errors={errors}
+          setAdminData={setAdminData}
+        />
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -864,361 +646,49 @@ const User = () => {
           <>
             {/* Customers Table */}
             {activeTab === 'customers' && (
-              <div className="bg-white shadow-md overflow-hidden">
-                <table className="min-w-full leading-normal">
-                  <thead>
-                    <tr>
-                      <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        ลำดับ
-                      </th>
-                      <th className="w-52 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        อาคาร
-                      </th>
-                      <th className="w-48 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        บริษัท/ร้านค้า
-                      </th>
-                      <th className="w-1 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        ยูนิต
-                      </th>
-                      <th className="w-52 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        ลูกค้า
-                      </th>
-                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        เบอร์โทรศัพท์
-                      </th>
-                      {/* <th className="px-5 py-3 border-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        Email
-                      </th> */}
-                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        สถานะ Line
-                      </th>
-                      <th className="w-28 px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        จัดการ
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {customers.length > 0 ? (
-                      customers.map((customer, index) => (
-                        <tr key={customer.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-2 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                            {index + 1}
-                          </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                            {customer.unit?.company?.building?.buildingName || '-'}
-                          </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                            {customer.unit?.company?.companyName || '-'}
-                          </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                            {customer.unit?.unitName || '-'}
-                          </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                            {customer.name || '-'}
-                          </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                            {customer.phone || '-'}
-                          </td>
-                          {/* <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {customer.email || '-'}
-                          </td> */}
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm">
-                            {customer.userId ? (
-                              <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
-                            ) : (
-                              <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
-                            )}
-                          </td>
-                          <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                            <button
-                              className="text-blue-500 hover:text-blue-700 mr-3"
-                              title="แก้ไข"
-                              onClick={() => {
-                                // setPopupEditUser(true)
-                                handleEditCustomer(customer.id)
-                              }}
-                            >
-                              <UserPen className="inline-block" />
-                            </button>
-                            <button
-                              className="text-red-500 hover:text-red-700"
-                              title="ลบ"
-                              onClick={() => confirmDelete(customer.id)} //confirmDeleteId handleDeleteCustomer
-                            >
-                              <Trash2 className="inline-block" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="9" className="px-5 py-4 text-center text-gray-500">
-                          ไม่พบข้อมูลลูกค้า
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <CustomerTable
+                customers={customers}
+                handleEditCustomer={handleEditCustomer}
+                confirmDelete={confirmDelete}
+                setEditMode={setEditMode}
+              />
             )}
 
             {/* Technicians Table */}
             {activeTab === 'technicians' && (
-              <div className="bg-white shadow-md overflow-hidden">
-                <table className="min-w-full leading-normal">
-                  <thead>
-                    <tr>
-                      <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        ลำดับ
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        เจ้าหน้าที่
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        เบอร์โทรศัพท์
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        สถานะ Line
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        สังกัด
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        จัดการ
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {technicians.length > 0 ? (
-                      technicians.map((tech, index) => {
-                        const uniqueBuildings = getUniqueBuildings(tech.techBuilds);
-
-                        return (
-                          <tr key={tech.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {index + 1}
-                            </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {tech.name || '-'}
-                            </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {tech.phone || '-'}
-                            </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {tech.userId ? (
-                                <>
-                                  <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
-                                </>
-                              ) : (
-                                <>
-                                  <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
-                                </>
-                              )}
-                            </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {uniqueBuildings.length > 0 ? (
-                                <div className="flex flex-row space-x-2">
-                                  {uniqueBuildings.join(', ')}
-                                </div>
-                              ) : '-'}
-                            </td>
-                            <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              <button
-                                className="text-blue-500 hover:text-blue-700 mr-3"
-                                title="แก้ไข"
-                                onClick={() => handleEditTechnician(tech.userId)}
-                              >
-                                <UserPen className="inline-block" />
-                              </button>
-                              <button
-                                className="text-red-500 hover:text-red-700"
-                                title="ลบ"
-                                onClick={() => confirmDelete(tech.id)}
-                              >
-                                <Trash2 className="inline-block" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan="6" className="px-5 py-4 text-center text-gray-500">
-                          ไม่พบข้อมูลพนักงาน
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <TechnicianTable
+                technicians={technicians}
+                getUniqueBuildings={getUniqueBuildings}
+                handleEditTechnician={handleEditTechnician}
+                confirmDelete={confirmDelete}
+              />
             )}
 
             {/* Wait Approve Table */}
             {/* {activeTab === 'waitApprove' && (
-              <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                <table className="min-w-full leading-normal">
-                  <thead>
-                    <tr>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        ลำดับ
-                      </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        อาคาร
-                      </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        บริษัท
-                      </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        ยูนิต
-                      </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        ผู้ใช้
-                      </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        เบอร์โทรศัพท์
-                      </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        Email
-                      </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        Line
-                      </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
-                        จัดการ
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {waitForApprove.length > 0 ? (
-                      waitForApprove.map((user, index) => (
-                        <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {index + 1}
-                          </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {user.unit.company.building.buildingName || '-'}
-                          </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {user.unit.company.companyName || '-'}
-                          </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {user.unit.unitName || '-'}
-                          </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {user.name || '-'}
-                          </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {user.phone || '-'}
-                          </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {user.email || '-'}
-                          </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {user.userId ? (
-                              <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
-                            ) : (
-                              <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
-                            )}
-                          </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            <button
-                              className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                              onClick={() => handleApprove(user.userId)}
-                            >
-                              อนุมัติ
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="5" className="px-5 py-4 text-center text-gray-500">
-                          ไม่พบข้อมูลรออนุมัติ
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <WaitApproveTable
+                activeTab={activeTab}
+                waitForApprove={waitForApprove}
+                handleApprove={handleApprove}
+              />
             )} */}
 
             {/* Admin */}
-            {
-              activeTab === "admin" && (
-                <div className="bg-white shadow-md overflow-hidden">
-                  <table className="min-w-full leading-normal">
-                    <thead>
-                      <tr>
-                        <th className="w-1 px-4 py-2 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                          ลำดับ
-                        </th>
-                        <th className="px-4 py-2 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                          ชื่อผู้ใช้งาน
-                        </th>
-                        {/* <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                          รหัสผ่าน
-                        </th> */}
-                        <th className="w-24 px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                          จัดการ
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {
-                        admin.length > 0 ? (
-                          admin.map((admin, index) => (
-                            <tr key={admin.id} className="hover:bg-gray-50">
-                              <td className="px-4 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                                {index + 1}
-                              </td>
-                              <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                                {admin.username}
-                              </td>
-                              {/* <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                                <span className='mx-2'>
-                                  {showPasswords[admin.id] ? admin.password : "********"}
-                                </span>
-                                <button onClick={() => toggleShowPassword(admin.id)} className="focus:outline-none">
-                                  {showPasswords[admin.id] ? <FaEyeSlash /> : <FaEye />}
-                                </button>
-                              </td> */}
-                              <td className="h-[16px] px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] text-sm">
-                                <button
-                                  className="text-blue-500 hover:text-blue-700 mr-3"
-                                  title="แก้ไข"
-                                  onClick={() => handleEditAdmin(admin.id)}
-                                >
-                                  <UserPen className="inline-block" />
-                                </button>
-                                <button
-                                  className="text-red-500 hover:text-red-700"
-                                  title="ลบ"
-                                  onClick={() => confirmDelete(admin.id)}
-                                >
-                                  <Trash2 className="inline-block" />
-                                </button>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="4" className="text-center py-4 text-gray-500">
-                              ไม่มีข้อมูลผู้ใช้งาน
-                            </td>
-                          </tr>
-                        )
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              )
-            }
+            {activeTab === "admin" && (
+              <AdminTable
+                admin={admin}
+                handleEditAdmin={handleEditAdmin}
+                confirmDelete={confirmDelete}
+              // showPasswords={showPasswords}
+              // toggleShowPassword={toggleShowPassword}
+              />
+            )}
 
-            {popupEditUser && (
+            {/*
+             {popupEditUser && (
               <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
                 <div className="bg-white max-w-xl w-full mx-4 rounded-lg shadow-lg p-6 relative">
 
-                  {/* ปุ่มปิด */}
                   <button
                     className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
                     onClick={() => setPopupEditUser(false)}
@@ -1319,59 +789,22 @@ const User = () => {
                   </form>
                 </div>
               </div>
-            )}
+            )} 
+            */}
 
             {/* Popup ยืนยันการลบ */}
-            {showConfirmPopup && (
-              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
-                <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] h-[120px] text-center">
-                  <p className="text-lg font-semibold text-[#837958]">ยืนยันการลบ{activeTab === 'customers' ? "ลูกค้า" : activeTab === 'technicians' ? "เจ้าหน้าที่" : "แอดมิน"}</p>
-                  <div className="flex flex-rows items-center justify-center text-[#837958] text-center mt-6 gap-x-4">
-                    <button onClick={cancelDelete} className="bg-white text-[12px] text-[#BC9D72] border-[1px] w-64 h-6 border-[#BC9D72] rounded hover:opacity-80">
-                      ยกเลิก
-                    </button>
-                    <button onClick={proceedDelete} className="bg-[#BC9D72] text-[12px] w-64 h-6 text-white rounded hover:opacity-90">
-                      ยืนยัน
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+            <ConfirmDeletePopup
+              show={showConfirmPopup}
+              onCancel={cancelDelete}
+              onConfirm={proceedDelete}
+              activeTab={activeTab}
+            />
 
-            {popupStatus && (
-              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
-                <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] text-center">
-                  {popupStatus === "loading" ? (
-                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      {/* ไอคอนหรือวงกลม loading */}
-                      <div className="animate-spin rounded-full border-4 border-t-[#837958] border-gray-200 h-12 w-12 mb-4"></div>
-                      <h2 className="text-lg font-semibold">กำลังโหลด...</h2>
-                    </div>
-                  ) : popupStatus === "success" ? (
-                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleCheck size={50} strokeWidth={1} className="mb-2" />
-                      <h2 className="text-lg font-semibold">
-                        {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "เพิ่มข้อมูลเจ้าหน้าที่สำเร็จ" : "เพิ่มข้อมูลแอดมินสำเร็จ"}
-                      </h2>
-                    </div>
-                  ) : popupStatus === "delete" ? (
-                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleCheck size={50} strokeWidth={1} className="mb-2" />
-                      <h2 className="text-lg font-semibold">
-                        {activeTab === "customers" ? "ลบข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "ลบข้อมูลเจ้าหน้าที่สำเร็จ" : "ลบข้อมูลแอดมินสำเร็จ"}
-                      </h2>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleX size={50} strokeWidth={1} className="mb-2" />
-                      <h2 className="text-lg font-semibold">
-                        {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าไม่สำเร็จ" : activeTab === "technicians" ? "เพิ่มข้อมูลเจ้าหน้าที่ไม่สำเร็จ" : "เพิ่มข้อมูลแอดมินไม่สำเร็จ"}
-                      </h2>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <StatusPopup
+              show={!!popupStatus}
+              status={popupStatus} // "loading", "success", "delete", or "error"
+              activeTab={activeTab}
+            />
 
             {popupMessage && (
               <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-500 text-white text-sm px-4 py-2 rounded-xl shadow-md z-50 transition">
