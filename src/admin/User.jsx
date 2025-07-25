@@ -751,9 +751,10 @@ const User = () => {
                             <input name="name" value={technicianData.name} onChange={handleTechnicianChange}
                               placeholder="ชื่อ-สกุล"
                               className={`w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none
-                                ${errors.name ? 'border-red-500' : 'border-[#837958]'}`}
+                              `}
                             />
                           </div>
+                          {/*${errors.name ? 'border-red-500' : 'border-[#837958]'}*/}
 
                           <div className="mb-12">
                             <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
@@ -981,10 +982,10 @@ const User = () => {
                       </th>
                       <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สังกัด
-                      </th>  
+                      </th>
                       <th className="px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         จัดการ
-                      </th>  
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1371,6 +1372,13 @@ const User = () => {
                 </div>
               </div>
             )}
+
+            {popupMessage && (
+              <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-500 text-white text-sm px-4 py-2 rounded-xl shadow-md z-50 transition">
+                {popupMessage}
+              </div>
+            )}
+
           </>
         )}
       </div>
