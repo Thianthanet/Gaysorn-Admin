@@ -1,8 +1,12 @@
-import axios from 'axios'
-import React, { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import axios from "axios";
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { CircleCheck, CircleX } from "lucide-react";
-import Swal from 'sweetalert2'
+import Swal from "sweetalert2";
+
+//photo and logo
+import BgLogin from "../assets/BgLogin.png";
+import LogoLogin from "../assets/LogoLogin.png";
 
 const Login = () => {
   const [username, setUsername] = useState('')
@@ -15,7 +19,8 @@ const Login = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const handleResize = () => { //1024
+    const handleResize = () => {
+      //1024
       setIsMobile(window.innerWidth < 1030);
     };
 
@@ -67,10 +72,10 @@ const Login = () => {
 
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/login`, {
-        username,
-        password,
+          username,
+          password,
         'cf-turnstile-response': captchaToken,
-      },
+        },
         {
           headers: { "Content-Type": "application/json" }
         }
@@ -120,7 +125,13 @@ const Login = () => {
 
   return (
     //bg-[#F5F3EE]
-    <div className={`min-h-screen bg-center bg-[url('/bg-adminLogin.png')] flex items-center justify-center ${isMobile ? "bg-cover" : "bg-contain"}`}>
+    <div className="relative w-screen h-screen flex items-center justify-center overflow-hidden">
+      <img
+        src={BgLogin}
+        alt="Background"
+        className="absolute inset-0 w-full h-full object-cover -z-10"
+      />
+
       <form
         ref={formRef}
         onSubmit={handleLogin}
@@ -128,7 +139,7 @@ const Login = () => {
         className="bg-[#E5E5E5]/10 backdrop-blur-[2px] w-[368px] shadow-2xl rounded-2xl border border-white flex flex-col p-8"
         style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
       >
-        <img src="/logo-gaysorn.png" alt="Logo" className="w-12 mx-auto mb-4" />
+        <img src={LogoLogin} alt="Logo" className="w-12 mx-auto mb-4" />
         <h2 className="text-center font-bold text-[28px] mb-2 bg-gradient-to-r from-[#4f4833] to-[#fff1c7] bg-clip-text text-transparent">
           เข้าสู่ระบบ
         </h2>
@@ -141,12 +152,15 @@ const Login = () => {
           type="text"
           placeholder="Username"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value)}
           // required
           className="w-full text-xs p-3 rounded-full border border-[#837958] bg-white/50 mb-4 focus:outline-none focus:ring-1 focus:ring-[#837958] placeholder-[#BC9D72]"
         />
 
-        <label className="block text-[12px] mb-1 text-white font-semibold" htmlFor="password">
+        <label
+          className="block text-[12px] mb-1 text-white font-semibold"
+          htmlFor="password"
+        >
           Password<span className="text-red-500"> *</span>
         </label>
         <input
@@ -154,7 +168,7 @@ const Login = () => {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           // required
           className="w-full text-xs p-3 rounded-full border border-[#837958] bg-white/50 mb-4 focus:outline-none focus:ring-1 focus:ring-[#837958] placeholder-[#BC9D72]"
         />
@@ -165,10 +179,11 @@ const Login = () => {
             className="cf-turnstile"
             data-sitekey={import.meta.env.VITE_API_SITE_KEY}
             // data-sitekey="3x00000000000000000000FF"
-            data-theme="light" F
+            data-theme="light"
+            F
           />
         </div>
-        <div className='flex items-center justify-center'>
+        <div className="flex items-center justify-center">
           <button
             type="submit"
             // disabled={loading}
@@ -193,25 +208,29 @@ const Login = () => {
               <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                 <CircleX size={50} className="mb-2" />
                 <h2 className="text-lg font-semibold">Please enter your</h2>
-                <h2 className="text-lg font-semibold">username and password.</h2>
+                <h2 className="text-lg font-semibold">
+                  username and password.
+                </h2>
               </div>
             ) : popupStatus === "success" ? (
-                <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                  <CircleCheck size={50} className="mb-2" />
-                  <h2 className="text-lg font-semibold">Login Success.</h2>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                  <CircleX size={50} className="mb-2" />
-                  <h2 className="text-lg font-semibold">Login failed.</h2>
-                  <h2 className="text-lg font-semibold">Please check your credentials.</h2>
-                </div>
-              )}
+              <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                <CircleCheck size={50} className="mb-2" />
+                <h2 className="text-lg font-semibold">Login Success.</h2>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                <CircleX size={50} className="mb-2" />
+                <h2 className="text-lg font-semibold">Login failed.</h2>
+                <h2 className="text-lg font-semibold">
+                  Please check your credentials.
+                </h2>
+              </div>
+            )}
           </div>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
