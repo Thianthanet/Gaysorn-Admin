@@ -475,8 +475,18 @@ const User = () => {
   const handleDeleteTechnician = async (id) => {
     try {
       // setPopupStatus("loading");
+      // setPopupStatus("loading");
       const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteTechnician/${id}`);
       console.log('Delete response:', response.data);
+      // แสดง popup "delete" 3 วินาที
+      setTimeout(() => {
+        setPopupStatus("delete");
+
+        setTimeout(() => {
+          setPopupStatus(null);
+          window.location.reload();
+        }, 2000);
+      }, 2000);
       // แสดง popup "delete" 3 วินาที
       setTimeout(() => {
         setPopupStatus("delete");
@@ -523,6 +533,8 @@ const User = () => {
     setShowConfirmPopup(false);
     if (confirmDeleteId !== null) {
       activeTab === 'customers' ? handleDeleteCustomer(confirmDeleteId) : activeTab === 'technicians' ? handleDeleteTechnician(confirmDeleteId) : handleDeleteAdmin(confirmDeleteId);
+    }
+  };
     }
   };
 
@@ -586,6 +598,7 @@ const User = () => {
               }`}
             onClick={() => setActiveTab('technicians')}
           >
+            เจ้าหน้าที่
             เจ้าหน้าที่
           </button>
 
@@ -972,7 +985,25 @@ const User = () => {
                       <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สังกัด
                       </th>
-                      <th className="px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-28 px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+=========
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        ลำดับ
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        เจ้าหน้าที่
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        เบอร์โทรศัพท์
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        Line
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        สังกัด (อาคาร)
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+>>>>>>>>> Temporary merge branch 2
                         จัดการ
                       </th>
                     </tr>
@@ -996,12 +1027,16 @@ const User = () => {
                             <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               {tech.userId ? (
                                 <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
+                                <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
                               ) : (
+                                <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
                                 <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
                               )}
                             </td>
                             <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               {uniqueBuildings.length > 0 ? (
+                                <div className="flex flex-row space-x-2">
+                                  {uniqueBuildings.join(', ')}
                                 <div className="flex flex-row space-x-2">
                                   {uniqueBuildings.join(', ')}
                                 </div>
@@ -1018,6 +1053,7 @@ const User = () => {
                               <button
                                 className="text-red-500 hover:text-red-700"
                                 title="ลบ"
+                                onClick={() => confirmDelete(tech.id)}
                                 onClick={() => confirmDelete(tech.id)}
                               >
                                 <Trash2 className="inline-block" />

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { SquarePlus } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { FaEdit, FaToggleOn, FaToggleOff } from 'react-icons/fa'
 
@@ -68,17 +69,17 @@ const Draft = () => {
 
             <div className="flex gap-2 mb-4">
                 <input
-                    className="border p-2 rounded w-1/2"
+                    className="border px-4 py-2 rounded flex-1"
                     type="text"
                     placeholder="เพิ่มข้อความบันทึกงานชั่วคราว"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                 />
                 <button
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    className="bg-[#837958] text-white px-6 py-2 rounded hover:bg-[#BC9D72] flex gap-2 justify-center items-center"
                     onClick={handleCreateContractor}
                 >
-                    เพิ่มข้อความ
+                   <SquarePlus /> เพิ่มข้อความ
                 </button>
             </div>
 
@@ -86,9 +87,9 @@ const Draft = () => {
                 <table className="min-w-full border border-gray-300">
                     <thead>
                         <tr className="bg-gray-100">
-                            <th className="border px-4 py-2 text-left">ลำดับ</th>
-                            <th className="border px-4 py-2 text-left">ข้อความ</th>
-                            <th className="border px-4 py-2 text-center">จัดการ</th>
+                            <th className="border px-4 py-2 text-left bg-[#BC9D72]">ลำดับ</th>
+                            <th className="border px-4 py-2 text-left bg-[#BC9D72]">ข้อความ</th>
+                            <th className="border px-4 py-2 text-center bg-[#BC9D72]">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -129,7 +130,7 @@ const Draft = () => {
                                         </button>
                                     ) : (
                                         <button
-                                            className="text-blue-600 hover:text-blue-800"
+                                            className="text-[#837958] hover:text-[#BC9D72]"
                                             onClick={() => {
                                                 setEditId(item.id)
                                                 setEditMessage(item.message)
