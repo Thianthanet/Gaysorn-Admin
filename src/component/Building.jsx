@@ -176,7 +176,7 @@ const Building = () => {
       )}
 
       {/* รายการตึก */}
-      <div className="space-y-2">
+      <div className="space-y-2 bg-white">
         {buildings.map((building) => (
           <div
             key={building.id}

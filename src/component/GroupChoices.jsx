@@ -1,6 +1,7 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { Edit, SquarePlus, ToggleLeft, ToggleRight } from 'lucide-react'
+import { FaToggleOff, FaToggleOn } from 'react-icons/fa'
 
 const GroupChoices = () => {
   const [groupChoices, setGroupChoices] = useState([])
@@ -76,7 +77,7 @@ const GroupChoices = () => {
           value={newChoiceName}
           onChange={(e) => setNewChoiceName(e.target.value)}
           placeholder="ชื่อกลุ่มงานใหม่"
-          className="border px-3 py-2 rounded w-72 flex-1"
+          className="border border-[#837958] px-3 py-2 rounded w-72 flex-1"
         />
         <button
           onClick={handleCreateChoice}
@@ -98,7 +99,7 @@ const GroupChoices = () => {
           </thead>
           <tbody>
             {groupChoices.map((choice, index) => (
-              <tr key={choice.id} className="hover:bg-gray-50">
+              <tr key={choice.id} className="bg-white hover:bg-gray-50">
                 <td className="px-4 py-2 border-b">{index + 1}</td>
                 <td className="px-4 py-2 border-b">
                   {editingId === choice.id ? (
@@ -132,9 +133,9 @@ const GroupChoices = () => {
 
                     <button onClick={() => handleToggleStatus(choice.id, choice.isDelete)}>
                       {!choice.isDelete ? (
-                        <ToggleRight size={24} className="text-green-500" />
+                        <FaToggleOn size={24} className="text-green-500" />
                       ) : (
-                        <ToggleLeft size={24} className="text-red-500" />
+                        <FaToggleOff size={24} className="text-red-500" />
                       )}
                     </button>
                   </div>
