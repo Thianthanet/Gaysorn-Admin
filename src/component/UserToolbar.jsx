@@ -20,6 +20,7 @@ const UserToolbar = ({
           placeholder="ค้นหา"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           className="w-full pl-2 pr-3 py-1 outline-none"
         />
       </div>

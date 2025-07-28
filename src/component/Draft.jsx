@@ -69,7 +69,7 @@ const Draft = () => {
 
             <div className="flex gap-2 mb-4">
                 <input
-                    className="border px-4 py-2 rounded flex-1"
+                    className="border border-[#837958] px-4 py-2 rounded flex-1"
                     type="text"
                     placeholder="เพิ่มข้อความบันทึกงานชั่วคราว"
                     value={newMessage}
@@ -79,7 +79,7 @@ const Draft = () => {
                     className="bg-[#837958] text-white px-6 py-2 rounded hover:bg-[#BC9D72] flex gap-2 justify-center items-center"
                     onClick={handleCreateContractor}
                 >
-                   <SquarePlus /> เพิ่มข้อความ
+                    <SquarePlus /> เพิ่มข้อความ
                 </button>
             </div>
 
@@ -94,7 +94,7 @@ const Draft = () => {
                     </thead>
                     <tbody>
                         {note.map((item) => (
-                            <tr key={item.id} className="hover:bg-gray-50">
+                            <tr key={item.id} className="bg-white hover:bg-gray-50">
                                 <td className="border px-4 py-2">{item.id}</td>
 
                                 <td className="border px-4 py-2">
@@ -111,15 +111,6 @@ const Draft = () => {
                                 </td>
 
                                 <td className="border px-4 py-2 text-center flex gap-2 justify-center">
-                                    {/* ปุ่ม toggle เปิด/ปิด */}
-                                    <button onClick={() => handleApproveContractor(item.id, item.isDelete)}>
-                                        {item.isDelete ? (
-                                            <FaToggleOff className="text-red-500 text-xl" />
-                                        ) : (
-                                            <FaToggleOn className="text-green-500 text-xl" />
-                                        )}
-                                    </button>
-
                                     {/* ปุ่มแก้ไข */}
                                     {editId === item.id ? (
                                         <button
@@ -139,6 +130,15 @@ const Draft = () => {
                                             <FaEdit />
                                         </button>
                                     )}
+
+                                    {/* ปุ่ม toggle เปิด/ปิด */}
+                                    <button onClick={() => handleApproveContractor(item.id, item.isDelete)}>
+                                        {item.isDelete ? (
+                                            <FaToggleOff className="text-red-500 text-xl" />
+                                        ) : (
+                                            <FaToggleOn className="text-green-500 text-xl" />
+                                        )}
+                                    </button>
                                 </td>
                             </tr>
                         ))}

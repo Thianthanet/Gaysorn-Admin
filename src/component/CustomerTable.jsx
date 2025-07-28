@@ -6,7 +6,6 @@ const CustomerTable = ({
   customers,
   handleEditCustomer,
   confirmDelete,
-  setEditMode,
 }) => {
   return (
     <div className="bg-white shadow-md overflow-hidden">
@@ -55,7 +54,6 @@ const CustomerTable = ({
                     className="text-blue-500 hover:text-blue-700 mr-3"
                     title="แก้ไข"
                     onClick={() => {
-                      setEditMode(true);
                       handleEditCustomer(customer.id);
                     }}
                   >

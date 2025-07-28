@@ -12,8 +12,11 @@ const UserPopup = ({
   handleCustomerChange,
   handleTechnicianChange,
   buildings,
+  selectedBuildings,
+  isEditModeTechnicians,
+  handleBuildingToggle,
   errors,
-  setAdminData
+  setAdminData,
 }) => {
   if (!show) return null;
 
@@ -24,18 +27,17 @@ const UserPopup = ({
           {activeTab === "customers"
             ? "เพิ่มข้อมูลลูกค้า"
             : activeTab === "technicians"
-            ? "เพิ่มข้อมูลเจ้าหน้าที่"
-            : "เพิ่มข้อมูลแอดมิน"}
+              ? "เพิ่มข้อมูลเจ้าหน้าที่"
+              : "เพิ่มข้อมูลแอดมิน"}
         </h2>
 
         {/* Tabs */}
         <div className="flex w-fit mx-auto mb-2 rounded-xl border border-[#837958] overflow-hidden text-sm bg-[#F4F2ED]">
           <button
-            className={`px-6 py-2 font-medium w-[160px] transition-all duration-300 ease-in-out ${
-              activeTab === "customers"
-                ? "bg-[#837958] text-white rounded-r-xl"
-                : "text-[#837958]"
-            }`}
+            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out ${activeTab === "customers"
+              ? "bg-[#837958] text-white rounded-r-xl"
+              : "text-[#837958]"
+              }`}
             onClick={(e) => {
               e.preventDefault();
               setActiveTab("customers");
@@ -44,17 +46,28 @@ const UserPopup = ({
             ลูกค้า
           </button>
           <button
-            className={`px-6 py-2 font-medium w-[160px] transition-all duration-300 ease-in-out ${
-              activeTab === "technicians"
-                ? "bg-[#837958] text-white rounded-l-xl"
-                : "text-[#837958]"
-            }`}
+            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out ${activeTab === "technicians"
+              ? "bg-[#837958] text-white rounded-r-xl rounded-l-xl"
+              : "text-[#837958]"
+              }`}
             onClick={(e) => {
               e.preventDefault();
               setActiveTab("technicians");
             }}
           >
             เจ้าหน้าที่
+          </button>
+          <button
+            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out ${activeTab === "admin"
+              ? "bg-[#837958] text-white rounded-l-xl"
+              : "text-[#837958]"
+              }`}
+            onClick={(e) => {
+              e.preventDefault();
+              setActiveTab("admin");
+            }}
+          >
+            แอดมิน
           </button>
         </div>
 
@@ -102,11 +115,10 @@ const UserPopup = ({
                       name="buildingName"
                       value={customerData.buildingName}
                       onChange={handleCustomerChange}
-                      className={`w-[320px] text-[12px] text-[#BC9D72]/50 border ${
-                        errors.buildingName
-                          ? "border-red-500"
-                          : "border-[#837958]"
-                      } rounded-lg px-2 py-1.5 focus:outline-none`}
+                      className={`w-[320px] text-[12px] text-[#BC9D72]/50 border ${errors.buildingName
+                        ? "border-red-500"
+                        : "border-[#837958]"
+                        } rounded-lg px-2 py-1.5 focus:outline-none`}
                     >
                       <option value="">เลือกอาคาร</option>
                       {buildings.map((building) => (
@@ -142,12 +154,34 @@ const UserPopup = ({
                   />
                   <InputField
                     label="เบอร์โทรศัพท์"
+                    note="(การแก้ไขเบอร์โทรศัพท์ อาจทำให้ผู้ใช้งานต้องลงทะเบียนใหม่)"
                     name="phone"
                     value={technicianData.phone}
                     onChange={handleTechnicianChange}
                   />
 
-                  <Divider label="Admin" />
+                  {/* อาคาร */}
+                  {isEditModeTechnicians && (
+                    <div className="">
+                      <label className="text-[#BC9D72] text-[12px] font-medium">อาคาร</label>
+                      <div className="grid grid-cols-1 gap-3 mt-1">
+                        {buildings.map(building => (
+                          <label key={building.id} className="flex items-center space-x-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedBuildings.includes(building.id)}
+                              onChange={() => handleBuildingToggle(building.id)}
+                              className="h-3 w-3 text-[#BC9D72] accent-[#BC9D72] border-[1px] border-[#BC9D72] checked:bg-[#BC9D72] checked:border-[#BC9D72] cursor-pointer"
+                            />
+                            
+                            <span className="text-[#BC9D72] text-[12px] font-medium">{building.buildingName}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* <Divider label="Admin" />
 
                   <InputField
                     label="Username"
@@ -165,7 +199,7 @@ const UserPopup = ({
                     onChange={(e) =>
                       setAdminData({ ...adminData, password: e.target.value })
                     }
-                  />
+                  /> */}
                 </>
               )}
 
@@ -195,13 +229,13 @@ const UserPopup = ({
                 <button
                   type="submit"
                   className={`w-full mt-2 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition
-                    ${activeTab === "technicians" ? "mt-[52px]" : ""}`}
+                    ${activeTab === "technicians" ? isEditModeTechnicians ? "mt-[156px]" : "mt-[262px]" : activeTab === "admin" ? "mt-[262px]" : ""}`}
                 >
                   {activeTab === "customers"
                     ? "เพิ่มข้อมูลลูกค้า"
                     : activeTab === "technicians"
-                    ? "เพิ่มข้อมูลเจ้าหน้าที่"
-                    : "เพิ่มข้อมูลแอดมิน"}
+                      ? "เพิ่มข้อมูลเจ้าหน้าที่"
+                      : "เพิ่มข้อมูลแอดมิน"}
                 </button>
                 <button
                   type="button"
@@ -221,6 +255,7 @@ const UserPopup = ({
 
 const InputField = ({
   label,
+  note,
   name,
   value,
   onChange,
@@ -230,10 +265,17 @@ const InputField = ({
   inputMode,
   error,
 }) => (
-  <div className={`mb-2`}>
-    <label className="block text-[#BC9D72] mb-1 text-[12px]">
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
+  <div className="mb-2">
+    <div className="flex items-center gap-1 mb-1">
+      <label className="text-[#BC9D72] text-[12px] font-medium">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      {note && (
+        <span className="text-gray-500 text-[10px] font-normal">
+          {note}
+        </span>
+      )}
+    </div>
     <input
       type={type}
       name={name}
@@ -242,21 +284,20 @@ const InputField = ({
       placeholder={label}
       maxLength={maxLength}
       inputMode={inputMode}
-      className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border ${
-        error ? "border-red-500" : "border-[#837958]"
-      } rounded-lg px-3 py-1.5 text-sm focus:outline-none`}
+      className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border ${error ? "border-red-500" : "border-[#837958]"
+        } rounded-lg px-3 py-1.5 text-sm focus:outline-none`}
     />
   </div>
 );
 
-const Divider = ({ label }) => (
-  <div className="flex items-center justify-center mb-4 mt-12">
-    <div className="w-full h-px bg-[#837958] opacity-60" />
-    <span className="mx-2 text-[#837958] font-semibold text-[18px]">
-      {label}
-    </span>
-    <div className="w-full h-px bg-[#837958] opacity-60" />
-  </div>
-);
+// const Divider = ({ label }) => (
+//   <div className="flex items-center justify-center mb-4 mt-12">
+//     <div className="w-full h-px bg-[#837958] opacity-60" />
+//     <span className="mx-2 text-[#837958] font-semibold text-[18px]">
+//       {label}
+//     </span>
+//     <div className="w-full h-px bg-[#837958] opacity-60" />
+//   </div>
+// );
 
 export default UserPopup;

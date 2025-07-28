@@ -67,7 +67,7 @@ const TechnicianTable = ({
                     <button
                       className="text-blue-500 hover:text-blue-700 mr-3"
                       title="แก้ไข"
-                      onClick={() => handleEditTechnician(tech.userId)}
+                      onClick={() => handleEditTechnician(tech.id)}
                     >
                       <UserPen className="inline-block" />
                     </button>

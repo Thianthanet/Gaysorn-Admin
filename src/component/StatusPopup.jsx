@@ -12,6 +12,7 @@ const StatusPopup = ({ show, status, activeTab = "customers" }) => {
       : "แอดมิน";
 
     if (status === "success") return `เพิ่มข้อมูล${tabLabel}สำเร็จ`;
+    if (status === "update") return `แก้ไขข้อมูล${tabLabel}สำเร็จ`;
     if (status === "delete") return `ลบข้อมูล${tabLabel}สำเร็จ`;
     if (status === "error") return `เพิ่มข้อมูล${tabLabel}ไม่สำเร็จ`;
     return `กำลังโหลด...`;
@@ -29,6 +30,7 @@ const StatusPopup = ({ show, status, activeTab = "customers" }) => {
           </div>
         );
       case "success":
+      case "update":
       case "delete":
         return (
           <div className={baseClasses}>
