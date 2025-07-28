@@ -117,15 +117,22 @@ const Jobs = () => {
       วันที่เสร็จสิ้น: job.completeDate
         ? formatDateTimeThaiShort(job.completeDate)
         : "-",
-      เจ้าหน้าที่: job.acceptedBy?.name?.trim() || "-",
+      // เจ้าหน้าที่: job.acceptedBy?.name?.trim() || "-",
+      เจ้าหน้าที่:
+        [
+          job.acceptedBy?.name?.trim() ? `${job.acceptedBy.name} (รับงาน)` : null,
+          job.completedBy?.name?.trim() ? `${job.completedBy.name} (ดำเนินการ)` : null,
+        ]
+          .filter(Boolean)
+          .join("\n") || "-",
       สถานะ:
         job.status === "pending"
           ? "รอดำเนินการ"
           : job.status === "in_progress"
-          ? "อยู่ระหว่างดำเนินการ"
-          : job.status === "completed"
-          ? "เสร็จสิ้น"
-          : job.status || "-",
+            ? "อยู่ระหว่างดำเนินการ"
+            : job.status === "completed"
+              ? "เสร็จสิ้น"
+              : job.status || "-",
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
 
@@ -139,7 +146,7 @@ const Jobs = () => {
       { wch: 20 }, // วันที่แจ้ง
       { wch: 20 }, // วันที่รับงาน
       { wch: 20 }, // วันที่เสร็จสิ้น
-      { wch: 20 }, // เจ้าหน้าที่
+      { wch: 30 }, // เจ้าหน้าที่
       { wch: 20 }, // สถานะ
     ];
 
@@ -223,8 +230,7 @@ const Jobs = () => {
       if (endDate) params.append("endDate", endDate);
 
       const res = await axios.get(
-        `${
-          import.meta.env.VITE_API_BASE_URL
+        `${import.meta.env.VITE_API_BASE_URL
         }/api/getAllRepair?${params.toString()}`
       );
 
@@ -530,7 +536,7 @@ const Jobs = () => {
           </div>
         )}
         <table className="min-w-full border border-[#837958]/50">
-          <thead className="bg-[#837958]/50 ">
+          <thead className="">
             <tr className="bg-[#BC9D72]/50 h-[50px] text-[14px]">
               <th className="min-w-[10px]"></th>
               <th>ลำดับ</th>
@@ -581,15 +587,14 @@ const Jobs = () => {
               >
                 <td className=" px-4 py-2 text-center align-text-top">
                   <span
-                    className={`inline-block w-4 h-4 rounded-full mx-auto ${
-                      job.status === "pending"
-                        ? "bg-red-500"
-                        : job.status === "in_progress"
+                    className={`inline-block w-4 h-4 rounded-full mx-auto ${job.status === "pending"
+                      ? "bg-red-500"
+                      : job.status === "in_progress"
                         ? "bg-yellow-500"
                         : job.status === "completed"
-                        ? "bg-green-500"
-                        : "bg-gray-400"
-                    }`}
+                          ? "bg-green-500"
+                          : "bg-gray-400"
+                      }`}
                   ></span>
                 </td>
                 <td className="align-text-top">
@@ -620,26 +625,26 @@ const Jobs = () => {
                   {formatDateTimeThaiShort(job?.completeDate) || "-"}
                 </td>
                 <td className=" px-4 py-2 min-w-[150px] align-text-top">
-                  {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}
+                  {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"} <br />
+                  {job?.completedBy?.name?.trim() ? job.completedBy.name : "-"}
                 </td>
                 <td
-                  className={` px-4 py-2 min-w-[160px] align-text-top ${
-                    job.status === "pending"
-                      ? "text-red-500"
-                      : job.status === "in_progress"
+                  className={` px-4 py-2 min-w-[160px] align-text-top ${job.status === "pending"
+                    ? "text-red-500"
+                    : job.status === "in_progress"
                       ? "text-yellow-500"
                       : job.status === "completed"
-                      ? "text-green-500"
-                      : ""
-                  }`}
+                        ? "text-green-500"
+                        : ""
+                    }`}
                 >
                   {job.status === "pending"
                     ? "รอดำเนินการ"
                     : job.status === "in_progress"
-                    ? "อยู่ระหว่างดำเนินการ"
-                    : job.status === "completed"
-                    ? "เสร็จสิ้น"
-                    : job.status}
+                      ? "อยู่ระหว่างดำเนินการ"
+                      : job.status === "completed"
+                        ? "เสร็จสิ้น"
+                        : job.status}
                 </td>
               </tr>
             ))}

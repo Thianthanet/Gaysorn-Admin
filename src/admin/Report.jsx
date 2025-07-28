@@ -103,17 +103,29 @@ const Report = () => {
             <table className="min-w-full bg-white border border-gray-300 rounded-lg">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
                     ลำดับ
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
                     ชื่อบริษัท
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
                     อาคาร
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
                     จำนวนงานที่แจ้งซ่อม
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                    รอดำเนินการ
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                    อยู่ระหว่างดำเนินการ
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                    เสร็จสิ้น
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                    เปอร์เซ็นต์สำเร็จ
                   </th>
                 </tr>
               </thead>
@@ -130,6 +142,10 @@ const Report = () => {
                     <td className="py-2 px-4 border-b">{item.companyName}</td>
                     <td className="py-2 px-4 border-b">{item.buildingName}</td>
                     <td className="py-2 px-4 border-b">{item.total}</td>
+                    <td className="py-2 px-4 border-b">{item.pending}</td>
+                    <td className="py-2 px-4 border-b">{item.in_progress}</td>
+                    <td className="py-2 px-4 border-b">{item.completed}</td>
+                    <td className="py-2 px-4 border-b">{item.completedPercent}</td>
                   </tr>
                 ))}
                 {customer.length === 0 && (
@@ -147,17 +163,23 @@ const Report = () => {
             <table className="min-w-full bg-white border border-gray-300 rounded-lg">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
                     ลำดับ
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
                     ชื่อพนักงาน
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
                     สังกัด
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72] border-b text-left">
-                    จำนวนงานที่เสร็จสิ้น
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                    งานที่รับ
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                    เสร็จสิ้น
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                    เปอร์เซ็นต์จบงาน
                   </th>
                 </tr>
               </thead>
@@ -179,7 +201,9 @@ const Report = () => {
                         ? item.buildings.join(", ")
                         : item.buildings}
                     </td>
+                    <td className="py-2 px-4 border-b">{item.acceptedJobs}</td>
                     <td className="py-2 px-4 border-b">{item.completedJobs}</td>
+                    <td className="py-2 px-4 border-b">{item.successRate || "0"}%</td>
                   </tr>
                 ))}
                 {technician.length === 0 && (

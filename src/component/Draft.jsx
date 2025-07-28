@@ -87,9 +87,9 @@ const Draft = () => {
                 <table className="min-w-full border border-gray-300">
                     <thead>
                         <tr className="bg-gray-100">
-                            <th className="border px-4 py-2 text-left bg-[#BC9D72]">ลำดับ</th>
-                            <th className="border px-4 py-2 text-left bg-[#BC9D72]">ข้อความ</th>
-                            <th className="border px-4 py-2 text-center bg-[#BC9D72]">จัดการ</th>
+                            <th className="border px-4 py-2 text-left bg-[#BC9D72]/50">ลำดับ</th>
+                            <th className="border px-4 py-2 text-left bg-[#BC9D72]/50">ข้อความ</th>
+                            <th className="border px-4 py-2 text-center bg-[#BC9D72]/50">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody>

@@ -92,9 +92,9 @@ const GroupChoices = () => {
         <table className="min-w-full border border-gray-200">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]">ลำดับ</th>
-              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]">ชื่อกลุ่มงาน</th>
-              <th className="px-4 py-2 text-center border-b bg-[#BC9D72]">การจัดการ</th>
+              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]/50">ลำดับ</th>
+              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]/50">ชื่อกลุ่มงาน</th>
+              <th className="px-4 py-2 text-center border-b bg-[#BC9D72]/50">การจัดการ</th>
             </tr>
           </thead>
           <tbody>
