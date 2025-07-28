@@ -902,7 +902,7 @@ const User = () => {
                         อาคาร
                       </th>
                       <th className="w-48 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        บริษัท/ร้านค้า
+                        บริษัท
                       </th>
                       <th className="w-1 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ยูนิต
@@ -1082,7 +1082,7 @@ const User = () => {
                 <table className="min-w-full leading-normal">
                   <thead>
                     <tr>
-                      <th className="px-5 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="w-1 px-5 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ลำดับ
                       </th>
                       <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
@@ -1136,11 +1136,11 @@ const User = () => {
                           <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.email || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="w-32 px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.userId ? (
-                              <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
+                              <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
                             ) : (
-                              <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
+                              <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
                             )}
                           </td>
                           <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
