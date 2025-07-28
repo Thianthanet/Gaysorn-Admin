@@ -23,13 +23,17 @@ const User = () => {
   const [searchInput, setSearchInput] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [popupCreateUser, setPopupCreateUser] = useState(false);
+  const [popupStatus, setPopupStatus] = useState();
   const [buildings, setBuildings] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [units, setUnits] = useState([]);
-  const [popupStatus, setPopupStatus] = useState();
   const [confirmDeleteId, setConfirmDeleteId] = useState(null); // สำหรับเก็บ ID ที่จะลบ
   const [showConfirmPopup, setShowConfirmPopup] = useState(false); // คุมการแสดง popup
   const [popupEditUser, setPopupEditUser] = useState(false); // คุมการแสดง popup
+  // const [tabPopup, setTabPopup] = useState('customers');
+  const [errors, setErrors] = useState({});
+  const [popupMessage, setPopupMessage] = useState('');
+
   // const [popupUserVisible, setPopupUserVisible] = useState(false);   // เปิด/ปิด popup
   // const [isEditMode, setIsEditMode] = useState(false);               // true = กำลังแก้ไข
   // const [editingId, setEditingId] = useState(null);
@@ -65,31 +69,10 @@ const User = () => {
     password: '',
   });
 
-  // const buildings_tech = [
-  //   "Gaysorn Tower",
-  //   "Gaysorn Center",
-  //   "Gaysorn Amarin"
-  // ];
-
-  // const handleCheckboxChange = (e) => {
-  //   const { name, value, checked } = e.target;
-
-  //   setTechnicianData(prev => {
-  //     const currentList = Array.isArray(prev[name]) ? prev[name] : [];
-
-  //     return {
-  //       ...prev,
-  //       [name]: checked
-  //         ? [...currentList, value]
-  //         : currentList.filter(item => item !== value)
-  //     };
-  //   });
+  // const handleAdminChange = (e) => {
+  //   const { name, value } = e.target;
+  //   setAdmin((prev) => ({ ...prev, [name]: value }));
   // };
-
-  const handleAdminChange = (e) => {
-    const { name, value } = e.target;
-    setAdmin((prev) => ({ ...prev, [name]: value }));
-  };
 
   // const validateAdminCredentials = async () => {
   //   try {
@@ -221,6 +204,32 @@ const User = () => {
   const handleCustomerChange = async (e) => {
     const { name, value } = e.target;
 
+    // ✅ ถ้าเป็นเบอร์โทรศัพท์: รับเฉพาะตัวเลข และจำกัด 15 ตัว
+    if (name === 'phone') {
+      const onlyNums = value.replace(/\D/g, ''); // ลบทุกตัวที่ไม่ใช่เลข
+      setCustomerData(prev => ({
+        ...prev,
+        phone: onlyNums.slice(0, 15)
+      }));
+      return; // จบตรงนี้ไม่ต้องเช็ก unitName/companyName
+    }
+
+    // ✅ ถ้าเป็นอีเมล: ตรวจสอบรูปแบบก่อนอัปเดต
+    if (name === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(value)) {
+        // ถ้าไม่ตรงรูปแบบ อาจไม่เซตค่า หรือจะแสดง error ก็ได้
+        console.warn('อีเมลไม่ถูกต้อง');
+      }
+
+      // ยังอัปเดตค่าให้ user พิมพ์ต่อได้ (แต่คุณอาจเลือกไม่อัปเดตก็ได้)
+      setCustomerData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+      return;
+    }
+
     setCustomerData(prev => ({
       ...prev,
       [name]: value
@@ -263,6 +272,17 @@ const User = () => {
 
   const handleTechnicianChange = (e) => {
     const { name, value } = e.target;
+
+    // ✅ ถ้าเป็นเบอร์โทรศัพท์: รับเฉพาะตัวเลข และจำกัด 15 ตัว
+    if (name === 'phone') {
+      const onlyNums = value.replace(/\D/g, ''); // ลบทุกตัวที่ไม่ใช่เลข
+      setTechnicianData(prev => ({
+        ...prev,
+        phone: onlyNums.slice(0, 15)
+      }));
+      return; // จบตรงนี้ไม่ต้องเช็ก unitName/companyName
+    }
+
     setTechnicianData(prev => ({
       ...prev,
       [name]: value
@@ -279,12 +299,12 @@ const User = () => {
     }
   }
 
-  const toggleShowPassword = (id) => {
-    setShowPasswords(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }))
-  }
+  // const toggleShowPassword = (id) => {
+  //   setShowPasswords(prev => ({
+  //     ...prev,
+  //     [id]: !prev[id]
+  //   }))
+  // }
 
   useEffect(() => {
     handleGetBuilding();
@@ -301,6 +321,32 @@ const User = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const newErrors = {};
+
+    if (activeTab === 'customers') {
+      if (!customerData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
+      if (!customerData.companyName) newErrors.companyName = 'กรุณากรอกบริษัท';
+      if (!customerData.buildingName) newErrors.buildingName = 'กรุณากรอกอาคาร';
+    } else if (activeTab === 'technicians') {
+      if (!technicianData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      // แสดงข้อความ popup แรกที่เจอ
+      const firstErrorKey = Object.keys(newErrors)[0];
+      setPopupMessage(newErrors[firstErrorKey]);
+
+      // ซ่อน popup หลัง 3 วินาที
+      setTimeout(() => {
+        setPopupMessage('');
+      }, 3000);
+
+      return;
+    }
+
     setPopupStatus("loading");
     const hasTechnicianData = technicianData.name.trim() !== '' || technicianData.phone.trim() !== '';
     const hasAdminData = adminData.username.trim() !== '' && adminData.password.trim() !== '';
@@ -504,7 +550,6 @@ const User = () => {
   //   }
   // };
 
-
   const handleEditTechnician = (userId) => {
     navigate(`/editTechnician/${userId}`);
   };
@@ -533,8 +578,18 @@ const User = () => {
   const handleDeleteTechnician = async (id) => {
     try {
       // setPopupStatus("loading");
+      // setPopupStatus("loading");
       const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteTechnician/${id}`);
       console.log('Delete response:', response.data);
+      // แสดง popup "delete" 3 วินาที
+      setTimeout(() => {
+        setPopupStatus("delete");
+
+        setTimeout(() => {
+          setPopupStatus(null);
+          window.location.reload();
+        }, 2000);
+      }, 2000);
       // แสดง popup "delete" 3 วินาที
       setTimeout(() => {
         setPopupStatus("delete");
@@ -695,189 +750,224 @@ const User = () => {
               {/* Tabs */}
               <div className="flex w-fit mx-auto mb-2 rounded-xl border border-[#837958] overflow-hidden text-sm bg-[#F4F2ED]">
                 <button
-                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-200 
-                    ${activeTab === 'customers'
+                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-300 ease-in-out
+                  ${activeTab === 'customers'
                       ? 'bg-[#837958] text-white rounded-r-xl'
-                      : 'text-[#837958]'
+                      : 'text-[#837958] rounded-none'
                     }`}
-                  onClick={() => setActiveTab('customers')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // setTabPopup('customers');
+                    setActiveTab('customers')
+                  }}
                 >
                   ลูกค้า
                 </button>
                 <button
-                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-200 
-                    ${activeTab === 'technicians'
+                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-300 ease-in-out
+                  ${activeTab === 'technicians'
                       ? 'bg-[#837958] text-white rounded-l-xl'
-                      : 'text-[#837958]'
+                      : 'text-[#837958] rounded-none'
                     }`}
-                  onClick={() => setActiveTab('technicians')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // setTabPopup('technicians');
+                    setActiveTab('technicians')
+                  }}
                 >
                   เจ้าหน้าที่
                 </button>
               </div>
 
               <div className='flex justify-center'>
-                <form onSubmit={handleSubmit}>
-                  {activeTab === 'customers' && (
-                    <>
-                      <div className="mb-2">
-                        <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
-                        <input name="name" value={customerData.name} onChange={handleCustomerChange}
-                          placeholder="ชื่อ-สกุล" required
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                <div className="relative min-h-[400px]">  {/* ปรับตามความสูงฟอร์มที่ใหญ่สุด */}
+                  <div
+                    className={`transition-all duration-300 ease-in-out
+                    ${['customers', 'technicians'].includes(activeTab)
+                        ? 'opacity-100 translate-y-0'
+                        : ''}
+                    `}
+                  >
+                    <form onSubmit={handleSubmit}>
+
+                      {(activeTab === 'customers') && (
+                        <>
+                          <div className="mb-2">
+                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
+                            <input name="name" value={customerData.name} onChange={handleCustomerChange}
+                              placeholder="ชื่อ-สกุล"
+                              className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border rounded-lg px-3 py-1.5 text-sm focus:outline-none
+                              ${errors.name ? 'border-red-500' : 'border-[#837958]'}
+                              `}
+                            />
+                          </div>
+
+                          <div className="mb-2">
+                            <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
+                            <input name="phone" value={customerData.phone} onChange={handleCustomerChange}
+                              placeholder="เบอร์โทรศัพท์"
+                              maxLength={15}
+                              inputMode="numeric"
+                              pattern="\d*"
+                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                          </div>
+
+                          <div className="mb-2">
+                            <label className="block text-[#BC9D72] mb-1 text-[12px]">บริษัท<span className="text-red-500">*</span></label>
+                            <input name="companyName" value={customerData.companyName} onChange={handleCustomerChange}
+                              placeholder="บริษัท"
+                              className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none
+                              ${errors.companyName ? 'border-red-500' : 'border-[#837958]'}`} />
+                          </div>
+
+                          {/* <div className="mb-3">
+                            <label className="block text-[#BC9D72] mb-1 text-sm">ชื่อเล่น</label>
+                            <input name="nickname" value={customerData.nickname} onChange={handleCustomerChange}
+                              placeholder="ชื่อเล่น"
+                              className="w-full border border-[#BC9D72] rounded px-3 py-1.5 text-sm focus:outline-none" />
+                            </div> */}
+
+                          <div className="mb-2">
+                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ยูนิต</label>
+                            <input name="unitName" value={customerData.unitName} onChange={handleCustomerChange}
+                              placeholder="ยูนิต"
+                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                          </div>
+
+                          <div className="mb-2">
+                            <label className="block text-[#BC9D72] mb-1 text-[12px]">อาคาร<span className="text-red-500">*</span></label>
+                            <select
+                              name="buildingName"
+                              value={customerData.buildingName}
+                              onChange={handleCustomerChange}
+                              className={`w-[320px] text-[12px] text-[#BC9D72]/50 border 
+                            ${errors.buildingName ? 'border-red-500' : 'border-[#837958]'} 
+                            rounded-lg px-2 py-1.5 focus:outline-none`}
+                            >
+                              <option value="">เลือกอาคาร</option>
+                              {buildings.map((building) => (
+                                <option key={building.id} value={building.buildingName}>
+                                  {building.buildingName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="mb-4">
+                            <label className="block text-[#BC9D72] mb-1 text-[12px]">อีเมล</label>
+                            <input type="email" name="email" value={customerData.email} onChange={handleCustomerChange}
+                              placeholder="อีเมล"
+                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
+                          </div>
+                        </>
+                      )}
+
+                      {(activeTab === 'technicians') && (
+                        <>
+                          <div className="mb-2">
+                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
+                            <input name="name" value={technicianData.name} onChange={handleTechnicianChange}
+                              placeholder="ชื่อ-สกุล"
+                              className={`w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none
+                                ${errors.name ? 'border-red-500' : 'border-[#837958]'}`}
+                            />
+                          </div>
+
+                          <div className="mb-12">
+                            <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
+                            <input name="phone" value={technicianData.phone} onChange={handleTechnicianChange}
+                              placeholder="เบอร์โทรศัพท์"
+
+                              className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
+                          </div>
+
+                          <div className="mb-[64px]">
+                            <div className="flex items-center justify-center mb-4">
+                              <div className="w-full h-px bg-[#837958] opacity-60" />
+                              <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
+                              <div className="w-full h-px bg-[#837958] opacity-60" />
+                            </div>
+
+                            <div className="mb-2">
+                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
+                              <input
+                                type="text"
+                                name="username"
+                                value={adminData.username}
+                                onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
+                                placeholder="Username"
+                                className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
+                              />
+                            </div>
+
+                            <div className="mb-2">
+                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
+                              <input
+                                type="password"
+                                name="password"
+                                value={adminData.password}
+                                onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
+                                placeholder="Password"
+                                className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {(activeTab === 'admin') && (
+                        <>
+                          <div className="mb-[64px]">
+                            {/* <div className="flex items-center justify-center mb-4">
+                              <div className="w-[120px] h-px bg-[#837958]" />
+                              <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
+                              <div className="w-[120px] h-px bg-[#837958]" />
+                            </div> */}
+
+                            <div className="mb-2">
+                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
+                              <input
+                                type="text"
+                                name="username"
+                                value={adminData.username}
+                                onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
+                                placeholder="Username"
+                                className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
+                              />
+                            </div>
+
+                            <div className="mb-2">
+                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
+                              <input
+                                type="password"
+                                name="password"
+                                value={adminData.password}
+                                onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
+                                placeholder="Password"
+                                className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      <div className={`flex flex-col`}>
+                        <button
+                          type="submit"
+                          className="w-full mt-2 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition"
+                        >
+                          {activeTab === 'customers' ? 'เพิ่มข้อมูลลูกค้า' : activeTab === 'technicians' ? 'เพิ่มข้อมูลเจ้าหน้าที่' : "เพิ่มข้อมูลแอดมิน"}
+                        </button>
+
+                        {/* ปุ่มปิด */}
+                        <button
+                          className="w-full mb-2 bg-white text-[#837958] text-[12px] font-bold border-[1px] border-[#837958] py-2 rounded-xl hover:opacity-90 transition"
+                          onClick={() => setPopupCreateUser(false)}
+                        >
+                          ปิดหน้าต่างนี้
+                        </button>
                       </div>
-
-                      <div className="mb-2">
-                        <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
-                        <input name="phone" value={customerData.phone} onChange={handleCustomerChange}
-                          placeholder="เบอร์โทรศัพท์"
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                      </div>
-
-                      <div className="mb-2">
-                        <label className="block text-[#BC9D72] mb-1 text-[12px]">บริษัท<span className="text-red-500">*</span></label>
-                        <input name="companyName" value={customerData.companyName} onChange={handleCustomerChange}
-                          placeholder="บริษัท"
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                      </div>
-
-                      {/* <div className="mb-3">
-                  <label className="block text-[#BC9D72] mb-1 text-sm">ชื่อเล่น</label>
-                  <input name="nickname" value={customerData.nickname} onChange={handleCustomerChange}
-                    placeholder="ชื่อเล่น"
-                    className="w-full border border-[#BC9D72] rounded px-3 py-1.5 text-sm focus:outline-none" />
-                  </div> */}
-
-                      <div className="mb-2">
-                        <label className="block text-[#BC9D72] mb-1 text-[12px]">ยูนิต</label>
-                        <input name="unitName" value={customerData.unitName} onChange={handleCustomerChange}
-                          placeholder="ยูนิต"
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                      </div>
-
-                      <div className="mb-2">
-                        <label className="block text-[#BC9D72] mb-1 text-[12px]">อาคาร<span className="text-red-500">*</span></label>
-                        <select name="buildingName" value={customerData.buildingName} onChange={handleCustomerChange}
-                          required className="w-[320px] text-[#BC9D72]/50 text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none">
-                          <option className="" value="">เลือกอาคาร</option>
-                          {buildings.map((building) => (
-                            <option key={building.id} value={building.buildingName}>
-                              {building.buildingName}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-[#BC9D72] mb-1 text-[12px]">อีเมล</label>
-                        <input type="email" name="email" value={customerData.email} onChange={handleCustomerChange}
-                          placeholder="อีเมล"
-                          className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                      </div>
-                    </>
-                  )}
-
-                  {activeTab === 'technicians' && (
-                    <>
-                      <div className="mb-2">
-                        <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
-                        <input name="name" value={technicianData.name} onChange={handleTechnicianChange}
-                          placeholder="ชื่อ-สกุล"
-                          className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                      </div>
-
-                      <div className="mb-12">
-                        <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
-                        <input name="phone" value={technicianData.phone} onChange={handleTechnicianChange}
-                          placeholder="เบอร์โทรศัพท์"
-                          className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                      </div>
-
-                      <div className="mb-[64px]">
-                        <div className="flex items-center justify-center mb-4">
-                          <div className="w-full h-px bg-[#837958] opacity-60" />
-                          <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
-                          <div className="w-full h-px bg-[#837958] opacity-60" />
-                        </div>
-
-                        <div className="mb-2">
-                          <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
-                          <input
-                            type="text"
-                            name="username"
-                            value={adminData.username}
-                            onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
-                            placeholder="Username"
-                            className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="mb-2">
-                          <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
-                          <input
-                            type="password"
-                            name="password"
-                            value={adminData.password}
-                            onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
-                            placeholder="Password"
-                            className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {activeTab === 'admin' && (
-                    <>
-                      <div className="mb-[64px]">
-                        {/* <div className="flex items-center justify-center mb-4">
-                          <div className="w-[120px] h-px bg-[#837958]" />
-                          <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
-                          <div className="w-[120px] h-px bg-[#837958]" />
-                        </div> */}
-
-                        <div className="mb-2">
-                          <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
-                          <input
-                            type="text"
-                            name="username"
-                            value={adminData.username}
-                            onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
-                            placeholder="Username"
-                            className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
-                          />
-                        </div>
-
-                        <div className="mb-2">
-                          <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
-                          <input
-                            type="password"
-                            name="password"
-                            value={adminData.password}
-                            onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
-                            placeholder="Password"
-                            className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  <div className={`flex flex-col`}>
-                    <button
-                      type="submit"
-                      className="w-full mt-2 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition"
-                    >
-                      {activeTab === 'customers' ? 'เพิ่มข้อมูลลูกค้า' : activeTab === 'technicians' ? 'เพิ่มข้อมูลเจ้าหน้าที่' : "เพิ่มข้อมูลแอดมิน"}
-                    </button>
-
-                    {/* ปุ่มปิด */}
-                    <button
-                      className="w-full mb-2 bg-white text-[#837958] text-[12px] font-bold border-[1px] border-[#837958] py-2 rounded-xl hover:opacity-90 transition"
-                      onClick={() => setPopupCreateUser(false)}
-                    >
-                      ปิดหน้าต่างนี้
-                    </button>
+                    </form>
                   </div>
-                </form>
+                </div>
               </div>
             </div>
           </div>
@@ -998,21 +1088,21 @@ const User = () => {
                       <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ลำดับ
                       </th>
-                      <th className="w-52 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         เจ้าหน้าที่
                       </th>
-                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         เบอร์โทรศัพท์
                       </th>
-                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สถานะ Line
                       </th>
                       <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         สังกัด
-                      </th>
-                      <th className="w-28 px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      </th>  
+                      <th className="px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         จัดการ
-                      </th>
+                      </th>  
                     </tr>
                   </thead>
                   <tbody>
@@ -1031,14 +1121,18 @@ const User = () => {
                             <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               {tech.phone || '-'}
                             </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm">
+                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               {tech.userId ? (
-                                <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
+                                <>
+                                  <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
+                                </>
                               ) : (
-                                <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
+                                <>
+                                  <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
+                                </>
                               )}
                             </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-[12px] text-center">
+                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                               {uniqueBuildings.length > 0 ? (
                                 <div className="flex flex-row space-x-2">
                                   {uniqueBuildings.join(', ')}
@@ -1178,10 +1272,10 @@ const User = () => {
                         <th className="px-4 py-2 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                           ชื่อผู้ใช้งาน
                         </th>
-                        <th className="w-48 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        {/* <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                           รหัสผ่าน
-                        </th>
-                        <th className="w-28 px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        </th> */}
+                        <th className="w-24 px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                           จัดการ
                         </th>
                       </tr>
@@ -1197,14 +1291,14 @@ const User = () => {
                               <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                                 {admin.username}
                               </td>
-                              <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                              {/* <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                                 <span className='mx-2'>
                                   {showPasswords[admin.id] ? admin.password : "********"}
                                 </span>
                                 <button onClick={() => toggleShowPassword(admin.id)} className="focus:outline-none">
                                   {showPasswords[admin.id] ? <FaEyeSlash /> : <FaEye />}
                                 </button>
-                              </td>
+                              </td> */}
                               <td className="h-[16px] px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] text-sm">
                                 <button
                                   className="text-blue-500 hover:text-blue-700 mr-3"
@@ -1347,7 +1441,7 @@ const User = () => {
             {/* Popup ยืนยันการลบ */}
             {showConfirmPopup && (
               <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
-                <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] h-[128px] text-center">
+                <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] h-[120px] text-center">
                   <p className="text-lg font-semibold text-[#837958]">ยืนยันการลบ{activeTab === 'customers' ? "ลูกค้า" : activeTab === 'technicians' ? "เจ้าหน้าที่" : "แอดมิน"}</p>
                   <div className="flex flex-rows items-center justify-center text-[#837958] text-center mt-6 gap-x-4">
                     <button onClick={cancelDelete} className="bg-white text-[12px] text-[#BC9D72] border-[1px] w-64 h-6 border-[#BC9D72] rounded hover:opacity-80">
@@ -1368,13 +1462,7 @@ const User = () => {
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                       {/* ไอคอนหรือวงกลม loading */}
                       <div className="animate-spin rounded-full border-4 border-t-[#837958] border-gray-200 h-12 w-12 mb-4"></div>
-                      <h2 className="text-lg font-semibold">Loading...</h2>
-                    </div>
-                  ) : popupStatus === "empty" ? (
-                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleX size={50} strokeWidth={1} className="mb-2" />
-                      <h2 className="text-lg font-semibold">Please enter your</h2>
-                      <h2 className="text-lg font-semibold">username and password.</h2>
+                      <h2 className="text-lg font-semibold">กำลังโหลด...</h2>
                     </div>
                   ) : popupStatus === "success" ? (
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
@@ -1401,7 +1489,6 @@ const User = () => {
                 </div>
               </div>
             )}
-
           </>
         )}
       </div>
