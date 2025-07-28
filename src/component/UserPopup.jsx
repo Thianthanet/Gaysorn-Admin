@@ -11,33 +11,39 @@ const UserPopup = ({
   adminData,
   handleCustomerChange,
   handleTechnicianChange,
+  handleAdminChange, // <--- รับ prop นี้เข้ามา
   buildings,
+  companies, // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกบริษัทจาก dropdown
+  units,     // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกยูนิตจาก dropdown
   selectedBuildings,
-  isEditModeTechnicians,
   handleBuildingToggle,
   errors,
-  setAdminData,
+  // isEditModeTechnicians ถูกลบออก เพราะเราจะคำนวณจาก technicianData.id
+  // setAdminData ถูกลบออก เพราะเราจะใช้ handleAdminChange แทน
 }) => {
   if (!show) return null;
+
+  // ตรวจสอบโหมดแก้ไขสำหรับช่าง (Technician Edit Mode)
+  const isTechnicianEditMode = !!technicianData.id;
+  // ตรวจสอบโหมดแก้ไขสำหรับแอดมิน (Admin Edit Mode)
+  const isAdminEditMode = !!adminData.id;
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
       <div className="relative w-[520px] h-[620px] bg-white border border-[#BC9D72] rounded-xl p-2 shadow-lg overflow-y-auto">
         <h2 className="text-[18px] font-black text-[#837958] text-center mb-4 mt-4">
-          {activeTab === "customers"
-            ? "เพิ่มข้อมูลลูกค้า"
-            : activeTab === "technicians"
-              ? "เพิ่มข้อมูลเจ้าหน้าที่"
-              : "เพิ่มข้อมูลแอดมิน"}
+          {activeTab === "customers" && (customerData.id ? "แก้ไขข้อมูลลูกค้า" : "เพิ่มข้อมูลลูกค้า")}
+          {activeTab === "technicians" && (technicianData.id ? "แก้ไขข้อมูลเจ้าหน้าที่" : "เพิ่มข้อมูลเจ้าหน้าที่")}
+          {activeTab === "admin" && (adminData.id ? "แก้ไขข้อมูลแอดมิน" : "เพิ่มข้อมูลแอดมิน")}
         </h2>
 
         {/* Tabs */}
         <div className="flex w-fit mx-auto mb-2 rounded-xl border border-[#837958] overflow-hidden text-sm bg-[#F4F2ED]">
           <button
-            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out ${activeTab === "customers"
-              ? "bg-[#837958] text-white rounded-r-xl"
-              : "text-[#837958]"
-              }`}
+            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out
+              ${activeTab === "customers" ? "bg-[#837958] text-white" : "text-[#837958]"}
+              rounded-l-xl rounded-r-xl`} //ใช้ rounded-l-xl สำหรับปุ่มแรก
             onClick={(e) => {
               e.preventDefault();
               setActiveTab("customers");
@@ -46,10 +52,9 @@ const UserPopup = ({
             ลูกค้า
           </button>
           <button
-            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out ${activeTab === "technicians"
-              ? "bg-[#837958] text-white rounded-r-xl rounded-l-xl"
-              : "text-[#837958]"
-              }`}
+            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out
+              ${activeTab === "technicians" ? "bg-[#837958] text-white" : "text-[#837958]"}
+              rounded-l-xl rounded-r-xl`} // ใช้ rounded-none สำหรับปุ่มกลาง
             onClick={(e) => {
               e.preventDefault();
               setActiveTab("technicians");
@@ -57,11 +62,10 @@ const UserPopup = ({
           >
             เจ้าหน้าที่
           </button>
-          <button
-            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out ${activeTab === "admin"
-              ? "bg-[#837958] text-white rounded-l-xl"
-              : "text-[#837958]"
-              }`}
+          <button 
+            className={`px-6 py-2 font-medium w-[108px] transition-all duration-300 ease-in-out
+              ${activeTab === "admin" ? "bg-[#837958] text-white" : "text-[#837958]"}
+              rounded-l-xl rounded-r-xl`} //ใช้ rounded-r-xl สำหรับปุ่มสุดท้าย
             onClick={(e) => {
               e.preventDefault();
               setActiveTab("admin");
@@ -116,8 +120,8 @@ const UserPopup = ({
                       value={customerData.buildingName}
                       onChange={handleCustomerChange}
                       className={`w-[320px] text-[12px] text-[#BC9D72]/50 border ${errors.buildingName
-                        ? "border-red-500"
-                        : "border-[#837958]"
+                          ? "border-red-500"
+                          : "border-[#837958]"
                         } rounded-lg px-2 py-1.5 focus:outline-none`}
                     >
                       <option value="">เลือกอาคาร</option>
@@ -130,6 +134,9 @@ const UserPopup = ({
                         </option>
                       ))}
                     </select>
+                    {/* {errors.buildingName && (
+                      <p className="text-red-500 text-xs mt-1">{errors.buildingName}</p>
+                    )} */}
                   </div>
 
                   <InputField
@@ -138,6 +145,7 @@ const UserPopup = ({
                     value={customerData.email}
                     onChange={handleCustomerChange}
                     type="email"
+                    error={errors.email}
                   />
                 </>
               )}
@@ -160,67 +168,47 @@ const UserPopup = ({
                     onChange={handleTechnicianChange}
                   />
 
-                  {/* อาคาร */}
-                  {isEditModeTechnicians && (
-                    <div className="">
-                      <label className="text-[#BC9D72] text-[12px] font-medium">อาคาร</label>
-                      <div className="grid grid-cols-1 gap-3 mt-1">
+                  {/* อาคารสำหรับช่าง จะแสดงเฉพาะเมื่ออยู่ในโหมดแก้ไข (อัปเดตข้อมูลช่าง) */}
+                  {isTechnicianEditMode && (
+                    <div className="mt-4 mb-4"> {/* เพิ่ม margin บน/ล่างเพื่อให้มีช่องว่าง */}
+                      <label className="text-[#BC9D72] text-[12px] font-medium block mb-2">อาคาร</label>
+                      <div className="grid grid-cols-1 gap-3 max-h-[120px] overflow-y-auto pr-2"> {/* ปรับ grid และเพิ่ม scrollbar */}
                         {buildings.map(building => (
-                          <label key={building.id} className="flex items-center space-x-3">
+                          <label key={building.id} className="flex items-center space-x-2">
                             <input
                               type="checkbox"
                               checked={selectedBuildings.includes(building.id)}
                               onChange={() => handleBuildingToggle(building.id)}
                               className="h-3 w-3 text-[#BC9D72] accent-[#BC9D72] border-[1px] border-[#BC9D72] checked:bg-[#BC9D72] checked:border-[#BC9D72] cursor-pointer"
                             />
-                            
-                            <span className="text-[#BC9D72] text-[12px] font-medium">{building.buildingName}</span>
+                            <span className="text-[#837958] text-[12px] font-medium">{building.buildingName}</span>
                           </label>
                         ))}
                       </div>
                     </div>
                   )}
-
-                  {/* <Divider label="Admin" />
-
-                  <InputField
-                    label="Username"
-                    name="username"
-                    value={adminData.username}
-                    onChange={(e) =>
-                      setAdminData({ ...adminData, username: e.target.value })
-                    }
-                  />
-                  <InputField
-                    label="Password"
-                    type="password"
-                    name="password"
-                    value={adminData.password}
-                    onChange={(e) =>
-                      setAdminData({ ...adminData, password: e.target.value })
-                    }
-                  /> */}
                 </>
               )}
 
               {activeTab === "admin" && (
                 <>
                   <InputField
-                    label="Username"
+                    label="ชื่อผู้ใช้งาน"
+                    required
                     name="username"
                     value={adminData.username}
-                    onChange={(e) =>
-                      setAdminData({ ...adminData, username: e.target.value })
-                    }
+                    onChange={handleAdminChange} // <--- ใช้ handleAdminChange
+                    error={errors.username}
                   />
                   <InputField
-                    label="Password"
+                    label="รหัสผ่าน"
                     type="password"
                     name="password"
                     value={adminData.password}
-                    onChange={(e) =>
-                      setAdminData({ ...adminData, password: e.target.value })
-                    }
+                    onChange={handleAdminChange} // <--- ใช้ handleAdminChange
+                    required={!isAdminEditMode} // <--- รหัสผ่านจำเป็นเฉพาะตอนสร้างใหม่
+                    error={errors.password}
+                    note={isAdminEditMode ? "(ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน)" : ""} // เพิ่มข้อความสำหรับโหมดแก้ไข
                   />
                 </>
               )}
@@ -228,14 +216,13 @@ const UserPopup = ({
               <div className="flex flex-col">
                 <button
                   type="submit"
-                  className={`w-full mt-2 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition
-                    ${activeTab === "technicians" ? isEditModeTechnicians ? "mt-[156px]" : "mt-[262px]" : activeTab === "admin" ? "mt-[262px]" : ""}`}
+                  className={`w-full mb-2 mt-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition
+                    ${activeTab === "technicians" ? (technicianData.id ? "mt-[134px]" : "mt-[262px]") : activeTab === "admin" ? "mt-[262px]" : ""}`}
+                  // ลบการกำหนด mt- ที่ซับซ้อนออก ให้ใช้ margin-top ค่ากลางๆ แล้วให้เนื้อหาดันปุ่มลงมาเอง
                 >
-                  {activeTab === "customers"
-                    ? "เพิ่มข้อมูลลูกค้า"
-                    : activeTab === "technicians"
-                      ? "เพิ่มข้อมูลเจ้าหน้าที่"
-                      : "เพิ่มข้อมูลแอดมิน"}
+                  {activeTab === "customers" && (customerData.id ? "บันทึกข้อมูลลูกค้า" : "เพิ่มข้อมูลลูกค้า")}
+                  {activeTab === "technicians" && (technicianData.id ? "บันทึกข้อมูลเจ้าหน้าที่" : "เพิ่มข้อมูลเจ้าหน้าที่")}
+                  {activeTab === "admin" && (adminData.id ? "บันทึกข้อมูลแอดมิน" : "เพิ่มข้อมูลแอดมิน")}
                 </button>
                 <button
                   type="button"
@@ -263,7 +250,7 @@ const InputField = ({
   required,
   maxLength,
   inputMode,
-  error,
+  error, // <--- รับ prop error เข้ามา
 }) => (
   <div className="mb-2">
     <div className="flex items-center gap-1 mb-1">
@@ -284,20 +271,12 @@ const InputField = ({
       placeholder={label}
       maxLength={maxLength}
       inputMode={inputMode}
+      // เพิ่ม class สำหรับ error
       className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border ${error ? "border-red-500" : "border-[#837958]"
         } rounded-lg px-3 py-1.5 text-sm focus:outline-none`}
     />
+    {/*error && <p className="text-red-500 text-xs mt-1">{error}</p>} {/* แสดงข้อความ error */}
   </div>
 );
-
-// const Divider = ({ label }) => (
-//   <div className="flex items-center justify-center mb-4 mt-12">
-//     <div className="w-full h-px bg-[#837958] opacity-60" />
-//     <span className="mx-2 text-[#837958] font-semibold text-[18px]">
-//       {label}
-//     </span>
-//     <div className="w-full h-px bg-[#837958] opacity-60" />
-//   </div>
-// );
 
 export default UserPopup;

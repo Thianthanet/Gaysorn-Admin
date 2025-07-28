@@ -4,14 +4,14 @@ import Dashboard from './admin/Dashboard';
 import User from './admin/User';
 import PrivateRoute from './route/PrivateRoute';
 import CreateCustomer from './admin/CreateCustomer';
-import EditTechnician from './admin/EditTechnician';
+// import EditTechnician from './admin/EditTechnician';
 import Setting from './admin/Setting';
-import EditCustomer from './admin/EditCustomer';
+// import EditCustomer from './admin/EditCustomer';
 import Jobs from './admin/Jobs';
 import Report from './admin/Report';
 import ReportCustomer from './admin/ReportCustomer';
 import ReportTechnician from './admin/ReportTechnician';
-import EditAdmin from './admin/EditAdmin';
+// import EditAdmin from './admin/EditAdmin';
 import JobDetail from './admin/JobDetail';
 
 function App() {
@@ -32,9 +32,9 @@ function App() {
           <Route path="/job/:id" element={<JobDetail />} />
           <Route path="/report" element={<Report />} />
           <Route path="/createCustomer" element={<CreateCustomer />} />
-          <Route path="/editTechnician/:userId" element={<EditTechnician />} />
-          <Route path="/editCustomer/:id" element={<EditCustomer />} />
-          <Route path="/editAdmin/:id" element={ <EditAdmin /> } />
+          {/* <Route path="/editTechnician/:userId" element={<EditTechnician />} /> */}
+          {/* <Route path="/editCustomer/:id" element={<EditCustomer />} /> */}
+          {/* <Route path="/editAdmin/:id" element={ <EditAdmin /> } /> */}
           <Route path="/reportCustomer/:id" element={<ReportCustomer />} />
           <Route path="/reportTechnician/:userId" element={<ReportTechnician />} />
         </Route>
