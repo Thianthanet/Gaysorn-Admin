@@ -658,7 +658,6 @@ const Jobs = () => {
           advancedPagination={true}
         />
         {/* {isModalOpen && <JobModal job={selectedJob} onClose={closeJobModal} />} */}
-        // แก้ไขส่วนเรียกใช้ JobModal เป็นแบบนี้
         {isModalOpen && selectedJob && (
           <JobModal jobId={selectedJob.id} onClose={closeJobModal} />
         )}
