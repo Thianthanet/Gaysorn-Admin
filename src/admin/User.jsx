@@ -1078,35 +1078,35 @@ const User = () => {
 
             {/* Wait Approve Table */}
             {activeTab === 'waitApprove' && (
-              <div className="bg-white shadow-md rounded-lg overflow-hidden">
+              <div className="bg-white shadow-md overflow-hidden">
                 <table className="min-w-full leading-normal">
                   <thead>
                     <tr>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ลำดับ
                       </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         อาคาร
                       </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         บริษัท
                       </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ยูนิต
                       </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ผู้ใช้
                       </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         เบอร์โทรศัพท์
                       </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         Line
                       </th>
-                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                      <th className="px-5 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         จัดการ
                       </th>
                     </tr>
@@ -1115,35 +1115,35 @@ const User = () => {
                     {waitForApprove.length > 0 ? (
                       waitForApprove.map((user, index) => (
                         <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                            {index + 1}
+                          <td className="px-4 py-2 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                            {index + 1} 
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.unit.company.building.buildingName || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.unit.company.companyName || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.unit.unitName || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.name || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.phone || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.email || '-'}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             {user.userId ? (
                               <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
                             ) : (
                               <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
                             )}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
                             <button
                               className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
                               onClick={() => handleApprove(user.userId)}
