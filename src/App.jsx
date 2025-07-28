@@ -12,6 +12,7 @@ import Report from './admin/Report';
 import ReportCustomer from './admin/ReportCustomer';
 import ReportTechnician from './admin/ReportTechnician';
 import EditAdmin from './admin/EditAdmin';
+import JobDetail from './admin/JobDetail';
 
 function App() {
   const token = localStorage.getItem('token');
@@ -28,6 +29,7 @@ function App() {
           <Route path="/user" element={<User />} />
           <Route path="/setting" element={<Setting />} />
           <Route path="/job" element={<Jobs />} />
+          <Route path="/job/:id" element={<JobDetail />} />
           <Route path="/report" element={<Report />} />
           <Route path="/createCustomer" element={<CreateCustomer />} />
           <Route path="/editTechnician/:userId" element={<EditTechnician />} />
