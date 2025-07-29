@@ -120,10 +120,12 @@ const User = () => {
     setPopupStatus(statusType);
     setTimeout(() => {
       setPopupStatus(null);
+      setPopupCreateUser(false); // Close popup on success
       if (shouldReload) {
         window.location.reload();
       }
-    }, 2000); // Popup visible for 2 seconds
+      // fetchData();
+    }, 3000); // Popup visible for 2 seconds
   }, []);
 
   // --- API Fetching Functions ---
@@ -537,7 +539,6 @@ const User = () => {
       }
 
       handlePopupStatus(successStatus, true); // Show success/update status, then reload
-      setPopupCreateUser(false); // Close popup on success
       navigate('/user'); // Redirect to user page
     } catch (error) {
       console.error('Submission error:', error);
@@ -661,6 +662,7 @@ const User = () => {
           buildings={buildings}
           filterBuilding={filterBuilding}
           setFilterBuilding={setFilterBuilding}
+          waitForApprove={waitForApprove}
           resetFormData={() => { // Reset form data when opening new create popup
             setCustomerFormData({
               id: null, name: '', phone: '', companyName: '', unitName: '', buildingName: '', email: '',
