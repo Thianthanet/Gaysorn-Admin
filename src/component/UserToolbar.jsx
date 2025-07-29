@@ -23,7 +23,7 @@ const UserToolbar = ({
   return (
     <div className="flex items-center gap-2 flex-wrap mb-6">
       {/* ช่องค้นหา */}
-      <div className="flex items-center flex-1 min-w-[210px] border-b-[1px] border-[#837958]">
+      <div className="flex items-center flex-1 min-w-[148px] border-b-[1px] border-[#837958]">
         <BiSearchAlt2 size={20} className="text-[#837958] ml-2" />
         <input
           type="text"
@@ -111,13 +111,17 @@ const UserToolbar = ({
         </button>
       ))}
 
+      {/* {console.log("activeTab: ", activeTab)} */}
+      
       {/* ปุ่มเพิ่มผู้ใช้งาน */}
-      <button
-        className="px-4 h-[36px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-[#a88f5c]"
-        onClick={handleAddUserClick} // <--- เปลี่ยนมาเรียก handleAddUserClick
-      >
-        เพิ่มผู้ใช้งาน
-      </button>
+      {activeTab !== "waitApprove" && (
+        <button
+          className="px-4 h-[36px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-[#a88f5c]"
+          onClick={handleAddUserClick}
+        >
+          เพิ่มผู้ใช้งาน
+        </button>
+      )}
     </div>
   );
 };

@@ -166,7 +166,9 @@ const User = () => {
 
   const fetchWaitForApprove = useCallback(async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
+      // const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/waitApprove`);
+      // console.log("waitApprove: ", response.data.data)
       setWaitForApprove(response.data.data);
     } catch (error) {
       console.error('Error fetching wait for approve data:', error);
@@ -178,6 +180,7 @@ const User = () => {
     try {
       let data = [];
       const term = searchTerm.toLowerCase();
+      // console.log("filterBuilding: ", filterBuilding)
 
       if (activeTab === 'customers') {
         const response = await axios.get(`${API_BASE_URL}/api/allCustomer`);
@@ -205,22 +208,32 @@ const User = () => {
         });
         console.log("techniciansData: ", data)
         setTechnicians(data);
-      } else if (activeTab === 'waitForApprove') {
-        await fetchWaitForApprove(); // This fetches and sets state directly
+      } else if (activeTab === 'waitApprove') {
+        // const response = await fetchWaitForApprove(); // This fetches and sets state directly
+        const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
+        data = response.data.data.filter(w => {
+          const matchesSearch =
+            w.name?.toLowerCase().includes(term) ||
+            w.phone?.toLowerCase().includes(term) ||
+            w.unit?.unitName?.toLowerCase().includes(term) ||
+            w.unit?.company?.companyName?.toLowerCase().includes(term) ||
+            w.unit?.company?.building?.buildingName?.toLowerCase().includes(term); //c.unit?.company?.building?.buildingName === filterBuilding
+          const matchesBuilding = filterBuilding === 'all' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
+          return matchesSearch && matchesBuilding;
+        });
+        console.log("waitApprove: ", data)
+        setWaitForApprove(data);
       } else if (activeTab === 'admin') {
         // await fetchAdmin(); // This fetches and sets state directly
-
         const response = await axios.get(`${API_BASE_URL}/api/getAdmin`);
-        data = response.data.data;
-        console.log("adminData: ", data)
         data = response.data.data.filter(a => {
           const matchesSearch =
             a.username?.toLowerCase().includes(term)
-            // a.phone?.toLowerCase().includes(term) ||
-            // a.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
-          const matchesBuilding = filterBuilding === 'all' || !filterBuilding || t.techBuilds?.some(b => b.building?.buildingName === filterBuilding);
-          return matchesSearch && matchesBuilding;
+          // a.phone?.toLowerCase().includes(term) ||
+          // a.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
+          return matchesSearch;
         });
+        console.log("adminData: ", data)
         setAdmin(data);
       }
     } catch (error) {
@@ -228,7 +241,7 @@ const User = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, searchTerm, filterBuilding, fetchWaitForApprove, fetchAdmin]); // Dependencies for useCallback
+  }, [activeTab, searchTerm, filterBuilding]); // Dependencies for useCallback
 
   // --- Handlers for Form Changes ---
 
@@ -618,6 +631,10 @@ const User = () => {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    fetchWaitForApprove(); // เรียกใช้ฟังก์ชันที่ถูก memoize ไว้
+  }, [fetchWaitForApprove]); // เพิ่ม fetchWaitForApprove ใน dependencies ของ useEffect เพื่อให้เรียกใหม่เมื่อฟังก์ชันเปลี่ยน (ในกรณีที่มี dependencies ใน useCallback)
+
   // Adjust isMobile state on window resize
   useEffect(() => {
     const handleResize = () => {
@@ -698,10 +715,6 @@ const User = () => {
                 confirmDelete={confirmDelete}
               />
             )}
-
-            {
-              console.log("waitForApprove: ", waitForApprove)
-            }
 
             {activeTab === 'waitApprove' && (
               <WaitApproveTable
