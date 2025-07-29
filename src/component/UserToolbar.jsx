@@ -1,7 +1,7 @@
 import React from "react";
 import { BiSearchAlt2 } from "react-icons/bi";
 import { HiChevronDown } from "react-icons/hi";
-// import BuildingFilter from "../component/BuildingFilter"
+import BuildingFilter from "./BuildingFilter";
 
 const UserToolbar = ({
   searchInput,
@@ -21,6 +21,9 @@ const UserToolbar = ({
     resetFormData(); // <--- เรียกใช้ฟังก์ชันนี้ก่อนเปิด Pop-up
     setPopupCreateUser(true);
   };
+
+  // console.log("buildings: ", buildings)
+  console.log("filterBuilding: ", filterBuilding)
 
   return (
     <div className="flex items-center gap-2 flex-wrap mb-6">
@@ -46,7 +49,8 @@ const UserToolbar = ({
         ค้นหา
       </button>
 
-      <div className="relative inline-block">
+      {/* ปุ่มอาคาร */}
+      {/* <div className="relative inline-block">
         <select
           value={filterBuilding}
           onChange={(e) => setFilterBuilding(e.target.value)}
@@ -78,14 +82,15 @@ const UserToolbar = ({
           ))}
         </select>
 
-        {/* dropdown arrow */}
+        {/* dropdown arrow 
         <HiChevronDown
           size={18}
           className="text-white pointer-events-none absolute top-1/2 right-2 -translate-y-1/2"
         />
+      </div> */}
+      <div className="mb-3">
+        <BuildingFilter isMobile={false} setBuildingName={setFilterBuilding}/>
       </div>
-
-      {/* <BuildingFilter /> */}
 
       {/* ปุ่มส่งข้อมูลออก */}
       <button

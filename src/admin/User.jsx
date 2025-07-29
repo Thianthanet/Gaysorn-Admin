@@ -193,7 +193,7 @@ const User = () => {
             c.unit?.company?.building?.buildingName?.toLowerCase().includes(term) ||
             c.unit?.unitName?.toLowerCase().includes(term) ||
             c.unit?.company?.companyName?.toLowerCase().includes(term);
-          const matchesBuilding = filterBuilding === 'all' || !filterBuilding || c.unit?.company?.building?.buildingName === filterBuilding;
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || c.unit?.company?.building?.buildingName === filterBuilding;
           return matchesSearch && matchesBuilding;
         });
         console.log("customerData: ", data)
@@ -205,7 +205,7 @@ const User = () => {
             t.name?.toLowerCase().includes(term) ||
             t.phone?.toLowerCase().includes(term) ||
             t.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
-          const matchesBuilding = filterBuilding === 'all' || !filterBuilding || t.techBuilds?.some(b => b.building?.buildingName === filterBuilding);
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || t.techBuilds?.some(b => b.building?.buildingName === filterBuilding);
           return matchesSearch && matchesBuilding;
         });
         console.log("techniciansData: ", data)
@@ -220,7 +220,7 @@ const User = () => {
             w.unit?.unitName?.toLowerCase().includes(term) ||
             w.unit?.company?.companyName?.toLowerCase().includes(term) ||
             w.unit?.company?.building?.buildingName?.toLowerCase().includes(term); //c.unit?.company?.building?.buildingName === filterBuilding
-          const matchesBuilding = filterBuilding === 'all' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
           return matchesSearch && matchesBuilding;
         });
         console.log("waitApprove: ", data)
