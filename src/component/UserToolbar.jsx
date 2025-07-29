@@ -28,7 +28,7 @@ const UserToolbar = ({
   return (
     <div className="flex items-center gap-2 flex-wrap mb-6">
       {/* ช่องค้นหา */}
-      <div className="flex items-center flex-1 min-w-[148px] border-b-[1px] border-[#837958]">
+      <div className="flex items-center flex-1 min-w-[172px] border-b-[1px] border-[#837958]">
         <BiSearchAlt2 size={20} className="text-[#837958] ml-2" />
         <input
           type="text"
@@ -43,7 +43,7 @@ const UserToolbar = ({
       {/* ปุ่มค้นหา */}
       <button
         onClick={handleSearch}
-        className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
+        className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-[#6f684c]"
       >
         <BiSearchAlt2 size={18} className="text-white mr-1" />
         ค้นหา
@@ -88,6 +88,7 @@ const UserToolbar = ({
           className="text-white pointer-events-none absolute top-1/2 right-2 -translate-y-1/2"
         />
       </div> */}
+
       <div className="mb-3">
         <BuildingFilter isMobile={false} setBuildingName={setFilterBuilding}/>
       </div>

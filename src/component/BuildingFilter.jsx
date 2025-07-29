@@ -72,7 +72,7 @@ const BuildingFilter = ({ isMobile, setBuildingName }) => {
                                 //     setOpen(false);
                                 // }}
                                 onClick={() => handleSelect(item)}
-                                className={`${isMobile ? "p-[2px] text-[7px]" : "p-[3px] text-[8px]"}  text-[#837958] text-center border-b-[1px] border-[#837958]/20 last:border-b-0 hover:bg-gray-100 cursor-pointer`}
+                                className={`${isMobile ? "p-[2px] text-[7px]" : "p-[2px] text-[9px]"}  text-[#837958] text-center border-b-[1px] border-[#837958]/20 last:border-b-0 hover:bg-[#BC9D72] hover:text-white cursor-pointer`}
                             >
                                 {item}
                             </div>
