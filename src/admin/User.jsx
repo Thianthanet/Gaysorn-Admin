@@ -11,6 +11,8 @@ import StatusPopup from '../component/StatusPopup';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 import WaitApproveTable from '../component/WaitApproveTable';
+import { FaLine } from 'react-icons/fa'; 
+import { Trash2, UserPen } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -648,6 +650,25 @@ const User = () => {
 
   // --- Render Logic ---
 
+  const handleApproveAuto = async (userId) => {
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/approve/${userId}`)
+      console.log(response.data.data)
+      window.location.reload()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleDeleteApprove = async (id) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`)
+      console.log(response.data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <AdminLayout>
       <div className="container mx-auto px-4 py-2">
@@ -875,12 +896,15 @@ const User = () => {
                               <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
                             )}
                           </td>
-                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="flex gap-2 px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             <button
                               className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
-                              onClick={() => handleApprove(user.userId)}
+                              onClick={() => handleApproveAuto(user.userId)}
                             >
                               อนุมัติ
+                            </button>
+                            <button onClick={() => handleDeleteApprove(user.id)}>
+                              <Trash2 className='text-red-500'/>
                             </button>
                           </td>
                         </tr>
@@ -969,11 +993,11 @@ const User = () => {
               )
             }
 
-            {popupEditUser && (
+            {/* {popupEditUser && (
               <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
                 <div className="bg-white max-w-xl w-full mx-4 rounded-lg shadow-lg p-6 relative">
 
-                  {/* ปุ่มปิด */}
+                 
                   <button
                     className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
                     onClick={() => setPopupEditUser(false)}
@@ -1074,7 +1098,7 @@ const User = () => {
                   </form>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Popup ยืนยันการลบ */}
             {showConfirmPopup && (
