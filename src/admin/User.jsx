@@ -12,7 +12,7 @@ import * as XLSX from 'xlsx';
 import axios from 'axios';
 import WaitApproveTable from '../component/WaitApproveTable';
 import { FaLine } from 'react-icons/fa'; 
-import { Trash2, UserPen } from 'lucide-react';
+import { CircleCheck, CircleX, Trash2, UserPen } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
