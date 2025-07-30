@@ -1,105 +1,554 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AdminLayout from './AdminLayout';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { BiSearchAlt2 } from "react-icons/bi";
-import { CircleCheck, CircleX } from "lucide-react";
-import { HiChevronDown } from "react-icons/hi";
-import { FaLine, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { UserPen, Trash2 } from 'lucide-react';
-import * as XLSX from 'xlsx'
+import UserToolbar from '../component/UserToolbar';
+import UserPopup from '../component/UserPopup';
+import CustomerTable from '../component/CustomerTable';
+import TechnicianTable from '../component/TechnicianTable';
+import AdminTable from '../component/AdminTable';
+import ConfirmDeletePopup from '../component/ConfirmDeletePopup';
+import StatusPopup from '../component/StatusPopup';
+import * as XLSX from 'xlsx';
+import axios from 'axios';
+import WaitApproveTable from '../component/WaitApproveTable';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const User = () => {
+  // --- State Management ---
+  // Data for tables
   const [customers, setCustomers] = useState([]);
   const [technicians, setTechnicians] = useState([]);
-  const [activeTab, setActiveTab] = useState('customers');
+  const [admin, setAdmin] = useState([]);
   const [waitForApprove, setWaitForApprove] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [admin, setAdmin] = useState([])
-  const [showPasswords, setShowPasswords] = useState({})
-  const navigate = useNavigate()
 
+  // UI state
+  const [activeTab, setActiveTab] = useState('customers');
+  const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [searchInput, setSearchInput] = useState("")
-  const [searchTerm, setSearchTerm] = useState("")
+  const navigate = useNavigate();
+
+  // Search and Filter state
+  const [searchInput, setSearchInput] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterBuilding, setFilterBuilding] = useState('');
+
+  // Popup and Form state
   const [popupCreateUser, setPopupCreateUser] = useState(false);
-  const [popupStatus, setPopupStatus] = useState();
+  const [popupStatus, setPopupStatus] = useState(null); // e.g., "loading", "success", "delete", "error", null
+  const [popupMessage, setPopupMessage] = useState('');
+  const [errors, setErrors] = useState({});
+
+  // Building/Company/Unit data for dropdowns
   const [buildings, setBuildings] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [units, setUnits] = useState([]);
-  const [confirmDeleteId, setConfirmDeleteId] = useState(null); // สำหรับเก็บ ID ที่จะลบ
-  const [showConfirmPopup, setShowConfirmPopup] = useState(false); // คุมการแสดง popup
-  const [popupEditUser, setPopupEditUser] = useState(false); // คุมการแสดง popup
-  // const [tabPopup, setTabPopup] = useState('customers');
-  const [errors, setErrors] = useState({});
-  const [popupMessage, setPopupMessage] = useState('');
+  const [selectedBuildings, setSelectedBuildings] = useState([]); // For technician building access
 
-  // const [popupUserVisible, setPopupUserVisible] = useState(false);   // เปิด/ปิด popup
-  // const [isEditMode, setIsEditMode] = useState(false);               // true = กำลังแก้ไข
-  // const [editingId, setEditingId] = useState(null);
-
-
-  const [customerData, setCustomerData] = useState({
+  // Data for create/edit forms
+  const [customerFormData, setCustomerFormData] = useState({
+    id: null, // Used for editing existing customer
     name: '',
     phone: '',
-    // nickname: '',
     companyName: '',
     unitName: '',
     buildingName: '',
     email: '',
+    buildingId: '', // For API payload
+    companyId: '', // For API payload
+    unitId: '', // For API payload
   });
 
-  // const [formData, setFormData] = useState({
-  //   name: '',
-  //   phone: '',
-  //   buildingId: '',
-  //   companyId: '',
-  //   companyName: '',
-  //   unitId: '',
-  //   unitName: '',
-  // });
-
-  const [technicianData, setTechnicianData] = useState({
+  const [technicianFormData, setTechnicianFormData] = useState({
+    id: null, // Used for editing existing technician
+    userId: null, // Backend user ID
     name: '',
     phone: '',
   });
 
-  const [adminData, setAdminData] = useState({
+  const [adminFormData, setAdminFormData] = useState({
+    id: null, // Used for editing existing admin
     username: '',
     password: '',
   });
 
-  // const handleAdminChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setAdmin((prev) => ({ ...prev, [name]: value }));
-  // };
+  // Delete Confirmation state
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [showConfirmPopup, setShowConfirmPopup] = useState(false);
 
-  // const validateAdminCredentials = async () => {
-  //   try {
-  //     const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getAdmin`);
-  //     const adminList = response.data.data;
+  // --- Helper Functions ---
 
-  //     const found = adminList.find(
-  //       (admin) =>
-  //         !admin.isDelete &&
-  //         admin.username === userAdmin.username &&
-  //         admin.password === userAdmin.password
-  //     );
+  /**
+   * Transforms technician's associated buildings into a unique list of building names.
+   * @param {Array} techBuilds - Array of technician's building associations.
+   * @returns {Array} - Array of unique building names (limited to first 3).
+   */
+  const getUniqueBuildings = (techBuilds) => {
+    if (!techBuilds || techBuilds.length === 0) return [];
 
-  //     if (!found) {
-  //       alert("ชื่อผู้ใช้หรือรหัสผ่านแอดมินไม่ถูกต้อง");
-  //       return false;
-  //     }
+    const uniqueBuildingNames = [];
+    const seen = new Set();
 
-  //     return true;
-  //   } catch (error) {
-  //     console.error("เกิดข้อผิดพลาดขณะตรวจสอบแอดมิน", error);
-  //     alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
-  //     return false;
-  //   }
-  // };
+    techBuilds.forEach(build => {
+      const buildingName = build.building?.buildingName;
+      if (buildingName && !seen.has(buildingName)) {
+        seen.add(buildingName);
+        uniqueBuildingNames.push(buildingName);
+      }
+    });
+    return uniqueBuildingNames.slice(0, 3);
+  };
 
-  const exportToExcel = () => {
+  /**
+   * Displays a temporary popup message.
+   * @param {string} message - The message to display.
+   * @param {number} duration - How long the message should be visible in ms.
+   */
+  const showTempPopupMessage = useCallback((message, duration = 3000) => {
+    setPopupMessage(message);
+    setTimeout(() => {
+      setPopupMessage('');
+    }, duration);
+  }, []);
+
+  /**
+   * Handles status popup display and dismissal.
+   * @param {string} statusType - "loading", "success", "update", "delete", "error"
+   * @param {boolean} shouldReload - Whether to reload the page after status popup.
+   */
+  const handlePopupStatus = useCallback((statusType, shouldReload = false) => {
+    setPopupStatus(statusType);
+    setTimeout(() => {
+      setPopupStatus(null);
+      setPopupCreateUser(false); // Close popup on success
+      if (shouldReload) {
+        window.location.reload();
+      }
+      // fetchData();
+    }, 3000); // Popup visible for 2 seconds
+  }, []);
+
+  // --- API Fetching Functions ---
+
+  const fetchBuildings = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/getBuilding`);
+      setBuildings(res.data.data);
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+    }
+  }, []);
+
+  const fetchCompanies = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/getCompany`);
+      setCompanies(res.data.data);
+    } catch (error) {
+      console.error('Error fetching companies:', error);
+    }
+  }, []);
+
+  const fetchUnits = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/getUnits`);
+      setUnits(res.data.data);
+    } catch (error) {
+      console.error('Error fetching units:', error);
+    }
+  }, []);
+
+  const fetchAdmin = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/getAdmin`);
+      setAdmin(response.data.data);
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+    }
+  }, []);
+
+  const fetchWaitForApprove = useCallback(async () => {
+    try {
+      // const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/waitApprove`);
+      // console.log("waitApprove: ", response.data.data)
+      setWaitForApprove(response.data.data);
+    } catch (error) {
+      console.error('Error fetching wait for approve data:', error);
+    }
+  }, []);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      let data = [];
+      const term = searchTerm.toLowerCase();
+      // console.log("filterBuilding: ", filterBuilding)
+
+      if (activeTab === 'customers') {
+        const response = await axios.get(`${API_BASE_URL}/api/allCustomer`);
+        data = response.data.data.filter(c => {
+          const matchesSearch =
+            c.name?.toLowerCase().includes(term) ||
+            c.phone?.toLowerCase().includes(term) ||
+            c.unit?.company?.building?.buildingName?.toLowerCase().includes(term) ||
+            c.unit?.unitName?.toLowerCase().includes(term) ||
+            c.unit?.company?.companyName?.toLowerCase().includes(term);
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || c.unit?.company?.building?.buildingName === filterBuilding;
+          return matchesSearch && matchesBuilding;
+        });
+        console.log("customerData: ", data)
+        setCustomers(data);
+      } else if (activeTab === 'technicians') {
+        const response = await axios.get(`${API_BASE_URL}/api/getTech`);
+        data = response.data.data.filter(t => {
+          const matchesSearch =
+            t.name?.toLowerCase().includes(term) ||
+            t.phone?.toLowerCase().includes(term) ||
+            t.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || t.techBuilds?.some(b => b.building?.buildingName === filterBuilding);
+          return matchesSearch && matchesBuilding;
+        });
+        console.log("techniciansData: ", data)
+        setTechnicians(data);
+      } else if (activeTab === 'waitApprove') {
+        // const response = await fetchWaitForApprove(); // This fetches and sets state directly
+        const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
+        data = response.data.data.filter(w => {
+          const matchesSearch =
+            w.name?.toLowerCase().includes(term) ||
+            w.phone?.toLowerCase().includes(term) ||
+            w.unit?.unitName?.toLowerCase().includes(term) ||
+            w.unit?.company?.companyName?.toLowerCase().includes(term) ||
+            w.unit?.company?.building?.buildingName?.toLowerCase().includes(term); //c.unit?.company?.building?.buildingName === filterBuilding
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
+          return matchesSearch && matchesBuilding;
+        });
+        console.log("waitApprove: ", data)
+        setWaitForApprove(data);
+      } else if (activeTab === 'admin') {
+        // await fetchAdmin(); // This fetches and sets state directly
+        const response = await axios.get(`${API_BASE_URL}/api/getAdmin`);
+        data = response.data.data.filter(a => {
+          const matchesSearch =
+            a.username?.toLowerCase().includes(term)
+          // a.phone?.toLowerCase().includes(term) ||
+          // a.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
+          return matchesSearch;
+        });
+        console.log("adminData: ", data)
+        setAdmin(data);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, searchTerm, filterBuilding]); // Dependencies for useCallback
+
+  // --- Handlers for Form Changes ---
+
+  const handleCustomerChange = useCallback(async (e) => {
+    const { name, value } = e.target;
+
+    // Phone number input formatting
+    if (name === 'phone') {
+      const onlyNums = value.replace(/\D/g, '');
+      setCustomerFormData(prev => ({ ...prev, phone: onlyNums.slice(0, 15) }));
+      return;
+    }
+
+    // Email validation (basic client-side, server-side validation is still critical)
+    if (name === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (value && !emailRegex.test(value)) {
+        setErrors(prev => ({ ...prev, email: 'รูปแบบอีเมลไม่ถูกต้อง' }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.email;
+          return newErrors;
+        });
+      }
+    }
+
+    setCustomerFormData(prev => ({ ...prev, [name]: value }));
+
+    // Auto-fill logic for related fields
+    if (name === 'unitName' && value) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByUnit/${value}`);
+        const { company, building, unitId, companyId, buildingId } = response.data;
+        setCustomerFormData(prev => ({
+          ...prev,
+          companyName: company || '',
+          buildingName: building || '',
+          unitId: unitId || '',
+          companyId: companyId || '',
+          buildingId: buildingId || '',
+        }));
+      } catch (error) {
+        console.error('Error fetching unit data:', error);
+      }
+    } else if (name === 'companyName' && value) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByCompany/${value}`);
+        const { building, units: fetchedUnits, companyId, buildingId } = response.data;
+        setCustomerFormData(prev => ({
+          ...prev,
+          buildingName: building || '',
+          unitName: fetchedUnits && fetchedUnits.length > 0 ? fetchedUnits[0] : '',
+          companyId: companyId || '',
+          buildingId: buildingId || '',
+        }));
+        if (fetchedUnits) {
+          setUnits(fetchedUnits.map(name => ({ unitName: name }))); // Assuming units are just names
+        }
+      } catch (error) {
+        console.error('Error fetching company data:', error);
+      }
+    } else if (name === 'buildingName' && value) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByBuilding/${value}`);
+        const { companies: fetchedCompanies, buildingId } = response.data;
+        setCustomerFormData(prev => ({
+          ...prev,
+          companyName: fetchedCompanies && fetchedCompanies.length > 0 ? fetchedCompanies[0] : '',
+          unitName: '', // Clear unit name as it depends on company
+          buildingId: buildingId || '',
+        }));
+        if (fetchedCompanies) {
+          setCompanies(fetchedCompanies.map(name => ({ companyName: name })));
+          setUnits([]); // Clear units
+        }
+      } catch (error) {
+        console.error('Error fetching building data:', error);
+      }
+    }
+
+  }, [setErrors, setCustomerFormData, setCompanies, setUnits]);
+
+  const handleTechnicianChange = useCallback((e) => {
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      const onlyNums = value.replace(/\D/g, '');
+      setTechnicianFormData(prev => ({ ...prev, phone: onlyNums.slice(0, 15) }));
+    } else {
+      setTechnicianFormData(prev => ({ ...prev, [name]: value }));
+    }
+  }, []);
+
+  const handleAdminChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setAdminFormData(prev => ({ ...prev, [name]: value }));
+  }, []);
+
+  const handleBuildingToggle = useCallback((buildingId) => {
+    setSelectedBuildings(prev =>
+      prev.includes(buildingId)
+        ? prev.filter(id => id !== buildingId)
+        : [...prev, buildingId]
+    );
+  }, []);
+
+  // --- Edit Data Loaders ---
+
+  const handleEditCustomer = useCallback(async (userId) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/getCustomerById/${userId}`);
+      const customer = res.data.data;
+
+      setCustomerFormData({
+        id: customer.id,
+        name: customer.name,
+        phone: customer.phone,
+        buildingId: customer.unit?.company?.buildingId || '',
+        companyId: customer.unit?.companyId || '',
+        companyName: customer.unit?.company?.companyName || '',
+        unitId: customer.unitId || '',
+        unitName: customer.unit?.unitName || '',
+        buildingName: customer.unit?.company?.building?.buildingName || '',
+        email: customer.email || '',
+      });
+
+      await Promise.all([
+        fetchBuildings(),
+        fetchCompanies(),
+        fetchUnits(),
+      ]);
+
+      setActiveTab('customers');
+      setPopupCreateUser(true);
+    } catch (err) {
+      console.error('Failed to load customer data for editing:', err);
+      showTempPopupMessage('ไม่สามารถโหลดข้อมูลลูกค้าเพื่อแก้ไขได้');
+    }
+  }, [fetchBuildings, fetchCompanies, fetchUnits, showTempPopupMessage]);
+
+  const handleEditTechnician = useCallback(async (userId) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/getTechnicianById/${userId}`);
+      const technician = res.data.data;
+
+      const resBuildings = await axios.get(`${API_BASE_URL}/api/getBuilding`);
+      const buildingsData = resBuildings.data.data;
+
+      const matchedBuildingIds = buildingsData
+        .filter(building =>
+          technician.techBuilds?.some(
+            techBuild => techBuild.building.buildingName === building.buildingName
+          )
+        )
+        .map(building => building.id);
+
+      setSelectedBuildings(matchedBuildingIds);
+
+      setTechnicianFormData({
+        id: technician.id,
+        userId: technician.userId,
+        name: technician.name,
+        phone: technician.phone,
+      });
+
+      setActiveTab('technicians');
+      setPopupCreateUser(true);
+    } catch (err) {
+      console.error('Failed to load technician data for editing:', err);
+      showTempPopupMessage('ไม่สามารถโหลดข้อมูลเจ้าหน้าที่เพื่อแก้ไขได้');
+    }
+  }, [showTempPopupMessage]);
+
+  const handleEditAdmin = useCallback(async (userId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/getAdminById/${userId}`);
+      const adminItem = response.data.data;
+
+      setAdminFormData({
+        id: adminItem.id,
+        username: adminItem.username,
+        password: adminItem.password,
+      });
+
+      setActiveTab('admin');
+      setPopupCreateUser(true);
+    } catch (err) {
+      console.error('Failed to load admin data for editing:', err);
+      showTempPopupMessage('ไม่สามารถโหลดข้อมูลแอดมินเพื่อแก้ไขได้');
+    }
+  }, [showTempPopupMessage]);
+
+  // --- Delete Handlers ---
+
+  const handleDelete = useCallback(async (idToDelete, type) => {
+    try {
+      let endpoint = '';
+      switch (type) {
+        case 'customers':
+          endpoint = `/api/deleteCustomer/${idToDelete}`;
+          break;
+        case 'technicians':
+          endpoint = `/api/deleteTechnician/${idToDelete}`;
+          break;
+        case 'admin':
+          endpoint = `/api/deleteAdmin/${idToDelete}`;
+          break;
+        default:
+          return;
+      }
+      handlePopupStatus('loading');
+      await axios.delete(`${API_BASE_URL}${endpoint}`);
+      handlePopupStatus('delete', true); // Show delete status, then reload
+    } catch (error) {
+      console.error(`Error deleting ${type}:`, error);
+      handlePopupStatus('error');
+      showTempPopupMessage(`ไม่สามารถลบ${type}ได้`);
+    }
+  }, [handlePopupStatus, showTempPopupMessage]);
+
+  const confirmDelete = useCallback((id) => {
+    setConfirmDeleteId(id);
+    setShowConfirmPopup(true);
+  }, []);
+
+  const cancelDelete = useCallback(() => {
+    setShowConfirmPopup(false);
+    setConfirmDeleteId(null);
+  }, []);
+
+  const proceedDelete = useCallback(() => {
+    setShowConfirmPopup(false);
+    if (confirmDeleteId !== null) {
+      handleDelete(confirmDeleteId, activeTab);
+    }
+  }, [confirmDeleteId, activeTab, handleDelete]);
+
+  // --- Form Submission Handler ---
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+
+    const newErrors = {};
+    let payload = {};
+    let apiCall = null;
+    let successStatus = '';
+
+    if (activeTab === 'customers') {
+      if (!customerFormData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
+      if (!customerFormData.companyName) newErrors.companyName = 'กรุณากรอกบริษัท';
+      if (!customerFormData.buildingName) newErrors.buildingName = 'กรุณากรอกอาคาร';
+      payload = customerFormData;
+      apiCall = customerFormData.id
+        ? axios.patch(`${API_BASE_URL}/api/updateCustomer`, payload)
+        : axios.post(`${API_BASE_URL}/api/createCustomer`, payload);
+      successStatus = customerFormData.id ? 'update' : 'success';
+    } else if (activeTab === 'technicians') {
+      if (!technicianFormData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
+      payload = technicianFormData;
+      apiCall = technicianFormData.id
+        ? axios.patch(`${API_BASE_URL}/api/updateTechnician`, payload)
+        : axios.post(`${API_BASE_URL}/api/createTechnician`, payload);
+      successStatus = technicianFormData.id ? 'update' : 'success';
+    } else if (activeTab === 'admin') {
+      if (!adminFormData.username) newErrors.username = 'กรุณากรอกชื่อผู้ใช้งาน';
+      if (!adminFormData.password && !adminFormData.id) newErrors.password = 'กรุณากรอกรหัสผ่าน'; // Password required only for new admin
+      payload = adminFormData;
+      apiCall = adminFormData.id
+        ? axios.patch(`${API_BASE_URL}/api/updateAdmin`, payload)
+        : axios.post(`${API_BASE_URL}/api/createAdmin`, payload);
+      successStatus = adminFormData.id ? 'update' : 'success';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorKey = Object.keys(newErrors)[0];
+      showTempPopupMessage(newErrors[firstErrorKey]);
+      return;
+    }
+
+    handlePopupStatus('loading');
+
+    try {
+      await apiCall;
+
+      // Handle technician's building assignments after technician update/creation
+      if (activeTab === 'technicians' && technicianFormData.id) {
+        await axios.post(
+          `${API_BASE_URL}/api/techUpdateBuilding`,
+          { techId: technicianFormData.userId, buildingIds: selectedBuildings }
+        );
+      }
+
+      handlePopupStatus(successStatus, true); // Show success/update status, then reload
+      navigate('/user'); // Redirect to user page
+    } catch (error) {
+      console.error('Submission error:', error);
+      handlePopupStatus('error');
+      showTempPopupMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+    }
+  }, [activeTab, customerFormData, technicianFormData, adminFormData, selectedBuildings, handlePopupStatus, showTempPopupMessage, navigate]);
+
+  // --- Export Function ---
+  const exportToExcel = useCallback(() => {
     let dataToExport = [];
     let fileName = '';
     let columnWidths = [];
@@ -117,16 +566,9 @@ const User = () => {
         }));
         fileName = 'ลูกค้า';
         columnWidths = [
-          { wch: 6 },   // ลำดับ
-          { wch: 25 },  // อาคาร
-          { wch: 25 },  // บริษัท
-          { wch: 12 },  // ยูนิต
-          { wch: 20 },  // ลูกค้า
-          { wch: 15 },  // เบอร์โทรศัพท์
-          { wch: 18 }   // สถานะ Line
+          { wch: 6 }, { wch: 25 }, { wch: 25 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 18 }
         ];
         break;
-
       case 'technicians':
         dataToExport = technicians.map((tech, index) => ({
           'ลำดับ': index + 1,
@@ -137,28 +579,19 @@ const User = () => {
         }));
         fileName = 'เจ้าหน้าที่';
         columnWidths = [
-          { wch: 6 },   // ลำดับ
-          { wch: 20 },  // เจ้าหน้าที่
-          { wch: 15 },  // เบอร์โทรศัพท์
-          { wch: 18 },  // สถานะ Line
-          { wch: 30 }   // สังกัด
+          { wch: 6 }, { wch: 20 }, { wch: 15 }, { wch: 18 }, { wch: 30 }
         ];
         break;
-
       case 'admin':
         dataToExport = admin.map((adminItem, index) => ({
           'ลำดับ': index + 1,
           'ชื่อผู้ใช้งาน': adminItem.username || '-',
-          // 'รหัสผ่าน': adminItem.password || '-'
         }));
         fileName = 'แอดมิน';
         columnWidths = [
-          { wch: 6 },   // ลำดับ
-          { wch: 20 },  // ชื่อผู้ใช้งาน
-          // { wch: 15 }   // รหัสผ่าน
+          { wch: 6 }, { wch: 20 }
         ];
         break;
-
       case 'waitApprove':
         dataToExport = waitForApprove.map((user, index) => ({
           'ลำดับ': index + 1,
@@ -172,806 +605,95 @@ const User = () => {
         }));
         fileName = 'รออนุมัติ';
         columnWidths = [
-          { wch: 6 },   // ลำดับ
-          { wch: 15 },  // อาคาร
-          { wch: 25 },  // บริษัท
-          { wch: 12 },  // ยูนิต
-          { wch: 20 },  // ผู้ใช้
-          { wch: 15 },  // เบอร์โทรศัพท์
-          { wch: 25 },  // Email
-          { wch: 18 }   // สถานะ Line
+          { wch: 6 }, { wch: 15 }, { wch: 25 }, { wch: 12 }, { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 18 }
         ];
         break;
-
       default:
         return;
     }
 
-    // Create worksheet and workbook
     const ws = XLSX.utils.json_to_sheet(dataToExport);
-
-    // Apply column widths
     ws['!cols'] = columnWidths;
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-
-    // Export Excel file
     XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
+  }, [activeTab, customers, technicians, admin, waitForApprove, getUniqueBuildings]);
 
 
-  const handleCustomerChange = async (e) => {
-    const { name, value } = e.target;
+  // --- Effects ---
 
-    // ✅ ถ้าเป็นเบอร์โทรศัพท์: รับเฉพาะตัวเลข และจำกัด 15 ตัว
-    if (name === 'phone') {
-      const onlyNums = value.replace(/\D/g, ''); // ลบทุกตัวที่ไม่ใช่เลข
-      setCustomerData(prev => ({
-        ...prev,
-        phone: onlyNums.slice(0, 15)
-      }));
-      return; // จบตรงนี้ไม่ต้องเช็ก unitName/companyName
-    }
+  // Initial fetch for buildings for the filter dropdown
+  useEffect(() => {
+    fetchBuildings();
+  }, [fetchBuildings]);
 
-    // ✅ ถ้าเป็นอีเมล: ตรวจสอบรูปแบบก่อนอัปเดต
-    if (name === 'email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-        // ถ้าไม่ตรงรูปแบบ อาจไม่เซตค่า หรือจะแสดง error ก็ได้
-        console.warn('อีเมลไม่ถูกต้อง');
-      }
-
-      // ยังอัปเดตค่าให้ user พิมพ์ต่อได้ (แต่คุณอาจเลือกไม่อัปเดตก็ได้)
-      setCustomerData(prev => ({
-        ...prev,
-        [name]: value
-      }));
-      return;
-    }
-
-    setCustomerData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Auto-fill logic when unitName changes
-    if (name === 'unitName' && value) {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getRelatedByUnit/${value}`);
-        const { company, building } = response.data;
-
-        setCustomerData(prev => ({
-          ...prev,
-          companyName: company || '',
-          buildingName: building || ''
-        }));
-      } catch (error) {
-        console.error('Error fetching unit data:', error);
-        // Don't clear fields if there's an error
-      }
-    }
-
-    // Auto-fill logic when companyName changes
-    if (name === 'companyName' && value) {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getRelatedByCompany/${value}`);
-        const { building, units } = response.data;
-
-        setCustomerData(prev => ({
-          ...prev,
-          buildingName: building || '',
-          unitName: units && units.length > 0 ? units[0] : ''
-        }));
-      } catch (error) {
-        console.error('Error fetching company data:', error);
-        // Don't clear fields if there's an error
-      }
-    }
-  };
-
-  const handleTechnicianChange = (e) => {
-    const { name, value } = e.target;
-
-    // ✅ ถ้าเป็นเบอร์โทรศัพท์: รับเฉพาะตัวเลข และจำกัด 15 ตัว
-    if (name === 'phone') {
-      const onlyNums = value.replace(/\D/g, ''); // ลบทุกตัวที่ไม่ใช่เลข
-      setTechnicianData(prev => ({
-        ...prev,
-        phone: onlyNums.slice(0, 15)
-      }));
-      return; // จบตรงนี้ไม่ต้องเช็ก unitName/companyName
-    }
-
-    setTechnicianData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleGetAdmin = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getAdmin`)
-      console.log("Get admin", response.data.data)
-      setAdmin(response.data.data)
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  // const toggleShowPassword = (id) => {
-  //   setShowPasswords(prev => ({
-  //     ...prev,
-  //     [id]: !prev[id]
-  //   }))
-  // }
+  // Fetch data whenever activeTab, searchTerm, or filterBuilding changes
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
-    handleGetBuilding();
-  }, []);
+    fetchWaitForApprove(); // เรียกใช้ฟังก์ชันที่ถูก memoize ไว้
+  }, [fetchWaitForApprove]); // เพิ่ม fetchWaitForApprove ใน dependencies ของ useEffect เพื่อให้เรียกใหม่เมื่อฟังก์ชันเปลี่ยน (ในกรณีที่มี dependencies ใน useCallback)
 
-  const handleGetBuilding = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`);
-      setBuildings(response.data.data);
-    } catch (error) {
-      console.error('Error fetching building data:', error);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const newErrors = {};
-
-    if (activeTab === 'customers') {
-      if (!customerData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
-      if (!customerData.companyName) newErrors.companyName = 'กรุณากรอกบริษัท';
-      if (!customerData.buildingName) newErrors.buildingName = 'กรุณากรอกอาคาร';
-    } else if (activeTab === 'technicians') {
-      if (!technicianData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
-    }
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) {
-      // แสดงข้อความ popup แรกที่เจอ
-      const firstErrorKey = Object.keys(newErrors)[0];
-      setPopupMessage(newErrors[firstErrorKey]);
-
-      // ซ่อน popup หลัง 3 วินาที
-      setTimeout(() => {
-        setPopupMessage('');
-      }, 3000);
-
-      return;
-    }
-
-    setPopupStatus("loading");
-    const hasTechnicianData = technicianData.name.trim() !== '' || technicianData.phone.trim() !== '';
-    const hasAdminData = adminData.username.trim() !== '' && adminData.password.trim() !== '';
-
-    console.log("technicianData: ", technicianData)
-    console.log("adminData: ", adminData)
-
-    try {
-      if (activeTab === 'customers') {
-        await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createCustomer`, customerData);
-      }
-      if (activeTab === 'technicians') {
-        // console.log("is comming technicians")
-        // console.log("hasTechnicianData is: ", hasTechnicianData)
-        if (hasTechnicianData) {
-          await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createTechnician`, technicianData);
-          // console.log("res technician: ", res.data)
-          // alert('สร้างเจ้าหน้าที่สำเร็จ');
-          // navigate('/user');
-          // return;
-        }
-        if (hasAdminData) {
-          await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/createAdmin`, adminData);
-          // console.log("res admin: ", res.data)
-          // if (res.data.data) {
-          //   alert('สร้างแอดมินสำเร็จ');
-          //   navigate('/user')
-          // } else {
-          //   alert('Username หรือ Password ของแอดมินไม่ถูกต้อง');
-          // }
-          // return;
-        }
-      }
-
-      setTimeout(() => {
-        setPopupStatus("success");
-        setTimeout(() => {
-          setPopupStatus(null);
-          setPopupCreateUser(false);
-          window.location.reload();
-        }, 2000);
-      }, 2000);
-      navigate('/user');
-
-    } catch (error) {
-      console.error(error);
-      setTimeout(() => {
-        setPopupStatus("error");
-        setTimeout(() => {
-          setPopupStatus(null);
-        }, 2000);
-      }, 2000);
-      // navigate('/user');
-    }
-  };
-
+  // Adjust isMobile state on window resize
   useEffect(() => {
-    const handleResize = () => { //1024
+    const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
+    handleResize(); // Set initial value
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isMobile]);
-
-  const handleSearch = () => {
-    setSearchTerm(searchInput)
-  }
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        if (activeTab === 'customers') {
-          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/allCustomer`);
-          let customerData = response.data.data;
-          console.log("customerData: ", customerData)
-
-          if (searchTerm.trim() !== "") {
-            const term = searchTerm.toLowerCase();
-            customerData = customerData.filter(c => {
-              const nameMatch = c.name?.toLowerCase().includes(term);
-              const phoneMatch = c.phone?.toLowerCase().includes(term);
-              const buildingNameMatch = c.unit?.company?.building?.buildingName?.toLowerCase().includes(term)
-              const unitMatch = c.unit?.unitName?.toLowerCase().includes(term)
-              const companyNameMatch = c.unit?.company?.companyName?.toLowerCase().includes(term)
-
-              // console.log("ชื่อ:", t.name, "| อาคารที่ดูแล:", t.techBuilds?.map(b => b.building?.buildingName), "| Match:", buildingMatch);
-
-              return nameMatch || phoneMatch || buildingNameMatch || unitMatch || companyNameMatch;
-            });
-          }
-
-          setCustomers(customerData);
-
-        } else if (activeTab === 'technicians') {
-          const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getTech`);
-          let techData = response.data.data;
-
-          console.log("technicians: ", response.data)
-
-          if (searchTerm.trim() !== "") {
-            const term = searchTerm.toLowerCase();
-            techData = techData.filter(t => {
-              const nameMatch = t.name?.toLowerCase().includes(term);
-              const phoneMatch = t.phone?.toLowerCase().includes(term);
-              // ตรวจสอบว่ามี techBuilds ที่ buildingName ตรงกับคำค้นไหม
-              const buildingMatch = t.techBuilds?.some(b =>
-                b.building?.buildingName?.toLowerCase().includes(term)
-              );
-
-              // console.log("ชื่อ:", t.name, "| อาคารที่ดูแล:", t.techBuilds?.map(b => b.building?.buildingName), "| Match:", buildingMatch);
-
-              return nameMatch || phoneMatch || buildingMatch;
-            });
-          }
-
-          setTechnicians(techData);
-
-        } else if (activeTab === 'waitForApprove') {
-          await handleGetWaitForApprove(searchTerm); // ส่ง searchTerm เข้าไปให้ด้วย ถ้าอยากให้ฟิลเตอร์ฝั่งนั้น
-        } else if (activeTab === 'admin') {
-          handleGetAdmin()
-        }
-
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [activeTab, searchTerm]); // ✅ เมื่อเปลี่ยนแท็บ หรือ คำค้นหา
-
-  useEffect(() => {
-    handleGetWaitForApprove()
-  }, [])
-
-  const handleGetWaitForApprove = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/waitApprove`);
-      console.log('Wait for approve data:', response.data.data);
-      setWaitForApprove(response.data.data);
-    } catch (error) {
-      console.error('Error fetching wait for approve data:', error);
-    }
-  }
-
-  const handleApprove = async (userId) => {
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/approve/${userId}`);
-      console.log('Approve response:', response.data);
-      if (response.data) {
-        // Refresh the wait for approve list
-        await handleGetWaitForApprove();
-        alert('User approved successfully');
-      } else {
-        alert('Failed to approve user');
-      }
-    } catch (error) {
-      console.error('Error approving user:', error);
-    }
-  }
-
-  const getUniqueBuildings = (techBuilds) => {
-    if (!techBuilds || techBuilds.length === 0) return [];
-
-    const uniqueBuildings = [];
-    const seen = new Set();
-
-    techBuilds.forEach(build => {
-      const buildingName = build.building?.buildingName;
-      if (buildingName && !seen.has(buildingName)) {
-        seen.add(buildingName);
-        uniqueBuildings.push(buildingName);
-      }
-    });
-
-    return uniqueBuildings.slice(0, 3);
-  };
-
-  const handleEditCustomer = (userId) => {
-    navigate(`/editCustomer/${userId}`);
-  }
-
-  // const handleEditCustomer = (userId) => {
-  //   const customer = customers.find((c) => c.id === userId);
-  //   if (customer) {
-  //     setFormData({
-  //       name: customer.name || '',
-  //       phone: customer.phone || '',
-  //       buildingId: customer.buildingId || '',
-  //       companyId: customer.unit?.companyId || '',
-  //       companyName: customer.companyName || '',
-  //       unitId: customer.unitId || '',
-  //       unitName: customer.unit?.unitName || '',
-  //     });
-  //     setPopupEditUser(true);
-  //   }
-  // };
-
-  const handleEditTechnician = (userId) => {
-    navigate(`/editTechnician/${userId}`);
-  };
-
-  const handleEditAdmin = (id) => {
-    navigate(`/editAdmin/${id}`)
-  }
-
-  const handleDeleteCustomer = async (id) => {
-    try {
-      setPopupStatus("loading");
-      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`);
-      console.log('Delete response:', response.data);
-      setTimeout(() => {
-        setPopupStatus("delete");
-        setTimeout(() => {
-          setPopupStatus(null);
-          window.location.reload();
-        }, 2000);
-      }, 2000);
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-    }
-  };
-
-  const handleDeleteTechnician = async (id) => {
-    try {
-      // setPopupStatus("loading");
-      // setPopupStatus("loading");
-      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteTechnician/${id}`);
-      console.log('Delete response:', response.data);
-      // แสดง popup "delete" 3 วินาที
-      setTimeout(() => {
-        setPopupStatus("delete");
-
-        setTimeout(() => {
-          setPopupStatus(null);
-          window.location.reload();
-        }, 2000);
-      }, 2000);
-      // แสดง popup "delete" 3 วินาที
-      setTimeout(() => {
-        setPopupStatus("delete");
-
-        setTimeout(() => {
-          setPopupStatus(null);
-          window.location.reload();
-        }, 2000);
-      }, 2000);
-    } catch (error) {
-      console.error('Error deleting technician:', error);
-    }
-  }
-
-  const handleDeleteAdmin = async (id) => {
-    try {
-      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteAdmin/${id}`)
-      console.log("Delete admin success", response.data)
-      // alert("Delete admin successfully")
-      setTimeout(() => {
-        setPopupStatus("delete");
-        setTimeout(() => {
-          setPopupStatus(null);
-          window.location.reload();
-        }, 2000);
-      }, 2000);
-    } catch (error) {
-      console.error('Error deleting admin:', error);
-    }
-  }
-
-  const confirmDelete = (id) => {
-    setConfirmDeleteId(id); // เก็บ ID ที่จะลบไว้ก่อน
-    setShowConfirmPopup(true); // แสดง popup
-  };
-
-  const cancelDelete = () => {
-    setShowConfirmPopup(false); // ปิด popup
-    setConfirmDeleteId(null); // ล้าง id ที่เลือก
-  };
-
-  const proceedDelete = () => {
-    setPopupStatus("loading");
-    setShowConfirmPopup(false);
-    if (confirmDeleteId !== null) {
-      activeTab === 'customers' ? handleDeleteCustomer(confirmDeleteId) : activeTab === 'technicians' ? handleDeleteTechnician(confirmDeleteId) : handleDeleteAdmin(confirmDeleteId);
-    }
-  };
+  // --- Render Logic ---
 
   return (
     <AdminLayout>
       <div className="container mx-auto px-4 py-2">
-        <div className="flex items-center gap-2 flex-wrap mb-6">
-          {/* ช่องค้นหา */}
-          <div className="flex items-center flex-1 min-w-[250px] border-b-[1px] border-[#837958]">
-            <BiSearchAlt2 size={20} className="text-[#837958] ml-2" />
-            <input
-              type="text"
-              placeholder="ค้นหา"
-              value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-              className="w-full pl-2 pr-3 py-1 outline-none"
-            />
-          </div>
+        <UserToolbar
+          searchInput={searchInput}
+          setSearchInput={setSearchInput}
+          handleSearch={() => setSearchTerm(searchInput)} // Trigger search when button is clicked
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          setPopupCreateUser={setPopupCreateUser}
+          exportToExcel={exportToExcel}
+          buildings={buildings}
+          filterBuilding={filterBuilding}
+          setFilterBuilding={setFilterBuilding}
+          waitForApprove={waitForApprove}
+          resetFormData={() => { // Reset form data when opening new create popup
+            setCustomerFormData({
+              id: null, name: '', phone: '', companyName: '', unitName: '', buildingName: '', email: '',
+              buildingId: '', companyId: '', unitId: ''
+            });
+            setTechnicianFormData({ id: null, userId: null, name: '', phone: '' });
+            setAdminFormData({ id: null, username: '', password: '' });
+            setSelectedBuildings([]); // Clear selected buildings for technician
+            setErrors({}); // Clear validation errors
+          }}
+        />
 
-          {/* ปุ่มค้นหา */}
-          <button
-            onClick={handleSearch}
-            className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
-          >
-            <BiSearchAlt2 size={18} className="text-white mr-1" />
-            ค้นหา
-          </button>
-
-          {/* ปุ่มอาคาร */}
-          <button
-            className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center gap-[2px] shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
-          >
-            อาคาร
-            <HiChevronDown size={18} className="text-white" />
-          </button>
-
-          {/* ปุ่มต่าง ๆ */}
-          <button
-            className="px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
-            onClick={exportToExcel}
-          >
-            ส่งข้อมูลออก
-          </button>
-
-          <button
-            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
-              ${activeTab === 'customers'
-                ? 'bg-[#BC9D72] text-white'
-                : 'bg-[#F4F2ED] text-black'
-              }`}
-            onClick={() => setActiveTab('customers')}
-          >
-            ลูกค้า
-          </button>
-
-          <button
-            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
-              ${activeTab === 'technicians'
-                ? 'bg-[#BC9D72] text-white'
-                : 'bg-[#F4F2ED] text-black'
-              }`}
-            onClick={() => setActiveTab('technicians')}
-          >
-            เจ้าหน้าที่
-          </button>
-
-          <button
-            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
-              ${activeTab === 'admin'
-                ? 'bg-[#BC9D72] text-white'
-                : 'bg-[#F4F2ED] text-black'
-              }`}
-            onClick={() => setActiveTab('admin')}
-          >
-            แอดมิน
-          </button>
-
-          <button
-            className="px-4 h-[36px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-[#a88f5c]"
-            onClick={() => setPopupCreateUser(true)}
-          >
-            เพิ่มผู้ใช้งาน
-          </button>
-
-          <button
-            className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300
-              ${activeTab === 'waitApprove'
-                ? 'bg-[#BC9D72] text-white'
-                : 'bg-[#F4F2ED] text-black'
-              }`}
-            onClick={() => setActiveTab('waitApprove')}
-          >
-            รออนุมัติ {waitForApprove.length > 0 && (
-              <span className='ml-1 text-sm text-red-600 font-bold'>
-                ( {waitForApprove.length} )
-              </span>
-            )}
-          </button>
-        </div>
-
-        {
-          console.log("activeTab: ", activeTab)
-        }
-
-        {popupCreateUser && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
-            <div className="relative w-[520px] h-[620px] bg-white border border-[#BC9D72] rounded-xl p-2 shadow-lg overflow-y-auto">
-              <h2 className="text-[18px] font-black text-[#837958] text-center mb-4 mt-4">
-                {activeTab === 'customers' ? "เพิ่มข้อมูลลูกค้า" : activeTab === 'technicians' ? "เพิ่มข้อมูลเจ้าหน้าที่" : "เพิ่มข้อมูลแอดมิน"}
-              </h2>
-
-              {/* Tabs */}
-              <div className="flex w-fit mx-auto mb-2 rounded-xl border border-[#837958] overflow-hidden text-sm bg-[#F4F2ED]">
-                <button
-                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-300 ease-in-out
-                  ${activeTab === 'customers'
-                      ? 'bg-[#837958] text-white rounded-r-xl'
-                      : 'text-[#837958] rounded-none'
-                    }`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // setTabPopup('customers');
-                    setActiveTab('customers')
-                  }}
-                >
-                  ลูกค้า
-                </button>
-                <button
-                  className={`px-6 py-2 font-medium w-[160px] transition-all duration-300 ease-in-out
-                  ${activeTab === 'technicians'
-                      ? 'bg-[#837958] text-white rounded-l-xl'
-                      : 'text-[#837958] rounded-none'
-                    }`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // setTabPopup('technicians');
-                    setActiveTab('technicians')
-                  }}
-                >
-                  เจ้าหน้าที่
-                </button>
-              </div>
-
-              <div className='flex justify-center'>
-                <div className="relative min-h-[400px]">  {/* ปรับตามความสูงฟอร์มที่ใหญ่สุด */}
-                  <div
-                    className={`transition-all duration-300 ease-in-out
-                    ${['customers', 'technicians'].includes(activeTab)
-                        ? 'opacity-100 translate-y-0'
-                        : ''}
-                    `}
-                  >
-                    <form onSubmit={handleSubmit}>
-
-                      {(activeTab === 'customers') && (
-                        <>
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
-                            <input name="name" value={customerData.name} onChange={handleCustomerChange}
-                              placeholder="ชื่อ-สกุล"
-                              className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border rounded-lg px-3 py-1.5 text-sm focus:outline-none
-                              ${errors.name ? 'border-red-500' : 'border-[#837958]'}
-                              `}
-                            />
-                          </div>
-
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
-                            <input name="phone" value={customerData.phone} onChange={handleCustomerChange}
-                              placeholder="เบอร์โทรศัพท์"
-                              maxLength={15}
-                              inputMode="numeric"
-                              pattern="\d*"
-                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                          </div>
-
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">บริษัท<span className="text-red-500">*</span></label>
-                            <input name="companyName" value={customerData.companyName} onChange={handleCustomerChange}
-                              placeholder="บริษัท"
-                              className={`w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none
-                              ${errors.companyName ? 'border-red-500' : 'border-[#837958]'}`} />
-                          </div>
-
-                          {/* <div className="mb-3">
-                            <label className="block text-[#BC9D72] mb-1 text-sm">ชื่อเล่น</label>
-                            <input name="nickname" value={customerData.nickname} onChange={handleCustomerChange}
-                              placeholder="ชื่อเล่น"
-                              className="w-full border border-[#BC9D72] rounded px-3 py-1.5 text-sm focus:outline-none" />
-                            </div> */}
-
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ยูนิต</label>
-                            <input name="unitName" value={customerData.unitName} onChange={handleCustomerChange}
-                              placeholder="ยูนิต"
-                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                          </div>
-
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">อาคาร<span className="text-red-500">*</span></label>
-                            <select
-                              name="buildingName"
-                              value={customerData.buildingName}
-                              onChange={handleCustomerChange}
-                              className={`w-[320px] text-[12px] text-[#BC9D72]/50 border 
-                            ${errors.buildingName ? 'border-red-500' : 'border-[#837958]'} 
-                            rounded-lg px-2 py-1.5 focus:outline-none`}
-                            >
-                              <option value="">เลือกอาคาร</option>
-                              {buildings.map((building) => (
-                                <option key={building.id} value={building.buildingName}>
-                                  {building.buildingName}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          <div className="mb-4">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">อีเมล</label>
-                            <input type="email" name="email" value={customerData.email} onChange={handleCustomerChange}
-                              placeholder="อีเมล"
-                              className="w-[320px] placeholder-[#BC9D72]/50 placeholder:text-[12px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm focus:outline-none" />
-                          </div>
-                        </>
-                      )}
-
-                      {(activeTab === 'technicians') && (
-                        <>
-                          <div className="mb-2">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">ชื่อ-สกุล<span className="text-red-500">*</span></label>
-                            <input name="name" value={technicianData.name} onChange={handleTechnicianChange}
-                              placeholder="ชื่อ-สกุล"
-                              className={`w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none
-                                ${errors.name ? 'border-red-500' : 'border-[#837958]'}`}
-                            />
-                          </div>
-
-                          <div className="mb-12">
-                            <label className="block text-[#BC9D72] mb-1 text-[12px]">เบอร์โทรศัพท์</label>
-                            <input name="phone" value={technicianData.phone} onChange={handleTechnicianChange}
-                              placeholder="เบอร์โทรศัพท์"
-
-                              className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                          </div>
-
-                          <div className="mb-[64px]">
-                            <div className="flex items-center justify-center mb-4">
-                              <div className="w-full h-px bg-[#837958] opacity-60" />
-                              <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
-                              <div className="w-full h-px bg-[#837958] opacity-60" />
-                            </div>
-
-                            <div className="mb-2">
-                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
-                              <input
-                                type="text"
-                                name="username"
-                                value={adminData.username}
-                                onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
-                                placeholder="Username"
-                                className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="mb-2">
-                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
-                              <input
-                                type="password"
-                                name="password"
-                                value={adminData.password}
-                                onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
-                                placeholder="Password"
-                                className="w-[320px] border border-[#837958] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {(activeTab === 'admin') && (
-                        <>
-                          <div className="mb-[64px]">
-                            {/* <div className="flex items-center justify-center mb-4">
-                              <div className="w-[120px] h-px bg-[#837958]" />
-                              <span className="mx-2 text-[#837958] font-semibold text-[18px]">Admin</span>
-                              <div className="w-[120px] h-px bg-[#837958]" />
-                            </div> */}
-
-                            <div className="mb-2">
-                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Username</label>
-                              <input
-                                type="text"
-                                name="username"
-                                value={adminData.username}
-                                onChange={(e) => setAdminData({ ...adminData, username: e.target.value })}
-                                placeholder="Username"
-                                className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none"
-                              />
-                            </div>
-
-                            <div className="mb-2">
-                              <label className="block text-[#BC9D72] mb-1 text-[12px]">Password</label>
-                              <input
-                                type="password"
-                                name="password"
-                                value={adminData.password}
-                                onChange={(e) => setAdminData({ ...adminData, password: e.target.value })}
-                                placeholder="Password"
-                                className="w-[320px] border border-[#BC9D72] rounded-lg px-3 py-1.5 text-sm placeholder-[#BC9D72]/50 placeholder:text-[12px] focus:outline-none" />
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      <div className={`flex flex-col`}>
-                        <button
-                          type="submit"
-                          className="w-full mt-2 mb-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition"
-                        >
-                          {activeTab === 'customers' ? 'เพิ่มข้อมูลลูกค้า' : activeTab === 'technicians' ? 'เพิ่มข้อมูลเจ้าหน้าที่' : "เพิ่มข้อมูลแอดมิน"}
-                        </button>
-
-                        {/* ปุ่มปิด */}
-                        <button
-                          className="w-full mb-2 bg-white text-[#837958] text-[12px] font-bold border-[1px] border-[#837958] py-2 rounded-xl hover:opacity-90 transition"
-                          onClick={() => setPopupCreateUser(false)}
-                        >
-                          ปิดหน้าต่างนี้
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <UserPopup
+          show={popupCreateUser}
+          onClose={() => setPopupCreateUser(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          handleSubmit={handleSubmit}
+          customerData={customerFormData}
+          technicianData={technicianFormData}
+          adminData={adminFormData}
+          handleCustomerChange={handleCustomerChange}
+          handleTechnicianChange={handleTechnicianChange}
+          handleAdminChange={handleAdminChange} // Pass admin change handler
+          buildings={buildings}
+          companies={companies} // Pass companies for customer form
+          units={units} // Pass units for customer form
+          selectedBuildings={selectedBuildings}
+          handleBuildingToggle={handleBuildingToggle}
+          errors={errors}
+        />
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -979,7 +701,6 @@ const User = () => {
           </div>
         ) : (
           <>
-            {/* Customers Table */}
             {activeTab === 'customers' && (
               <div className="bg-white shadow-md overflow-hidden">
                 <table className="min-w-full leading-normal">
@@ -992,7 +713,7 @@ const User = () => {
                         อาคาร
                       </th>
                       <th className="w-48 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        บริษัท
+                        บริษัท/ร้านค้า
                       </th>
                       <th className="w-1 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
                         ยูนิต
@@ -1079,128 +800,45 @@ const User = () => {
               </div>
             )}
 
-            {/* Technicians Table */}
             {activeTab === 'technicians' && (
-              <div className="bg-white shadow-md overflow-hidden">
-                <table className="min-w-full leading-normal">
-                  <thead>
-                    <tr>
-                      <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        ลำดับ
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        เจ้าหน้าที่
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        เบอร์โทรศัพท์
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        สถานะ Line
-                      </th>
-                      <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        สังกัด
-                      </th>  
-                      <th className="px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
-                        จัดการ
-                      </th>  
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {technicians.length > 0 ? (
-                      technicians.map((tech, index) => {
-                        const uniqueBuildings = getUniqueBuildings(tech.techBuilds);
-
-                        return (
-                          <tr key={tech.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-2 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {index + 1}
-                            </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {tech.name || '-'}
-                            </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {tech.phone || '-'}
-                            </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {tech.userId ? (
-                                <>
-                                  <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
-                                </>
-                              ) : (
-                                <>
-                                  <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
-                                </>
-                              )}
-                            </td>
-                            <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              {uniqueBuildings.length > 0 ? (
-                                <div className="flex flex-row space-x-2">
-                                  {uniqueBuildings.join(', ')}
-                                </div>
-                              ) : '-'}
-                            </td>
-                            <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                              <button
-                                className="text-blue-500 hover:text-blue-700 mr-3"
-                                title="แก้ไข"
-                                onClick={() => handleEditTechnician(tech.userId)}
-                              >
-                                <UserPen className="inline-block" />
-                              </button>
-                              <button
-                                className="text-red-500 hover:text-red-700"
-                                title="ลบ"
-                                onClick={() => confirmDelete(tech.id)}
-                              >
-                                <Trash2 className="inline-block" />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan="6" className="px-5 py-4 text-center text-gray-500">
-                          ไม่พบข้อมูลพนักงาน
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <TechnicianTable
+                technicians={technicians}
+                getUniqueBuildings={getUniqueBuildings}
+                handleEditTechnician={handleEditTechnician}
+                confirmDelete={confirmDelete}
+              />
             )}
 
-            {/* Wait Approve Table */}
             {activeTab === 'waitApprove' && (
-              <div className="bg-white shadow-md overflow-hidden">
+              <div className="bg-white shadow-md rounded-lg overflow-hidden">
                 <table className="min-w-full leading-normal">
                   <thead>
                     <tr>
-                      <th className="w-1 px-5 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         ลำดับ
                       </th>
-                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         อาคาร
                       </th>
-                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         บริษัท
                       </th>
-                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         ยูนิต
                       </th>
-                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         ผู้ใช้
                       </th>
-                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         เบอร์โทรศัพท์
                       </th>
-                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         Email
                       </th>
-                      <th className="px-5 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         Line
                       </th>
-                      <th className="px-5 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
                         จัดการ
                       </th>
                     </tr>
@@ -1209,35 +847,35 @@ const User = () => {
                     {waitForApprove.length > 0 ? (
                       waitForApprove.map((user, index) => (
                         <tr key={user.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-2 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                            {index + 1} 
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {index + 1}
                           </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {user.unit.company.building.buildingName || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {user.unit.company.companyName || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {user.unit.unitName || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {user.name || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {user.phone || '-'}
                           </td>
-                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {user.email || '-'}
                           </td>
-                          <td className="w-32 px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             {user.userId ? (
-                              <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
+                              <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
                             ) : (
-                              <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
+                              <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
                             )}
                           </td>
-                          <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
                             <button
                               className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
                               onClick={() => handleApprove(user.userId)}
@@ -1492,7 +1130,7 @@ const User = () => {
           </>
         )}
       </div>
-    </AdminLayout >
+    </AdminLayout>
   );
 };
 
