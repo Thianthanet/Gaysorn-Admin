@@ -10,9 +10,9 @@ const AdminLayout = ({ children }) => {
 
     const navItems = [
         { label: 'Dashboard', href: '/dashboard' },
-        { label: 'Job', href: '/job' },
-        { label: 'Report', href: '/report' },
-        { label: 'User', href: '/user' },
+        { label: 'Jobs', href: '/job' },
+        { label: 'Reports', href: '/report' },
+        { label: 'Users', href: '/user' },
         { label: 'Setting', href: '/setting' },
     ];
 

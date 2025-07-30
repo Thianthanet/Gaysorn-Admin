@@ -47,8 +47,26 @@ export default function Dashboard() {
   const [activeButton, setActiveButton] = useState('today')
   const [startDate, setStartDate] = useState("2025-07-21");
   const [endDate, setEndDate] = useState("2025-07-21");
-  const [buildingName, setBuildingName] = useState("ทั้งหมด");
+  const [buildingName, setBuildingName] = useState("all");
   const [choices, setChoices] = useState([]);
+
+  const [buildings, setBuildings] = useState([]);
+  // const [filterBuilding, setFilterBuilding] = useState('all');
+
+  const fetchBuildings = async () => {
+        try {
+            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`);
+            // console.log("Fetched buildings from API:", res.data.data); // เพิ่ม log เพื่อดูข้อมูลที่ได้
+            setBuildings(res.data.data); // Array of Objects
+        } catch (error) {
+            console.error('Error fetching buildings:', error);
+        }
+    };
+
+    // 👉 เพิ่ม useEffect นี้เพื่อโหลดข้อมูลอาคารเมื่อ Component mount
+    useEffect(() => {
+        fetchBuildings();
+    }, []); // Empty dependency array means this runs once on mount
 
   useEffect(() => {
     if (dashboardData) {
@@ -74,7 +92,8 @@ export default function Dashboard() {
           params: {
             startDate,
             endDate,
-            buildingName: buildingName === "ทั้งหมด" ? undefined : buildingName,
+            buildingName: buildingName === "all" ? undefined : buildingName,
+            // filterBuilding: filterBuilding === "all" ? undefined : filterBuilding,
           },
         });
         console.log('buildingName:', buildingName)
@@ -219,6 +238,9 @@ export default function Dashboard() {
 
   // console.log("choices: ", choices)
 
+  // console.log("Buildings: ", buildings)
+  // console.log("dashboard: ", dashboard)
+
   return (
     <AdminLayout>
       <TimeDisplay
@@ -239,7 +261,10 @@ export default function Dashboard() {
         iconMap={iconMap}
         isMobile={isMobile}
         activeButton={activeButton}
-        setBuildingName={setBuildingName} // ส่งฟังก์ชันไป
+        // setBuildingName={setBuildingName} // ส่งฟังก์ชันไป
+        buildings={buildings}
+        selectedBuilding={buildingName}
+        setFilterBuilding={setBuildingName}
       />
 
       <JobBarChart

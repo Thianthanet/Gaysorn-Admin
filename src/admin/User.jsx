@@ -11,6 +11,7 @@ import StatusPopup from '../component/StatusPopup';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 import WaitApproveTable from '../component/WaitApproveTable';
+import { Pagination } from '../component/Pagination'; // ตรวจสอบ path ให้ถูกต้อง
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -22,6 +23,12 @@ const User = () => {
   const [admin, setAdmin] = useState([]);
   const [waitForApprove, setWaitForApprove] = useState([]);
 
+  // NEW: State to hold ALL filtered data (before pagination) for each tab
+  const [allCustomersData, setAllCustomersData] = useState([]);
+  const [allTechniciansData, setAllTechniciansData] = useState([]);
+  const [allAdminData, setAllAdminData] = useState([]);
+  const [allWaitForApproveData, setAllWaitForApproveData] = useState([]);
+
   // UI state
   const [activeTab, setActiveTab] = useState('customers');
   const [loading, setLoading] = useState(false);
@@ -31,7 +38,7 @@ const User = () => {
   // Search and Filter state
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterBuilding, setFilterBuilding] = useState('');
+  const [filterBuilding, setFilterBuilding] = useState('all');
 
   // Popup and Form state
   const [popupCreateUser, setPopupCreateUser] = useState(false);
@@ -75,6 +82,10 @@ const User = () => {
   // Delete Confirmation state
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+
+  // === New States for Pagination ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25); // You can make this configurable if needed
 
   // --- Helper Functions ---
 
@@ -122,11 +133,74 @@ const User = () => {
       setPopupStatus(null);
       setPopupCreateUser(false); // Close popup on success
       if (shouldReload) {
-        window.location.reload();
+        // Instead of full page reload, refetch data
+        fetchData(); // Refetch data to update tables
+        // Reset to first page after successful operation if data count changes
+        setCurrentPage(1);
       }
-      // fetchData();
-    }, 3000); // Popup visible for 2 seconds
-  }, []);
+    }, 1500); // Shorter duration for quick feedback (can adjust)
+  }, []); // fetchData and setCurrentPage are dependencies if used here
+
+  const handleSearch = () => {
+    setSearchTerm(searchInput); // อัปเดต searchTerm จาก searchInput
+    setCurrentPage(1); // รีเซ็ตหน้าเมื่อค้นหา
+  };
+
+  const handleActiveTabChange = (tabValue) => {
+    setActiveTab(tabValue);
+    setCurrentPage(1); // รีเซ็ตหน้าเมื่อเปลี่ยน Tab
+    setSearchTerm(''); // รีเซ็ต searchTerm
+    setSearchInput(''); // รีเซ็ต input field
+    setFilterBuilding('all'); // รีเซ็ต filterBuilding
+  };
+
+  const handleFilterBuildingChange = (buildingName) => {
+    setFilterBuilding(buildingName);
+    setCurrentPage(1); // รีเซ็ตหน้าเมื่อ filter อาคาร
+  };
+
+  // const handlePageChange = (pageNumber) => {
+  //   setCurrentPage(pageNumber);
+  //   // Scroll to top of the page when changing page
+  //   // window.scrollTo({ top: 0, behavior: "smooth" }); // ย้ายไปใน Pagination Component แล้ว
+  // };
+
+  const handleItemsPerPageChange = (num) => {
+    setItemsPerPage(num);
+    setCurrentPage(1); // เมื่อเปลี่ยนจำนวนรายการต่อหน้า ให้กลับไปหน้าแรก
+  };
+
+  // Filter and Search Logic
+  const filterAndSearchData = (data, isBuildingFilterable = true) => {
+    let filteredData = data;
+
+    // console.log("filteredData in filterAndSearchData: ", filteredData)
+
+    // Filter by Building (ถ้าเป็น Technician หรือ Customer และ filterBuilding ไม่ใช่ 'all')
+    if (activeTab === 'customers' && filterBuilding !== 'all' && filterBuilding !== '') {
+      filteredData = filteredData.filter(item => item?.unit?.company?.building?.buildingName === filterBuilding);
+    }
+
+    if (activeTab === 'technicians' && filterBuilding !== 'all' && filterBuilding !== '') {
+      filteredData = filteredData.filter(item =>
+        // ตรวจสอบว่า item.techBuilds เป็น array และมีอย่างน้อย 1 building ที่ตรงกับ filterBuilding
+        item.techBuilds && Array.isArray(item.techBuilds) && item.techBuilds.some(t => t?.building?.buildingName === filterBuilding)
+      );
+    }
+
+    // Search by searchTerm
+    if (searchTerm) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      filteredData = filteredData.filter(item =>
+        item.username?.toLowerCase().includes(lowerCaseSearchTerm) ||
+        item.firstName?.toLowerCase().includes(lowerCaseSearchTerm) ||
+        item.lastName?.toLowerCase().includes(lowerCaseSearchTerm) ||
+        item.email?.toLowerCase().includes(lowerCaseSearchTerm) ||
+        (item.buildingName && item.buildingName.toLowerCase().includes(lowerCaseSearchTerm))
+      );
+    }
+    return filteredData;
+  };
 
   // --- API Fetching Functions ---
 
@@ -177,73 +251,96 @@ const User = () => {
     }
   }, []);
 
+  // console.log("filterBuilding: ", filterBuilding)
+
+  // Centralized data fetching, filtering, and storing in `all...Data` states
   const fetchData = useCallback(async () => {
     setLoading(true);
-    try {
-      let data = [];
-      const term = searchTerm.toLowerCase();
-      // console.log("filterBuilding: ", filterBuilding)
+    setCurrentPage(1); // Reset page to 1 on new data fetch/filter/search
+    const term = searchTerm.toLowerCase();
 
-      if (activeTab === 'customers') {
-        const response = await axios.get(`${API_BASE_URL}/api/allCustomer`);
-        data = response.data.data.filter(c => {
-          const matchesSearch =
-            c.name?.toLowerCase().includes(term) ||
-            c.phone?.toLowerCase().includes(term) ||
-            c.unit?.company?.building?.buildingName?.toLowerCase().includes(term) ||
-            c.unit?.unitName?.toLowerCase().includes(term) ||
-            c.unit?.company?.companyName?.toLowerCase().includes(term);
-          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || c.unit?.company?.building?.buildingName === filterBuilding;
-          return matchesSearch && matchesBuilding;
-        });
-        console.log("customerData: ", data)
-        setCustomers(data);
-      } else if (activeTab === 'technicians') {
-        const response = await axios.get(`${API_BASE_URL}/api/getTech`);
-        data = response.data.data.filter(t => {
-          const matchesSearch =
-            t.name?.toLowerCase().includes(term) ||
-            t.phone?.toLowerCase().includes(term) ||
-            t.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
-          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || t.techBuilds?.some(b => b.building?.buildingName === filterBuilding);
-          return matchesSearch && matchesBuilding;
-        });
-        console.log("techniciansData: ", data)
-        setTechnicians(data);
-      } else if (activeTab === 'waitApprove') {
-        // const response = await fetchWaitForApprove(); // This fetches and sets state directly
-        const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
-        data = response.data.data.filter(w => {
-          const matchesSearch =
-            w.name?.toLowerCase().includes(term) ||
-            w.phone?.toLowerCase().includes(term) ||
-            w.unit?.unitName?.toLowerCase().includes(term) ||
-            w.unit?.company?.companyName?.toLowerCase().includes(term) ||
-            w.unit?.company?.building?.buildingName?.toLowerCase().includes(term); //c.unit?.company?.building?.buildingName === filterBuilding
-          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
-          return matchesSearch && matchesBuilding;
-        });
-        console.log("waitApprove: ", data)
-        setWaitForApprove(data);
-      } else if (activeTab === 'admin') {
-        // await fetchAdmin(); // This fetches and sets state directly
-        const response = await axios.get(`${API_BASE_URL}/api/getAdmin`);
-        data = response.data.data.filter(a => {
-          const matchesSearch =
-            a.username?.toLowerCase().includes(term)
-          // a.phone?.toLowerCase().includes(term) ||
-          // a.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
-          return matchesSearch;
-        });
-        console.log("adminData: ", data)
-        setAdmin(data);
+    try {
+      let response;
+      let rawData = [];
+      let filteredData = [];
+
+      switch (activeTab) {
+        case 'customers':
+          response = await axios.get(`${API_BASE_URL}/api/allCustomer`);
+          rawData = response.data.data;
+          filteredData = rawData.filter(c => {
+            const matchesSearch =
+              (c.name?.toLowerCase().includes(term) ||
+                c.phone?.toLowerCase().includes(term) ||
+                c.unit?.company?.building?.buildingName?.toLowerCase().includes(term) ||
+                c.unit?.unitName?.toLowerCase().includes(term) ||
+                c.unit?.company?.companyName?.toLowerCase().includes(term));
+            const matchesBuilding = filterBuilding === 'all' || !filterBuilding || c.unit?.company?.building?.buildingName === filterBuilding;
+            return matchesSearch && matchesBuilding;
+          });
+          console.log("CustomersData:", filteredData)
+          setAllCustomersData(filteredData);
+          break;
+
+        case 'technicians':
+          response = await axios.get(`${API_BASE_URL}/api/getTech`);
+          rawData = response.data.data;
+          // console.log("rawData: ", rawData)
+          filteredData = rawData.filter(t => {
+            const matchesSearch =
+              (t.name?.toLowerCase().includes(term) ||
+                t.phone?.toLowerCase().includes(term) ||
+                t.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term)));
+            const matchesBuilding = filterBuilding === 'all' || !filterBuilding || t.techBuilds?.some(b => b.building?.buildingName === filterBuilding);
+            return matchesSearch && matchesBuilding;
+          });
+          console.log("TechniciansData:", filteredData)
+          setAllTechniciansData(filteredData);
+          break;
+
+        case 'waitApprove':
+          response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
+          rawData = response.data.data;
+          filteredData = rawData.filter(w => {
+            const matchesSearch =
+              (w.name?.toLowerCase().includes(term) ||
+                w.phone?.toLowerCase().includes(term) ||
+                w.unit?.unitName?.toLowerCase().includes(term) ||
+                w.unit?.company?.companyName?.toLowerCase().includes(term) ||
+                w.unit?.company?.building?.buildingName?.toLowerCase().includes(term));
+            const matchesBuilding = filterBuilding === 'all' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
+            return matchesSearch && matchesBuilding;
+          });
+          console.log("WaitForApproveData:", filteredData)
+          setAllWaitForApproveData(filteredData);
+          break;
+
+        case 'admin':
+          response = await axios.get(`${API_BASE_URL}/api/getAdmin`);
+          rawData = response.data.data;
+          filteredData = rawData.filter(a => {
+            const matchesSearch = a.username?.toLowerCase().includes(term);
+            // Admin tab does not seem to use building filter based on your code
+            return matchesSearch;
+          });
+          console.log("AdminData:", rawData)
+          setAllAdminData(filteredData);
+          break;
+
+        default:
+          break;
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Clear data states on error
+      setAllCustomersData([]);
+      setAllTechniciansData([]);
+      setAllAdminData([]);
+      setAllWaitForApproveData([]);
     } finally {
       setLoading(false);
     }
-  }, [activeTab, searchTerm, filterBuilding]); // Dependencies for useCallback
+  }, [activeTab, searchTerm, filterBuilding]);
 
   // --- Handlers for Form Changes ---
 
@@ -256,6 +353,8 @@ const User = () => {
       setCustomerFormData(prev => ({ ...prev, phone: onlyNums.slice(0, 15) }));
       return;
     }
+
+    // console.log("CustomerFormData: ", customerFormData)
 
     // Email validation (basic client-side, server-side validation is still critical)
     if (name === 'email') {
@@ -495,21 +594,37 @@ const User = () => {
       if (!customerFormData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
       if (!customerFormData.companyName) newErrors.companyName = 'กรุณากรอกบริษัท';
       if (!customerFormData.buildingName) newErrors.buildingName = 'กรุณากรอกอาคาร';
+
       payload = customerFormData;
-      apiCall = customerFormData.id
+      const randomSuffix = Math.random().toString(36).substring(2, 7);
+      if (!payload.phone) {
+        payload.phone = `NoPhone_${randomSuffix}`;
+      }
+
+      // console.log("payload: ", payload)
+
+      apiCall = payload.id
         ? axios.patch(`${API_BASE_URL}/api/updateCustomer`, payload)
         : axios.post(`${API_BASE_URL}/api/createCustomer`, payload);
-      successStatus = customerFormData.id ? 'update' : 'success';
+      successStatus = payload.id ? 'update' : 'success';
+      console.log("apiCall: ", apiCall)
     } else if (activeTab === 'technicians') {
       if (!technicianFormData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
-      payload = technicianFormData;
-      apiCall = technicianFormData.id
+
+      payload = customerFormData;
+      const randomSuffix = Math.random().toString(36).substring(2, 7);
+      if (!payload.phone) {
+        payload.phone = `NO_PHONE_${randomSuffix}`;
+      }
+
+      apiCall = payload.id
         ? axios.patch(`${API_BASE_URL}/api/updateTechnician`, payload)
         : axios.post(`${API_BASE_URL}/api/createTechnician`, payload);
-      successStatus = technicianFormData.id ? 'update' : 'success';
+      successStatus = payload.id ? 'update' : 'success';
     } else if (activeTab === 'admin') {
       if (!adminFormData.username) newErrors.username = 'กรุณากรอกชื่อผู้ใช้งาน';
       if (!adminFormData.password && !adminFormData.id) newErrors.password = 'กรุณากรอกรหัสผ่าน'; // Password required only for new admin
+
       payload = adminFormData;
       apiCall = adminFormData.id
         ? axios.patch(`${API_BASE_URL}/api/updateAdmin`, payload)
@@ -546,6 +661,8 @@ const User = () => {
       showTempPopupMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     }
   }, [activeTab, customerFormData, technicianFormData, adminFormData, selectedBuildings, handlePopupStatus, showTempPopupMessage, navigate]);
+
+  // console.log("customerFormData: ", customerFormData)
 
   // --- Export Function ---
   const exportToExcel = useCallback(() => {
@@ -636,6 +753,39 @@ const User = () => {
     fetchWaitForApprove(); // เรียกใช้ฟังก์ชันที่ถูก memoize ไว้
   }, [fetchWaitForApprove]); // เพิ่ม fetchWaitForApprove ใน dependencies ของ useEffect เพื่อให้เรียกใหม่เมื่อฟังก์ชันเปลี่ยน (ในกรณีที่มี dependencies ใน useCallback)
 
+  // Handle pagination slicing for `customers` tab
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setCustomers(allCustomersData.slice(startIndex, endIndex));
+  }, [allCustomersData, currentPage, itemsPerPage]);
+
+  // Handle pagination slicing for `technicians` tab
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setTechnicians(allTechniciansData.slice(startIndex, endIndex));
+  }, [allTechniciansData, currentPage, itemsPerPage]);
+
+  // Handle pagination slicing for `admin` tab
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setAdmin(allAdminData.slice(startIndex, endIndex));
+  }, [allAdminData, currentPage, itemsPerPage]);
+
+  // Handle pagination slicing for `waitApprove` tab
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    setWaitForApprove(allWaitForApproveData.slice(startIndex, endIndex));
+  }, [allWaitForApproveData, currentPage, itemsPerPage]);
+
+  // Function to handle page change from pagination controls
+  const handlePageChange = useCallback((pageNumber) => {
+    setCurrentPage(pageNumber);
+  }, []);
+
   // Adjust isMobile state on window resize
   useEffect(() => {
     const handleResize = () => {
@@ -646,23 +796,72 @@ const User = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // เตรียมข้อมูลสำหรับแต่ละ Tab (Filtered and Sliced)
+  const filteredCustomers = filterAndSearchData(allCustomersData, true);
+  const totalCustomers = filteredCustomers.length;
+  const totalCustomerPages = Math.ceil(totalCustomers / itemsPerPage);
+  const slicedCustomers = filteredCustomers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const filteredTechnicians = filterAndSearchData(allTechniciansData, true);
+  // console.log("filteredTechnicians: ", filteredTechnicians)
+  const totalTechnicians = filteredTechnicians.length;
+  const totalTechnicianPages = Math.ceil(totalTechnicians / itemsPerPage);
+  const slicedTechnicians = filteredTechnicians.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const filteredAdmin = filterAndSearchData(allAdminData, false); // Admin ไม่มี filter อาคาร
+  const totalAdmin = filteredAdmin.length;
+  const totalAdminPages = Math.ceil(totalAdmin / itemsPerPage);
+  const slicedAdmin = filteredAdmin.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const filteredWaitForApprove = filterAndSearchData(allWaitForApproveData, false); // WaitApprove ไม่มี filter อาคาร
+  const totalWaitForApprove = filteredWaitForApprove.length;
+  const totalWaitForApprovePages = Math.ceil(totalWaitForApprove / itemsPerPage);
+  const slicedWaitForApprove = filteredWaitForApprove.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   // --- Render Logic ---
 
   return (
     <AdminLayout>
       <div className="container mx-auto px-4 py-2">
+        {/* {console.log("buildings: ", buildings)} */}
+        {/* {console.log("filterBuilding: ", filterBuilding)} */}
         <UserToolbar
           searchInput={searchInput}
           setSearchInput={setSearchInput}
-          handleSearch={() => setSearchTerm(searchInput)} // Trigger search when button is clicked
+          handleSearch={() => {
+            setSearchTerm(searchInput); // Update searchTerm to trigger fetchData
+            setCurrentPage(1); // Reset page to 1 on search
+          }}
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={(tab) => {
+            setActiveTab(tab);
+            setSearchInput(''); // Clear search input on tab change
+            setSearchTerm(''); // Clear search term on tab change
+            setFilterBuilding('all'); // Reset filter on tab change
+            setCurrentPage(1); // Reset page to 1 on tab change
+          }}
           setPopupCreateUser={setPopupCreateUser}
           exportToExcel={exportToExcel}
           buildings={buildings}
           filterBuilding={filterBuilding}
-          setFilterBuilding={setFilterBuilding}
-          waitForApprove={waitForApprove}
+          setFilterBuilding={(value) => {
+            setFilterBuilding(value);
+            setCurrentPage(1); // Reset page to 1 on filter change
+          }}
+          // setFilterBuilding={setFilterBuilding}
+          waitForApprove={allWaitForApproveData} // Pass the full count for the badge, not paged
           resetFormData={() => { // Reset form data when opening new create popup
             setCustomerFormData({
               id: null, name: '', phone: '', companyName: '', unitName: '', buildingName: '', email: '',
@@ -702,45 +901,91 @@ const User = () => {
         ) : (
           <>
             {activeTab === 'customers' && (
-              <CustomerTable
-                customers={customers}
-                handleEditCustomer={handleEditCustomer}
-                confirmDelete={confirmDelete}
-              />
+              <>
+                <CustomerTable
+                  customers={slicedCustomers} // ส่งข้อมูลที่ถูก slice แล้ว
+                  handleEditCustomer={handleEditCustomer}
+                  confirmDelete={confirmDelete}
+                />
+                <Pagination
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={totalCustomers} // จำนวนรายการทั้งหมดหลังจาก filter แล้ว
+                  totalPages={totalCustomerPages}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  advancedPagination={true} // เลือกใช้ advancedPagination
+                />
+              </>
             )}
 
             {activeTab === 'technicians' && (
-              <TechnicianTable
-                technicians={technicians}
-                getUniqueBuildings={getUniqueBuildings}
-                handleEditTechnician={handleEditTechnician}
-                confirmDelete={confirmDelete}
-              />
+              <>
+                <TechnicianTable
+                  technicians={slicedTechnicians} // ส่งข้อมูลที่ถูก slice แล้ว
+                  getUniqueBuildings={getUniqueBuildings}
+                  handleEditTechnician={handleEditTechnician}
+                  confirmDelete={confirmDelete}
+                />
+                <Pagination
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={totalTechnicians}
+                  totalPages={totalTechnicianPages}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  advancedPagination={true}
+                />
+              </>
             )}
 
             {activeTab === 'waitApprove' && (
-              <WaitApproveTable
-                activeTab={activeTab}
-                waitForApprove={waitForApprove}
-                handleApprove={async (userId) => {
-                  try {
-                    await axios.post(`${API_BASE_URL}/api/approve/${userId}`);
-                    showTempPopupMessage('อนุมัติผู้ใช้สำเร็จ');
-                    fetchWaitForApprove(); // Refresh the list
-                  } catch (error) {
-                    console.error('Error approving user:', error);
-                    showTempPopupMessage('เกิดข้อผิดพลาดในการอนุมัติผู้ใช้');
-                  }
-                }}
-              />
+              <>
+                <WaitApproveTable
+                  activeTab={activeTab}
+                  waitForApprove={slicedWaitForApprove} // ส่งข้อมูลที่ถูก slice แล้ว
+                  handleApprove={async (userId) => {
+                    try {
+                      const token = localStorage.getItem('token');
+                      const headers = { Authorization: `Bearer ${token}` };
+                      await axios.post(`${API_BASE_URL}/api/approve/${userId}`, {}, { headers });
+                      showTempPopupMessage('อนุมัติผู้ใช้สำเร็จ');
+                      fetchData(); // Refresh data after approval
+                    } catch (error) {
+                      console.error('Error approving user:', error);
+                      showTempPopupMessage('เกิดข้อผิดพลาดในการอนุมัติผู้ใช้', 'error');
+                    }
+                  }}
+                />
+                <Pagination
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={totalWaitForApprove}
+                  totalPages={totalWaitForApprovePages}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  advancedPagination={true}
+                />
+              </>
             )}
 
             {activeTab === 'admin' && (
-              <AdminTable
-                admin={admin}
-                handleEditAdmin={handleEditAdmin}
-                confirmDelete={confirmDelete}
-              />
+              <>
+                <AdminTable
+                  admin={slicedAdmin} // ส่งข้อมูลที่ถูก slice แล้ว
+                  handleEditAdmin={handleEditAdmin}
+                  confirmDelete={confirmDelete}
+                />
+                <Pagination
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={totalAdmin}
+                  totalPages={totalAdminPages}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleItemsPerPageChange}
+                  advancedPagination={true}
+                />
+              </>
             )}
 
             <ConfirmDeletePopup

@@ -35,7 +35,11 @@ const CustomerTable = ({
                 </TableCell>
                 <TableCell>{customer.unit?.unitName || "-"}</TableCell>
                 <TableCell>{customer.name || "-"}</TableCell>
-                <TableCell>{customer.phone || "-"}</TableCell>
+                <TableCell>
+                  {customer.phone?.startsWith("NoPhone")
+                    ? "-"
+                    : (customer.phone || "-")}
+                </TableCell>
                 <TableCell className="pl-12">
                   {customer.userId ? (
                     <FaLine

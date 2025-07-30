@@ -10,7 +10,7 @@ import {
 } from "recharts";
 import BuildingFilter from "./BuildingFilter";
 
-const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, activeButton, setBuildingName }) => {
+const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, activeButton, buildings, selectedBuilding, setFilterBuilding }) => {
     const [activeIndex, setActiveIndex] = useState(null);
     const navigate = useNavigate()
 
@@ -56,7 +56,7 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, ac
     const renderCustomLegend = (props) => {
         const { payload } = props;
         return (
-            <ul className={`list-none m-0 ${isMobile ? "pr-12" : "pr-16"}`}>
+            <ul className={`list-none m-0 ${isMobile ? "pr-4" : "pr-[48px]"}`}>
                 {payload.map((entry, index) => (
                     <li key={`item-${index}`} className="flex items-center mb-1">
                         <span
@@ -77,10 +77,17 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, ac
             {/* ----- PIE CHART ----- สมดุลคือ ไม่กำหนดความสูง h */}
             <div className={`${isMobile ? "h-[210px]" : "md:col-span-8 h-[310px]"} bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 pt-2 pl-2 shadow`}>
                 <div className="flex justify-between">
-                    <h2 className={`font-semibold text-[#837958] pl-4 ${isMobile ? "text-[20px]" : "text-[26px]"}`}>
+                    <h2 className={`font-semibold text-[#837958] pl-4 ${isMobile ? "text-[16px]" : "text-[26px]"}`}>
                         สรุปสถานะของงานประจำ{activeLabel}
                     </h2>
-                    <BuildingFilter isMobile={isMobile} setBuildingName={setBuildingName} />
+                    {/* <BuildingFilter isMobile={isMobile} setBuildingName={setBuildingName} /> */}
+                    <BuildingFilter
+                        isMobile={isMobile}
+                        buildings={buildings} // <--- ส่ง buildings เข้าไป
+                        // filterBuilding={filterBuilding}
+                        setFilterBuilding={setFilterBuilding} // ซึ่งคือ handleFilterBuildingChange จาก User.jsx
+                        selectedBuilding={selectedBuilding} // <--- ส่ง filterBuilding เข้าไป เพื่อให้ BuildingFilter แสดงค่าที่เลือกปัจจุบัน
+                    />
                 </div> {/*สมดุลคือ ไม่กำหนดความสูง h */}
                 <div className={`w-full ${isMobile ? "h-[180px]" : "ml-[10px] h-[280px]"}`}>
                     <ResponsiveContainer width="100%" height="100%">

@@ -24,10 +24,11 @@ const UserPopup = ({
   if (!show) return null;
 
   // ตรวจสอบโหมดแก้ไขสำหรับช่าง (Technician Edit Mode)
-  const isTechnicianEditMode = !!technicianData.id;
+  const isTechnicianEditMode = !!technicianData.id && !!technicianData.userId;
   // ตรวจสอบโหมดแก้ไขสำหรับแอดมิน (Admin Edit Mode)
   const isAdminEditMode = !!adminData.id;
 
+  // console.log("technicianData: ", technicianData)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
@@ -119,7 +120,7 @@ const UserPopup = ({
                       name="buildingName"
                       value={customerData.buildingName}
                       onChange={handleCustomerChange}
-                      className={`w-[320px] text-[12px] text-[#BC9D72]/50 border ${errors.buildingName
+                      className={`w-[320px] text-[12px] text-[#837958] border ${errors.buildingName
                           ? "border-red-500"
                           : "border-[#837958]"
                         } rounded-lg px-2 py-1.5 focus:outline-none`}
@@ -168,6 +169,8 @@ const UserPopup = ({
                     onChange={handleTechnicianChange}
                   />
 
+                  {/* {console.log("technicianData: ", )} */}
+
                   {/* อาคารสำหรับช่าง จะแสดงเฉพาะเมื่ออยู่ในโหมดแก้ไข (อัปเดตข้อมูลช่าง) */}
                   {isTechnicianEditMode && (
                     <div className="mt-4 mb-4"> {/* เพิ่ม margin บน/ล่างเพื่อให้มีช่องว่าง */}
@@ -208,7 +211,7 @@ const UserPopup = ({
                     onChange={handleAdminChange} // <--- ใช้ handleAdminChange
                     required={!isAdminEditMode} // <--- รหัสผ่านจำเป็นเฉพาะตอนสร้างใหม่
                     error={errors.password}
-                    note={isAdminEditMode ? "(ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน)" : ""} // เพิ่มข้อความสำหรับโหมดแก้ไข
+                    // note={isAdminEditMode ? "(ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน)" : ""} // เพิ่มข้อความสำหรับโหมดแก้ไข
                   />
                 </>
               )}
