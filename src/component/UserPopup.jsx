@@ -47,7 +47,7 @@ const UserPopup = ({
               rounded-l-xl rounded-r-xl`} //ใช้ rounded-l-xl สำหรับปุ่มแรก
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab("customers");
+              setActiveTab('customers');
             }}
           >
             ลูกค้า
@@ -58,7 +58,7 @@ const UserPopup = ({
               rounded-l-xl rounded-r-xl`} // ใช้ rounded-none สำหรับปุ่มกลาง
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab("technicians");
+              setActiveTab('technicians');
             }}
           >
             เจ้าหน้าที่
@@ -69,7 +69,7 @@ const UserPopup = ({
               rounded-l-xl rounded-r-xl`} //ใช้ rounded-r-xl สำหรับปุ่มสุดท้าย
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab("admin");
+              setActiveTab('admin');
             }}
           >
             แอดมิน
@@ -79,7 +79,7 @@ const UserPopup = ({
         <div className="flex justify-center">
           <div className="relative min-h-[400px]">
             <form onSubmit={handleSubmit}>
-              {activeTab === "customers" && (
+              {activeTab === 'customers' && (
                 <>
                   <InputField
                     label="ชื่อ-สกุล"

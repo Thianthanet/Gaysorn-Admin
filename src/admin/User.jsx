@@ -87,6 +87,10 @@ const User = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25); // You can make this configurable if needed
 
+  // --- NEW States for Approve Confirmation Popup ---
+  const [showConfirmApprovePopup, setShowConfirmApprovePopup] = useState(false);
+  const [approveUserId, setApproveUserId] = useState(null); // เก็บ userId ที่จะอนุมัติ
+
   // --- Helper Functions ---
 
   /**
@@ -115,11 +119,11 @@ const User = () => {
    * @param {string} message - The message to display.
    * @param {number} duration - How long the message should be visible in ms.
    */
-  const showTempPopupMessage = useCallback((message, duration = 3000) => {
+  const showTempPopupMessage = useCallback((message) => {
     setPopupMessage(message);
     setTimeout(() => {
       setPopupMessage('');
-    }, duration);
+    }, 3000);
   }, []);
 
   /**
@@ -131,15 +135,15 @@ const User = () => {
     setPopupStatus(statusType);
     setTimeout(() => {
       setPopupStatus(null);
-      setPopupCreateUser(false); // Close popup on success
+      setPopupCreateUser(false);
       if (shouldReload) {
-        // Instead of full page reload, refetch data
-        fetchData(); // Refetch data to update tables
-        // Reset to first page after successful operation if data count changes
+        // console.log("fetchData")
         setCurrentPage(1);
+        fetchData();
+        // window.location.reload();
       }
-    }, 1500); // Shorter duration for quick feedback (can adjust)
-  }, []); // fetchData and setCurrentPage are dependencies if used here
+    }, 2500);
+  }, []);
 
   const handleSearch = () => {
     setSearchTerm(searchInput); // อัปเดต searchTerm จาก searchInput
@@ -259,6 +263,8 @@ const User = () => {
     setCurrentPage(1); // Reset page to 1 on new data fetch/filter/search
     const term = searchTerm.toLowerCase();
 
+    console.log(`[fetchData] Fetching for activeTab: ${activeTab}, searchTerm: '${term}', filterBuilding: '${filterBuilding}'`);
+
     try {
       let response;
       let rawData = [];
@@ -267,11 +273,16 @@ const User = () => {
       switch (activeTab) {
         case 'customers':
           response = await axios.get(`${API_BASE_URL}/api/allCustomer`);
-          rawData = response.data.data;
-          filteredData = rawData.filter(c => {
+          // rawData = response.data.data;
+          const sortedCustomers = response.data.data.sort((a, b) => {
+            return new Date(b.createdAt) - new Date(a.createdAt); // b - a สำหรับใหม่ไปเก่า (Descending)
+          });
+          filteredData = sortedCustomers.filter(c => {
             const matchesSearch =
               (c.name?.toLowerCase().includes(term) ||
                 c.phone?.toLowerCase().includes(term) ||
+                console.log(c.phone?.toLowerCase().includes(term))||
+                console.log(c.phone?.toLowerCase()) ||
                 c.unit?.company?.building?.buildingName?.toLowerCase().includes(term) ||
                 c.unit?.unitName?.toLowerCase().includes(term) ||
                 c.unit?.company?.companyName?.toLowerCase().includes(term));
@@ -284,9 +295,12 @@ const User = () => {
 
         case 'technicians':
           response = await axios.get(`${API_BASE_URL}/api/getTech`);
-          rawData = response.data.data;
+          // rawData = response.data.data;
           // console.log("rawData: ", rawData)
-          filteredData = rawData.filter(t => {
+          const sortedTechnicians = response.data.data.sort((a, b) => {
+            return new Date(b.createdAt) - new Date(a.createdAt); // b - a สำหรับใหม่ไปเก่า (Descending)
+          });
+          filteredData = sortedTechnicians.filter(t => {
             const matchesSearch =
               (t.name?.toLowerCase().includes(term) ||
                 t.phone?.toLowerCase().includes(term) ||
@@ -300,30 +314,38 @@ const User = () => {
 
         case 'waitApprove':
           response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
-          rawData = response.data.data;
-          filteredData = rawData.filter(w => {
-            const matchesSearch =
-              (w.name?.toLowerCase().includes(term) ||
-                w.phone?.toLowerCase().includes(term) ||
-                w.unit?.unitName?.toLowerCase().includes(term) ||
-                w.unit?.company?.companyName?.toLowerCase().includes(term) ||
-                w.unit?.company?.building?.buildingName?.toLowerCase().includes(term));
+          // rawData = response.data.data;
+          const sortedWaitApproves = response.data.data.sort((a, b) => {
+            return new Date(b.createdAt) - new Date(a.createdAt); // b - a สำหรับใหม่ไปเก่า (Descending)
+          });
+          // console.log("sortedWaitApproves: ", sortedWaitApproves)
+          filteredData = sortedWaitApproves.filter(w => {
+            const matchesSearch = 
+            (w.name?.toLowerCase().includes(term) ||
+              w.phone?.toLowerCase().includes(term) ||
+              w.unit?.unitName?.toLowerCase().includes(term) ||
+              w.unit?.company?.companyName?.toLowerCase().includes(term) ||
+              w.unit?.company?.building?.buildingName?.toLowerCase().includes(term));
             const matchesBuilding = filterBuilding === 'all' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
             return matchesSearch && matchesBuilding;
           });
           console.log("WaitForApproveData:", filteredData)
           setAllWaitForApproveData(filteredData);
+          // setWaitForApprove(filteredData);
           break;
 
         case 'admin':
           response = await axios.get(`${API_BASE_URL}/api/getAdmin`);
-          rawData = response.data.data;
-          filteredData = rawData.filter(a => {
+          // rawData = response.data.data;
+          const sortedAdmin = response.data.data.sort((a, b) => {
+            return new Date(b.createdAt) - new Date(a.createdAt); // b - a สำหรับใหม่ไปเก่า (Descending)
+          });
+          filteredData = sortedAdmin.filter(a => {
             const matchesSearch = a.username?.toLowerCase().includes(term);
             // Admin tab does not seem to use building filter based on your code
             return matchesSearch;
           });
-          console.log("AdminData:", rawData)
+          console.log("AdminData:", filteredData)
           setAllAdminData(filteredData);
           break;
 
@@ -340,7 +362,38 @@ const User = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, searchTerm, filterBuilding]);
+  }, [activeTab, searchTerm, filterBuilding]); //activeTab
+
+  // const fetchWaitApproveData = async (term, filterBuilding) => {
+  //   const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
+
+  //   const sortedWaitApproves = response.data.data.sort((a, b) => {
+  //     return new Date(b.createdAt) - new Date(a.createdAt); // ใหม่ -> เก่า
+  //   });
+
+  //   const filteredData = sortedWaitApproves.filter(w => {
+  //     const matchesSearch =
+  //       (w.name?.toLowerCase().includes(term) ||
+  //         w.phone?.toLowerCase().includes(term) ||
+  //         w.unit?.unitName?.toLowerCase().includes(term) ||
+  //         w.unit?.company?.companyName?.toLowerCase().includes(term) ||
+  //         w.unit?.company?.building?.buildingName?.toLowerCase().includes(term));
+
+  //     const matchesBuilding =
+  //       filterBuilding === 'all' || !filterBuilding ||
+  //       w.unit?.company?.building?.buildingName === filterBuilding;
+
+  //     return matchesSearch && matchesBuilding;
+  //   });
+
+  //   console.log("WaitForApproveData:", filteredData);
+  //   setAllWaitForApproveData(filteredData);
+  // };
+
+  // useEffect(() => {
+  //   fetchWaitApproveData();
+  // }, []);
+
 
   // --- Handlers for Form Changes ---
 
@@ -436,6 +489,8 @@ const User = () => {
     }
   }, []);
 
+  // console.log("TechnicianFormData: ", technicianFormData)
+
   const handleAdminChange = useCallback((e) => {
     const { name, value } = e.target;
     setAdminFormData(prev => ({ ...prev, [name]: value }));
@@ -455,7 +510,7 @@ const User = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/getCustomerById/${userId}`);
       const customer = res.data.data;
-
+      console.log("customer in handleEditCustomer: ", customer)
       setCustomerFormData({
         id: customer.id,
         name: customer.name,
@@ -475,7 +530,7 @@ const User = () => {
         fetchUnits(),
       ]);
 
-      setActiveTab('customers');
+      // setActiveTab('customers');
       setPopupCreateUser(true);
     } catch (err) {
       console.error('Failed to load customer data for editing:', err);
@@ -555,6 +610,9 @@ const User = () => {
       }
       handlePopupStatus('loading');
       await axios.delete(`${API_BASE_URL}${endpoint}`);
+      // fetchData();
+      // setCurrentPage(1);
+      // setConfirmDeleteId(null);
       handlePopupStatus('delete', true); // Show delete status, then reload
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
@@ -562,6 +620,51 @@ const User = () => {
       showTempPopupMessage(`ไม่สามารถลบ${type}ได้`);
     }
   }, [handlePopupStatus, showTempPopupMessage]);
+
+  // --- handleApproveAuto ที่ถูกเรียกจาก proceedApprove ---
+  const handleApproveAuto = useCallback(async (userId) => {
+    handlePopupStatus('loading');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/approve/${userId}`);
+      console.log("Approve API response:", response.data.data);
+
+      handlePopupStatus('success', true); // แสดง popup สถานะและสั่งให้โหลดข้อมูลใหม่ (ของตารางรออนุมัติ)
+      // ไม่ต้อง window.location.reload() แล้ว
+
+    } catch (error) {
+      console.error("Error approving user:", error.response?.data || error.message);
+      handlePopupStatus('error'); // แสดง popup สถานะ error
+    }
+  }, []);
+
+  // --- NEW Approve Confirmation Functions ---
+  const confirmApprove = useCallback((userId) => {
+    setApproveUserId(userId);
+    setShowConfirmApprovePopup(true);
+  }, []);
+
+  const cancelApprove = useCallback(() => {
+    setApproveUserId(null);
+    setShowConfirmApprovePopup(false);
+  }, []);
+
+  const proceedApprove = useCallback(async () => {
+    setShowConfirmApprovePopup(false); // ปิด popup ยืนยันทันที
+    if (approveUserId !== null) {
+      await handleApproveAuto(approveUserId); // เรียกฟังก์ชันอนุมัติจริง
+    }
+    setApproveUserId(null); // ล้าง ID หลังดำเนินการ
+  }, [approveUserId, activeTab, handleApproveAuto]);
+
+
+  const handleDeleteApprove = async (id) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`)
+      console.log(response.data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   const confirmDelete = useCallback((id) => {
     setConfirmDeleteId(id);
@@ -595,26 +698,104 @@ const User = () => {
       if (!customerFormData.companyName) newErrors.companyName = 'กรุณากรอกบริษัท';
       if (!customerFormData.buildingName) newErrors.buildingName = 'กรุณากรอกอาคาร';
 
+      // --- เพิ่มการตรวจสอบการมีอยู่ของ Company, Unit, Building ใน DB ---
+      try {
+        // ตรวจสอบ CompanyName
+        if (customerFormData.companyName) {
+          const companyRes = await axios.get(`${API_BASE_URL}/api/getRelatedByCompany/${customerFormData.companyName}`);
+          // ตรวจสอบจาก companyId ที่ API คืนมา (ถ้า API ส่งกลับมา)
+          // console.log("companyRes: ", companyRes)
+          // หรือตรวจสอบจาก company ที่ส่งกลับมา หรือ building ที่ส่งกลับมา (ถ้ามีบริษัท ก็ควรจะมี building ด้วย)
+          if (!companyRes.data.company) { // ตรวจสอบจาก companyId ที่ควรจะเป็น Unique Identifier
+            newErrors.companyName = 'ไม่พบข้อมูลบริษัทนี้ในระบบ';
+          }
+        }
+
+        // ตรวจสอบ UnitName (unitName ไม่ได้ required, จึงเช็คเฉพาะเมื่อมีค่า)
+        if (customerFormData.unitName) {
+          const unitRes = await axios.get(`${API_BASE_URL}/api/getRelatedByUnit/${customerFormData.unitName}`);
+          // ตรวจสอบจาก unitId ที่ API คืนมา
+          // console.log("unitRes: ", unitRes)
+          if (!unitRes.data.unit || unitRes.data.unit.length === 0) {
+            newErrors.unitName = 'ไม่พบข้อมูลยูนิตนี้ในระบบ';
+          }
+        }
+
+        // ตรวจสอบ BuildingName
+        // console.log("customerFormData: ", customerFormData)
+        // if (customerFormData.buildingName) {
+        //   // console.log("customerFormData.buildingName: ", customerFormData.unit?.company?.building?.buildingName)
+        //   const buildingName = String(customerFormData.buildingName); // ✅
+        //   const buildingRes = await axios.get(
+        //     `${API_BASE_URL}/api/getRelatedByBuilding/${encodeURIComponent(buildingName)}`
+        //   );
+
+        //   console.log("buildingRes: ", buildingRes)
+
+        // ตรวจสอบจาก buildingId ที่ API คืนมา
+        // หรือตรวจสอบจาก fetchedCompanies ว่ามีข้อมูลกลับมาหรือไม่
+
+        // if (!buildingRes.data.buildingId) {
+        //   newErrors.buildingName = 'ไม่พบข้อมูลอาคารนี้ในระบบ';
+        // }
+        // }
+
+      } catch (error) {
+        console.error('Error during DB existence check (using getRelated APIs):', error);
+        // กรณีเกิดข้อผิดพลาดในการเรียก API ตรวจสอบ (เช่น network error, server error)
+        // ให้แจ้งผู้ใช้ว่าเกิดข้อผิดพลาดในการตรวจสอบ
+        if (error.response && error.response.status === 404) {
+          // ถ้า API ตอบกลับ 404 แสดงว่าไม่พบ (อาจจะปรับ backend ให้ 404 เมื่อไม่พบ)
+          if (error.config.url.includes('getRelatedByCompany') && customerFormData.companyName && !newErrors.companyName) {
+            newErrors.companyName = 'ไม่พบข้อมูลบริษัทนี้ในระบบ';
+          }
+          if (error.config.url.includes('getRelatedByBuilding') && customerFormData.buildingName && !newErrors.buildingName) {
+            newErrors.buildingName = 'ไม่พบข้อมูลอาคารนี้ในระบบ';
+          }
+          if (error.config.url.includes('getRelatedByUnit') && customerFormData.unitName && !newErrors.unitName) {
+            newErrors.unitName = 'ไม่พบข้อมูลยูนิตนี้ในระบบ';
+          }
+        } else {
+          // สำหรับ Error อื่นๆ ที่ไม่ใช่ 404 (เช่น server error)
+          if (customerFormData.companyName && !newErrors.companyName) newErrors.companyName = 'เกิดข้อผิดพลาดในการตรวจสอบบริษัท';
+          if (customerFormData.buildingName && !newErrors.buildingName) newErrors.buildingName = 'เกิดข้อผิดพลาดในการตรวจสอบอาคาร';
+          if (customerFormData.unitName && !newErrors.unitName) newErrors.unitName = 'เกิดข้อผิดพลาดในการตรวจสอบยูนิต';
+        }
+      }
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
+        const firstErrorKey = Object.keys(newErrors)[0];
+        showTempPopupMessage(newErrors[firstErrorKey]);
+        return;
+      }
+
+      // --- เตรียม Payload และ API Call หากไม่มี Error ---
       payload = customerFormData;
       const randomSuffix = Math.random().toString(36).substring(2, 7);
       if (!payload.phone) {
-        payload.phone = `NoPhone_${randomSuffix}`;
+        payload.phone = `NO_PHONE_${randomSuffix}`;
       }
-
-      // console.log("payload: ", payload)
 
       apiCall = payload.id
         ? axios.patch(`${API_BASE_URL}/api/updateCustomer`, payload)
         : axios.post(`${API_BASE_URL}/api/createCustomer`, payload);
       successStatus = payload.id ? 'update' : 'success';
-      console.log("apiCall: ", apiCall)
+      console.log("apiCall: ", apiCall);
+
     } else if (activeTab === 'technicians') {
       if (!technicianFormData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
 
-      payload = customerFormData;
+      payload = technicianFormData;
+      // console.log("customerFormData in technicians: ", technicianFormData)
+      // console.log("payload in technicians: ", payload)
       const randomSuffix = Math.random().toString(36).substring(2, 7);
       if (!payload.phone) {
         payload.phone = `NO_PHONE_${randomSuffix}`;
+      }
+
+      if (!payload.userId) {
+        payload.techBuilds = ["-"];
       }
 
       apiCall = payload.id
@@ -646,7 +827,7 @@ const User = () => {
       await apiCall;
 
       // Handle technician's building assignments after technician update/creation
-      if (activeTab === 'technicians' && technicianFormData.id) {
+      if (activeTab === 'technicians' && technicianFormData.userId) {
         await axios.post(
           `${API_BASE_URL}/api/techUpdateBuilding`,
           { techId: technicianFormData.userId, buildingIds: selectedBuildings }
@@ -662,6 +843,7 @@ const User = () => {
     }
   }, [activeTab, customerFormData, technicianFormData, adminFormData, selectedBuildings, handlePopupStatus, showTempPopupMessage, navigate]);
 
+  // console.log("errors: ", errors)
   // console.log("customerFormData: ", customerFormData)
 
   // --- Export Function ---
@@ -797,38 +979,41 @@ const User = () => {
   }, []);
 
   // เตรียมข้อมูลสำหรับแต่ละ Tab (Filtered and Sliced)
-  const filteredCustomers = filterAndSearchData(allCustomersData, true);
-  const totalCustomers = filteredCustomers.length;
+  // const filteredCustomers = filterAndSearchData(allCustomersData, true);
+  const totalCustomers = allCustomersData.length;
   const totalCustomerPages = Math.ceil(totalCustomers / itemsPerPage);
-  const slicedCustomers = filteredCustomers.slice(
+  const slicedCustomers = allCustomersData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const filteredTechnicians = filterAndSearchData(allTechniciansData, true);
+  // const filteredTechnicians = filterAndSearchData(allTechniciansData, true);
   // console.log("filteredTechnicians: ", filteredTechnicians)
-  const totalTechnicians = filteredTechnicians.length;
+  const totalTechnicians = allTechniciansData.length;
   const totalTechnicianPages = Math.ceil(totalTechnicians / itemsPerPage);
-  const slicedTechnicians = filteredTechnicians.slice(
+  const slicedTechnicians = allTechniciansData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const filteredAdmin = filterAndSearchData(allAdminData, false); // Admin ไม่มี filter อาคาร
-  const totalAdmin = filteredAdmin.length;
+  // const filteredAdmin = filterAndSearchData(allAdminData, false); // Admin ไม่มี filter อาคาร
+  const totalAdmin = allAdminData.length;
   const totalAdminPages = Math.ceil(totalAdmin / itemsPerPage);
-  const slicedAdmin = filteredAdmin.slice(
+  const slicedAdmin = allAdminData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const filteredWaitForApprove = filterAndSearchData(allWaitForApproveData, false); // WaitApprove ไม่มี filter อาคาร
-  const totalWaitForApprove = filteredWaitForApprove.length;
+  // const filteredWaitForApprove = filterAndSearchData(allWaitForApproveData, false); // WaitApprove ไม่มี filter อาคาร
+  const totalWaitForApprove = allWaitForApproveData.length;
   const totalWaitForApprovePages = Math.ceil(totalWaitForApprove / itemsPerPage);
-  const slicedWaitForApprove = filteredWaitForApprove.slice(
+  const slicedWaitForApprove = allWaitForApproveData.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // console.log("allWaitForApproveData: ", allWaitForApproveData)
+  // console.log("WaitForApprove: ", waitForApprove)
 
   // --- Render Logic ---
 
@@ -861,7 +1046,7 @@ const User = () => {
             setCurrentPage(1); // Reset page to 1 on filter change
           }}
           // setFilterBuilding={setFilterBuilding}
-          waitForApprove={allWaitForApproveData} // Pass the full count for the badge, not paged
+          waitForApprove={waitForApprove} // Pass the full count for the badge, not paged
           resetFormData={() => { // Reset form data when opening new create popup
             setCustomerFormData({
               id: null, name: '', phone: '', companyName: '', unitName: '', buildingName: '', email: '',
@@ -944,18 +1129,8 @@ const User = () => {
                 <WaitApproveTable
                   activeTab={activeTab}
                   waitForApprove={slicedWaitForApprove} // ส่งข้อมูลที่ถูก slice แล้ว
-                  handleApprove={async (userId) => {
-                    try {
-                      const token = localStorage.getItem('token');
-                      const headers = { Authorization: `Bearer ${token}` };
-                      await axios.post(`${API_BASE_URL}/api/approve/${userId}`, {}, { headers });
-                      showTempPopupMessage('อนุมัติผู้ใช้สำเร็จ');
-                      fetchData(); // Refresh data after approval
-                    } catch (error) {
-                      console.error('Error approving user:', error);
-                      showTempPopupMessage('เกิดข้อผิดพลาดในการอนุมัติผู้ใช้', 'error');
-                    }
-                  }}
+                  // handleApprove={handleApproveAuto}
+                  confirmApprove={confirmApprove}
                 />
                 <Pagination
                   currentPage={currentPage}
@@ -995,6 +1170,31 @@ const User = () => {
               activeTab={activeTab}
             />
 
+            {/* NEW: Confirmation Popup for Approve */}
+            {showConfirmApprovePopup && (
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
+                <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] h-[120px] text-center">
+                  {/* <h3 className="text-[20px] font-semibold mb-[2px] text-[#837958]">ยืนยันการอนุมัติ ?</h3> */}
+                  <p className="text-[16px] font-semibold text-[#837958]">ต้องการอนุมัติคำร้องของงานนี้?</p>
+                  <div className="flex flex-rows items-center justify-center text-[#837958] text-center mt-6 gap-x-4">
+                    <button
+                      onClick={cancelApprove}
+                      className="bg-white text-[12px] text-[#BC9D72] border-[1px] w-64 h-6 border-[#BC9D72] rounded hover:opacity-80"
+                    >
+                      ยกเลิก
+                    </button>
+                    <button
+                      onClick={proceedApprove}
+                      // className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                      className="bg-[#BC9D72] text-[12px] w-64 h-6 text-white rounded hover:opacity-90"
+                    >
+                      อนุมัติ
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <StatusPopup
               show={!!popupStatus}
               status={popupStatus}
@@ -1009,7 +1209,7 @@ const User = () => {
           </>
         )}
       </div>
-    </AdminLayout>
+    </AdminLayout >
   );
 };
 

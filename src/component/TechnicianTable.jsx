@@ -47,13 +47,15 @@ const TechnicianTable = ({
                     {tech.name || '-'}
                   </td>
                   <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
-                    {tech.phone || '-'}
+                    {tech.phone?.startsWith("NO_PHONE_")
+                    ? "-"
+                    : (tech.phone || "-")}
                   </td>
-                  <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                  <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center leading-none">
                     {tech.userId ? (
-                      <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
+                      <FaLine className="text-green-500 text-xl inline-block" title="เชื่อมต่อ Line แล้ว" />
                     ) : (
-                      <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
+                      <FaLine className="text-red-500 text-xl inline-block" title="ยังไม่ได้เชื่อมต่อ Line" />
                     )}
                   </td>
                   <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">

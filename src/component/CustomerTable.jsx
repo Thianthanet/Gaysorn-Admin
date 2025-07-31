@@ -18,7 +18,7 @@ const CustomerTable = ({
             <TableHead className="w-1">ยูนิต</TableHead>
             <TableHead className="w-52">ลูกค้า</TableHead>
             <TableHead className="w-32">เบอร์โทรศัพท์</TableHead>
-            <TableHead className="w-32">สถานะ Line</TableHead>
+            <TableHead className="w-36">สถานะ Line</TableHead>
             <TableHead className="w-28 border-r-[1px]">จัดการ</TableHead>
           </tr>
         </thead>
@@ -36,19 +36,19 @@ const CustomerTable = ({
                 <TableCell>{customer.unit?.unitName || "-"}</TableCell>
                 <TableCell>{customer.name || "-"}</TableCell>
                 <TableCell>
-                  {customer.phone?.startsWith("NoPhone")
+                  {customer.phone?.startsWith("NO_PHONE_")
                     ? "-"
                     : (customer.phone || "-")}
                 </TableCell>
-                <TableCell className="pl-12">
+                <TableCell className="text-center leading-none">
                   {customer.userId ? (
                     <FaLine
-                      className="text-green-500 text-xl"
+                      className="text-green-500 text-xl inline-block"
                       title="เชื่อมต่อ Line แล้ว"
                     />
                   ) : (
                     <FaLine
-                      className="text-red-500 text-xl"
+                      className="text-red-500 text-xl inline-block"
                       title="ยังไม่ได้เชื่อมต่อ Line"
                     />
                   )}

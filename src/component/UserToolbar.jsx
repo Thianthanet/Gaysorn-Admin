@@ -17,11 +17,18 @@ const UserToolbar = ({
   waitForApprove,
   resetFormData,
 }) => {
-  const handleAddUserClick = () => {
+  const handleAddCustomer = (e) => {
+    resetFormData(); // <--- เรียกใช้ฟังก์ชันนี้ก่อนเปิด Pop-up
+    setPopupCreateUser(true);
+  };
+
+  const handleWaitForApprove = (e) => {
     resetFormData(); // <--- เรียกใช้ฟังก์ชันนี้ก่อนเปิด Pop-up
     setActiveTab('customers'); // <--- คอมเมนต์หรือลบออก ถ้าไม่ต้องการให้เปลี่ยนแท็บอัตโนมัติเมื่อกดเพิ่มผู้ใช้งาน
     setPopupCreateUser(true);
   };
+
+  // console.log("activeTab: ", activeTab)
 
   return (
     <div className="flex items-center gap-2 flex-wrap mb-6">
@@ -92,7 +99,7 @@ const UserToolbar = ({
               ? "bg-[#BC9D72] text-white"
               : "bg-white text-[#837958] border-[1px] border-[#837958]"
             }`}
-          onClick={() => setActiveTab("waitApprove")} // นี่คือ handleActiveTabChange
+          onClick={() => setActiveTab("waitApprove")}
         >
           รออนุมัติ
           <span className={`ml-[1px] text-[14px] font-medium"}`}>
@@ -104,7 +111,7 @@ const UserToolbar = ({
       {/* ปุ่มเพิ่มผู้ใช้งาน */}
       <button
         className="px-4 h-[36px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-[#a88f5c]"
-        onClick={handleAddUserClick}
+        onClick={activeTab === 'waitApprove' ? handleWaitForApprove : handleAddCustomer}
       >
         เพิ่มผู้ใช้งาน
       </button>

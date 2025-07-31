@@ -2,7 +2,7 @@
 import React from 'react';
 import { FaLine } from 'react-icons/fa';
 
-const WaitApproveTable = ({ activeTab, waitForApprove = [], handleApprove }) => {
+const WaitApproveTable = ({ activeTab, waitForApprove = [], confirmApprove }) => {
   // Logic นี้สามารถเก็บไว้ได้ ถ้าต้องการให้คอมโพเนนต์จัดการการซ่อนตัวเอง
   if (activeTab !== 'waitApprove') return null;
 
@@ -36,7 +36,7 @@ const WaitApproveTable = ({ activeTab, waitForApprove = [], handleApprove }) => 
             <TableHead className="w-52">ลูกค้า</TableHead>
             <TableHead className="w-32">เบอร์โทรศัพท์</TableHead>
             {/* <TableHead className="w-52">อีเมล</TableHead> */}
-            <TableHead className="w-52">สถานะ Line</TableHead>
+            <TableHead className="w-36">สถานะ Line</TableHead>
             <TableHead className="w-28 border-r-[1px]">จัดการ</TableHead>
           </tr>
         </thead>
@@ -91,15 +91,15 @@ const WaitApproveTable = ({ activeTab, waitForApprove = [], handleApprove }) => 
                 <TableCell>{customer.name || "-"}</TableCell>
                 <TableCell>{customer.phone || "-"}</TableCell>
                 {/* <TableCell>{customer.email || "-"}</TableCell> */}
-                <TableCell className="pl-[72px]">
+                <TableCell className="text-center leading-0">
                   {customer.userId ? (
                     <FaLine
-                      className="text-green-500 text-xl"
+                      className="text-green-500 text-xl inline-block"
                       title="เชื่อมต่อ Line แล้ว"
                     />
                   ) : (
                     <FaLine
-                      className="text-red-500 text-xl"
+                      className="text-red-500 text-xl inline-block"
                       title="ยังไม่ได้เชื่อมต่อ Line"
                     />
                   )}
@@ -109,7 +109,8 @@ const WaitApproveTable = ({ activeTab, waitForApprove = [], handleApprove }) => 
                     className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
                     title="อนุมัติ"
                     onClick={() => {
-                      handleApprove(customer.id);
+                      // handleApprove(customer.userId);
+                      confirmApprove(customer.userId);
                     }}
                   >อนุมัติ
                   </button>
