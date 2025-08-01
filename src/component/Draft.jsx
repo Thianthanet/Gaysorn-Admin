@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { SquarePlus } from 'lucide-react'
+import { SquarePlus, Trash2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { FaEdit, FaToggleOn, FaToggleOff } from 'react-icons/fa'
 
@@ -17,6 +17,7 @@ const Draft = () => {
         try {
             const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getContractor`)
             const sortData = response.data.data.sort((a, b) => a.id - b.id)
+            console.log(response.data.data)
             setNote(sortData)
         } catch (error) {
             console.error(error)
@@ -63,6 +64,16 @@ const Draft = () => {
         }
     }
 
+    const handleDeleteContractorFake = async (id) => {
+        try {
+            const response = await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/deleteContractorFake/${id}`)
+            console.log(response.data.data)
+            handleGetContractor()
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     return (
         <div className="p-4">
             <h1 className="text-xl font-bold mb-4">บันทึกงานชั่วคราว</h1>
@@ -93,7 +104,9 @@ const Draft = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {note.map((item) => (
+                        {note
+                        
+                        .map((item) => (
                             <tr key={item.id} className="bg-white hover:bg-gray-50">
                                 <td className="border px-4 py-2">{item.id}</td>
 
@@ -139,6 +152,9 @@ const Draft = () => {
                                             <FaToggleOn className="text-green-500 text-xl" />
                                         )}
                                     </button>
+                                    {/* <button onClick={() => handleDeleteContractorFake(item.id)}>
+                                        <Trash2 className='text-red-500'/>
+                                    </button> */}
                                 </td>
                             </tr>
                         ))}

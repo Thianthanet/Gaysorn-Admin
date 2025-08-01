@@ -92,7 +92,7 @@ const Building = () => {
       </h1>
 
       {/* ฟอร์มสร้าง */}
-      <form
+      {/* <form
         onSubmit={handleCreateBuilding}
         className="space-y-4 mb-8"
       >
@@ -129,7 +129,7 @@ const Building = () => {
         >
          <SquarePlus /> สร้างตึก
         </button>
-      </form>
+      </form> */}
 
       {/* ฟอร์มแก้ไข */}
       {editId && (
