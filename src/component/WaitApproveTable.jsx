@@ -8,7 +8,7 @@ const WaitApproveTable = ({ activeTab, waitForApprove = [], confirmApprove }) =>
 
   return (
     <div className="bg-white shadow-md overflow-hidden">
-      <table className="min-w-full leading-normal">
+      <table className="min-w-full leading-normal text-[14px] text-center">
         <thead>
           <tr>
             {/* {[
@@ -34,9 +34,9 @@ const WaitApproveTable = ({ activeTab, waitForApprove = [], confirmApprove }) =>
             <TableHead className="w-48">บริษัท/ร้านค้า</TableHead>
             <TableHead className="w-1">ยูนิต</TableHead>
             <TableHead className="w-52">ลูกค้า</TableHead>
-            <TableHead className="w-32">เบอร์โทรศัพท์</TableHead>
+            <TableHead className="w-36">เบอร์โทรศัพท์</TableHead>
             {/* <TableHead className="w-52">อีเมล</TableHead> */}
-            <TableHead className="w-36">สถานะ Line</TableHead>
+            <TableHead className="w-32">สถานะ Line</TableHead>
             <TableHead className="w-28 border-r-[1px]">จัดการ</TableHead>
           </tr>
         </thead>
@@ -119,7 +119,7 @@ const WaitApproveTable = ({ activeTab, waitForApprove = [], confirmApprove }) =>
             ))
           ) : (
             <tr>
-              <td colSpan="9" className="px-5 py-4 text-center text-gray-500">
+              <td colSpan="9" className="px-4 py-4 text-gray-500 border-b-[1px] border-r-[1px] border-l-[1px] border-[#837958]">
                 ไม่พบข้อมูลรออนุมัติ
               </td>
             </tr>
@@ -132,7 +132,7 @@ const WaitApproveTable = ({ activeTab, waitForApprove = [], confirmApprove }) =>
 
 const TableHead = ({ children, className = "" }) => (
   <th
-    className={`px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider ${className}`}
+    className={`px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 font-semibold text-black uppercase tracking-wider ${className}`}
   >
     {children}
   </th>
@@ -140,7 +140,7 @@ const TableHead = ({ children, className = "" }) => (
 
 const TableCell = ({ children, className = "" }) => (
   <td
-    className={`px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center ${className}`}
+    className={`px-4 py-2 border-b-[1px] border-[#837958] bg-white ${className}`}
   >
     {children}
   </td>

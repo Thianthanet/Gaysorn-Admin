@@ -100,13 +100,21 @@ const Jobs = () => {
       const repairsFilterArray = repairsLasterFilterParams
         ? repairsLasterFilterParams.split(",") // ["GA25080001", "GA25070052", ...]
         : [];
-      
+
+      console.log("statusParams: ", statusParams)
+
       // ฟิลเตอร์หลายเงื่อนไข
       const jobFilter = response.data.data.filter((j) => {
+
+        if (statusParams === "total") return true;
+
         const statusMatch = !statusParams || j.status === statusParams;
         const repairsMatch =
           repairsFilterArray.length === 0 || repairsFilterArray.includes(j.jobNo);
 
+        // console.log("j.status: ", j.status)
+        // console.log("statusMatch: ", statusMatch)
+        // console.log("repairsMatch: ", repairsMatch)
         return statusMatch && repairsMatch;
       });
 
@@ -114,9 +122,16 @@ const Jobs = () => {
 
       console.log("AllJobs: ", jobFilter.length > 0 ? jobFilter : response.data.data);
 
-      // console.log(`AllJobs (limit=${limit}, offset=${offset}): `, response.data.data);
+      // setJobs(jobFilter.length > 0 ? jobFilter : response.data.data);
 
-      setJobs(jobFilter.length > 0 ? jobFilter : response.data.data);
+      if (statusParams || repairsFilterArray.length > 0) {
+        // มีการตั้ง filter → แสดงผล filter (ถึงจะว่างก็ให้ว่างไป)
+        setJobs(jobFilter);
+      } else {
+        // ไม่มี filter → แสดงข้อมูลทั้งหมด
+        setJobs(response.data.data);
+      }
+
     } catch (error) {
       console.error("Error fetching jobs:", error);
     }
@@ -549,7 +564,7 @@ const Jobs = () => {
             onClick={() => setShowFilters(!showFilters)}
           >
             <Funnel className="w-4" /> เงื่อนไข
-            <HiChevronDown size={18} className="text-white" />
+            {/* <HiChevronDown size={18} className="text-white" /> */}
           </button>
 
           {/* ปุ่มส่งข้อมูลออก */}
@@ -657,19 +672,19 @@ const Jobs = () => {
           <thead className="sticky top-0 z-10 border-[#837958] text-center font-semibold text-black bg-[#BC9D72]/50 h-[44px] text-[14px]">
             <tr>
               <th className="relative"
-                style={{ width: `100px` }}
+                style={{ width: `24px` }}
               />
-              <th className="">ลำดับ</th>
-              <th className="text-center w-[32px]">
+              <th className="w-[60px]">ลำดับ</th>
+              <th className="text-center w-[60px]">
                 <TiStarFullOutline className="text-2xl mx-auto" />
               </th>
-              <th className="truncate">เลขงาน</th>
-              <th className="truncate">อาคาร</th>
-              <th className="truncate">บริษัท</th>
-              <th className="truncate">กลุ่มงาน</th>
+              <th className="w-[64px] truncate">เลขงาน</th>
+              <th className="w-[64px] truncate">อาคาร</th>
+              <th className="w-[64px] truncate">บริษัท</th>
+              <th className="w-[64px] truncate">กลุ่มงาน</th>
               <th
                 onClick={() => requestSort("createDate")}
-                className="cursor-pointer hover:underline w-[48px]"
+                className="cursor-pointer hover:underline w-[96px]"
               >
                 วันที่แจ้ง {getSortIndicator("createDate")}
                 {getSortPriority("createDate") && (
@@ -678,7 +693,7 @@ const Jobs = () => {
               </th>
               <th
                 onClick={() => requestSort("acceptDate")}
-                className="cursor-pointer hover:underline w-[48px]"
+                className="cursor-pointer hover:underline w-[96px]"
               >
                 วันที่รับงาน {getSortIndicator("acceptDate")}
                 {getSortPriority("acceptDate") && (
@@ -687,86 +702,97 @@ const Jobs = () => {
               </th>
               <th
                 onClick={() => requestSort("completeDate")}
-                className="cursor-pointer hover:underline w-[48px]"
+                className="cursor-pointer hover:underline w-[96px]"
               >
                 วันที่เสร็จสิ้น {getSortIndicator("completeDate")}
                 {getSortPriority("completeDate") && (
                   <sup>{getSortPriority("completeDate")}</sup>
                 )}
               </th>
-              <th>เจ้าหน้าที่</th>
-              <th>สถานะ</th>
+              <th className="w-[96px]">เจ้าหน้าที่</th>
+              <th className="w-[64px]">สถานะ</th>
             </tr>
           </thead>
           <tbody>
-            {getPaginatedJobs().map((job, index) => (
-              <tr
-                key={job.id}
-                className="text-center text-[12px] border-b-[1px] border-[#837958] cursor-pointer"
-                onClick={() => openJobModal(job)}
-              >
-                <td className="px-4 py-2 text-center align-text-top ">
-                  <span
-                    className={`inline-block w-4 h-4 rounded-full mx-auto ${job.status === "pending"
-                      ? "bg-red-500"
-                      : job.status === "in_progress"
-                        ? "bg-yellow-500"
-                        : job.status === "completed"
-                          ? "bg-green-500"
-                          : "bg-gray-400"
-                      }`}
-                  ></span>
-                </td>
-                <td className="align-text-top py-2">
-                  {(currentPage - 1) * itemsPerPage + index + 1}
-                </td>
-                <td className="px-8 py-2 align-text-top">
-                  {job?.workStar || "-"}
-                </td>
-                <td className="px-2 py-2 min-w-[64px] align-text-top">
-                  {job?.jobNo || "-"}
-                </td>
-                <td className="px-2 py-2 min-w-[140px] align-text-top">
-                  {job.building?.buildingName || "-"}
-                </td>
-                <td className="px-2 py-2 min-w-[88px] align-text-top">
-                  {job.company?.companyName || "-"}
-                </td>
-                <td className="px-4 py-2 min-w-[220px] align-text-top">
-                  {job?.choiceDesc || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[168px] align-text-top">
-                  {formatDateTimeThaiShort(job?.createDate) || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[168px] align-text-top">
-                  {formatDateTimeThaiShort(job?.acceptDate) || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[168px] align-text-top">
-                  {formatDateTimeThaiShort(job?.completeDate) || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[160px] align-text-top">
-                  {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}
-                </td>
-                <td
-                  className={` px-4 py-2 min-w-[140px] align-text-top ${job.status === "pending"
-                    ? "text-red-500"
-                    : job.status === "in_progress"
-                      ? "text-yellow-500"
-                      : job.status === "completed"
-                        ? "text-green-500"
-                        : ""
-                    }`}
+            {jobs.length > 0 ? (
+              getPaginatedJobs().map((job, index) => (
+                <tr
+                  key={job.id}
+                  className="text-center text-[12px] border-b-[1px] border-[#837958] cursor-pointer"
+                  onClick={() => openJobModal(job)}
                 >
-                  {job.status === "pending"
-                    ? "รอดำเนินการ"
-                    : job.status === "in_progress"
-                      ? "อยู่ระหว่างดำเนินการ"
-                      : job.status === "completed"
-                        ? "เสร็จสิ้น"
-                        : job.status}
+                  <td className="px-4 py-2 text-center align-text-top ">
+                    <span
+                      className={`inline-block w-4 h-4 rounded-full mx-auto ${job.status === "pending"
+                        ? "bg-red-500"
+                        : job.status === "in_progress"
+                          ? "bg-yellow-500"
+                          : job.status === "completed"
+                            ? "bg-green-500"
+                            : "bg-gray-400"
+                        }`}
+                    ></span>
+                  </td>
+                  <td className="align-text-top py-2">
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </td>
+                  <td className="px-8 py-2 align-text-top">
+                    {job?.workStar || "-"}
+                  </td>
+                  <td className="px-2 py-2 min-w-[64px] align-text-top">
+                    {job?.jobNo || "-"}
+                  </td>
+                  <td className="px-2 py-2 min-w-[140px] align-text-top">
+                    {job.building?.buildingName || "-"}
+                  </td>
+                  <td className="px-2 py-2 min-w-[88px] align-text-top">
+                    {job.company?.companyName || "-"}
+                  </td>
+                  <td className="px-4 py-2 min-w-[220px] align-text-top">
+                    {job?.choiceDesc || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[168px] align-text-top">
+                    {formatDateTimeThaiShort(job?.createDate) || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[168px] align-text-top">
+                    {formatDateTimeThaiShort(job?.acceptDate) || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[168px] align-text-top">
+                    {formatDateTimeThaiShort(job?.completeDate) || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[160px] align-text-top">
+                    {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}
+                  </td>
+                  <td
+                    className={` px-4 py-2 min-w-[140px] align-text-top ${job.status === "pending"
+                      ? "text-red-500"
+                      : job.status === "in_progress"
+                        ? "text-yellow-500"
+                        : job.status === "completed"
+                          ? "text-green-500"
+                          : ""
+                      }`}
+                  >
+                    {job.status === "pending"
+                      ? "รอดำเนินการ"
+                      : job.status === "in_progress"
+                        ? "อยู่ระหว่างดำเนินการ"
+                        : job.status === "completed"
+                          ? "เสร็จสิ้น"
+                          : job.status}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan="12"
+                  className="px-4 py-4 text-center text-gray-500 border-b-[1px] border-[#837958]"
+                >
+                  ไม่พบข้อมูลลูกค้า
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
         <Pagination

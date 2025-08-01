@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useContext } from 'react';
 import AdminLayout from './AdminLayout';
 import { useNavigate } from 'react-router-dom';
 import UserToolbar from '../component/UserToolbar';
@@ -12,6 +12,8 @@ import * as XLSX from 'xlsx';
 import axios from 'axios';
 import WaitApproveTable from '../component/WaitApproveTable';
 import { Pagination } from '../component/Pagination'; // ตรวจสอบ path ให้ถูกต้อง
+
+import { UserTabContext } from "../contexts/UserTabContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -30,7 +32,9 @@ const User = () => {
   const [allWaitForApproveData, setAllWaitForApproveData] = useState([]);
 
   // UI state
-  const [activeTab, setActiveTab] = useState('customers');
+  // const [activeTab, setActiveTab] = useState('');
+  const { activeTab, setActiveTab } = useContext(UserTabContext);
+
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
@@ -139,11 +143,12 @@ const User = () => {
       if (shouldReload) {
         // console.log("fetchData")
         setCurrentPage(1);
+        // setActiveTab(activeTab)
         fetchData();
         // window.location.reload();
       }
     }, 2500);
-  }, []);
+  }, [activeTab]);
 
   const handleSearch = () => {
     setSearchTerm(searchInput); // อัปเดต searchTerm จาก searchInput
@@ -281,8 +286,8 @@ const User = () => {
             const matchesSearch =
               (c.name?.toLowerCase().includes(term) ||
                 c.phone?.toLowerCase().includes(term) ||
-                console.log(c.phone?.toLowerCase().includes(term))||
-                console.log(c.phone?.toLowerCase()) ||
+                // console.log(c.phone?.toLowerCase().includes(term))||
+                // console.log(c.phone?.toLowerCase()) ||
                 c.unit?.company?.building?.buildingName?.toLowerCase().includes(term) ||
                 c.unit?.unitName?.toLowerCase().includes(term) ||
                 c.unit?.company?.companyName?.toLowerCase().includes(term));
@@ -320,12 +325,12 @@ const User = () => {
           });
           // console.log("sortedWaitApproves: ", sortedWaitApproves)
           filteredData = sortedWaitApproves.filter(w => {
-            const matchesSearch = 
-            (w.name?.toLowerCase().includes(term) ||
-              w.phone?.toLowerCase().includes(term) ||
-              w.unit?.unitName?.toLowerCase().includes(term) ||
-              w.unit?.company?.companyName?.toLowerCase().includes(term) ||
-              w.unit?.company?.building?.buildingName?.toLowerCase().includes(term));
+            const matchesSearch =
+              (w.name?.toLowerCase().includes(term) ||
+                w.phone?.toLowerCase().includes(term) ||
+                w.unit?.unitName?.toLowerCase().includes(term) ||
+                w.unit?.company?.companyName?.toLowerCase().includes(term) ||
+                w.unit?.company?.building?.buildingName?.toLowerCase().includes(term));
             const matchesBuilding = filterBuilding === 'all' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
             return matchesSearch && matchesBuilding;
           });
@@ -363,6 +368,10 @@ const User = () => {
       setLoading(false);
     }
   }, [activeTab, searchTerm, filterBuilding]); //activeTab
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // const fetchWaitApproveData = async (term, filterBuilding) => {
   //   const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
@@ -530,7 +539,7 @@ const User = () => {
         fetchUnits(),
       ]);
 
-      // setActiveTab('customers');
+      setActiveTab('customers');
       setPopupCreateUser(true);
     } catch (err) {
       console.error('Failed to load customer data for editing:', err);
@@ -781,7 +790,7 @@ const User = () => {
         ? axios.patch(`${API_BASE_URL}/api/updateCustomer`, payload)
         : axios.post(`${API_BASE_URL}/api/createCustomer`, payload);
       successStatus = payload.id ? 'update' : 'success';
-      console.log("apiCall: ", apiCall);
+      // console.log("apiCall: ", apiCall);
 
     } else if (activeTab === 'technicians') {
       if (!technicianFormData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
@@ -802,6 +811,7 @@ const User = () => {
         ? axios.patch(`${API_BASE_URL}/api/updateTechnician`, payload)
         : axios.post(`${API_BASE_URL}/api/createTechnician`, payload);
       successStatus = payload.id ? 'update' : 'success';
+
     } else if (activeTab === 'admin') {
       if (!adminFormData.username) newErrors.username = 'กรุณากรอกชื่อผู้ใช้งาน';
       if (!adminFormData.password && !adminFormData.id) newErrors.password = 'กรุณากรอกรหัสผ่าน'; // Password required only for new admin
@@ -835,7 +845,7 @@ const User = () => {
       }
 
       handlePopupStatus(successStatus, true); // Show success/update status, then reload
-      navigate('/user'); // Redirect to user page
+      navigate('/user');
     } catch (error) {
       console.error('Submission error:', error);
       handlePopupStatus('error');
@@ -927,9 +937,9 @@ const User = () => {
   }, [fetchBuildings]);
 
   // Fetch data whenever activeTab, searchTerm, or filterBuilding changes
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  // useEffect(() => {
+  //   fetchData();
+  // }, [fetchData]);
 
   useEffect(() => {
     fetchWaitForApprove(); // เรียกใช้ฟังก์ชันที่ถูก memoize ไว้
@@ -995,6 +1005,7 @@ const User = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+  // console.log("allTechniciansData: ", allTechniciansData)
 
   // const filteredAdmin = filterAndSearchData(allAdminData, false); // Admin ไม่มี filter อาคาร
   const totalAdmin = allAdminData.length;
@@ -1015,6 +1026,10 @@ const User = () => {
   // console.log("allWaitForApproveData: ", allWaitForApproveData)
   // console.log("WaitForApprove: ", waitForApprove)
 
+  // console.log("AllCustomersData: ", allCustomersData)
+  // console.log("AllTechniciansData: ", allTechniciansData)
+  // console.log("AllAdminData: ", allAdminData)
+
   // --- Render Logic ---
 
   return (
@@ -1029,14 +1044,14 @@ const User = () => {
             setSearchTerm(searchInput); // Update searchTerm to trigger fetchData
             setCurrentPage(1); // Reset page to 1 on search
           }}
-          activeTab={activeTab}
-          setActiveTab={(tab) => {
-            setActiveTab(tab);
-            setSearchInput(''); // Clear search input on tab change
-            setSearchTerm(''); // Clear search term on tab change
-            setFilterBuilding('all'); // Reset filter on tab change
-            setCurrentPage(1); // Reset page to 1 on tab change
-          }}
+          // activeTab={activeTab}
+          // setActiveTab={(tab) => {
+          //   setActiveTab(tab);
+          //   setSearchInput(''); // Clear search input on tab change
+          //   setSearchTerm(''); // Clear search term on tab change
+          //   setFilterBuilding('all'); // Reset filter on tab change
+          //   setCurrentPage(1); // Reset page to 1 on tab change
+          // }}
           setPopupCreateUser={setPopupCreateUser}
           exportToExcel={exportToExcel}
           buildings={buildings}

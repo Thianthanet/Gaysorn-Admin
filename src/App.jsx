@@ -13,33 +13,36 @@ import ReportCustomer from './admin/ReportCustomer';
 import ReportTechnician from './admin/ReportTechnician';
 // import EditAdmin from './admin/EditAdmin';
 import JobDetail from './admin/JobDetail';
+import { UserTabProvider } from "./contexts/UserTabContext";
 
 function App() {
   const token = localStorage.getItem('token');
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public route */}
-        <Route path="/" element={ token ? <Navigate to="/dashboard" /> : <Navigate to="/Login" />} />
-        <Route path="/login" element={<Login />} />
+    <UserTabProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public route */}
+          <Route path="/" element={token ? <Navigate to="/dashboard" /> : <Navigate to="/Login" />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* Protected routes */}
-        <Route element={<PrivateRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/user" element={<User />} />
-          <Route path="/setting" element={<Setting />} />
-          <Route path="/job" element={<Jobs />} />
-          <Route path="/job/:id" element={<JobDetail />} />
-          <Route path="/report" element={<Report />} />
-          <Route path="/createCustomer" element={<CreateCustomer />} />
-          {/* <Route path="/editTechnician/:userId" element={<EditTechnician />} /> */}
-          {/* <Route path="/editCustomer/:id" element={<EditCustomer />} /> */}
-          {/* <Route path="/editAdmin/:id" element={ <EditAdmin /> } /> */}
-          <Route path="/reportCustomer/:id" element={<ReportCustomer />} />
-          <Route path="/reportTechnician/:userId" element={<ReportTechnician />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          {/* Protected routes */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/user" element={<User />} />
+            <Route path="/setting" element={<Setting />} />
+            <Route path="/job" element={<Jobs />} />
+            <Route path="/job/:id" element={<JobDetail />} />
+            <Route path="/report" element={<Report />} />
+            <Route path="/createCustomer" element={<CreateCustomer />} />
+            {/* <Route path="/editTechnician/:userId" element={<EditTechnician />} /> */}
+            {/* <Route path="/editCustomer/:id" element={<EditCustomer />} /> */}
+            {/* <Route path="/editAdmin/:id" element={ <EditAdmin /> } /> */}
+            <Route path="/reportCustomer/:id" element={<ReportCustomer />} />
+            <Route path="/reportTechnician/:userId" element={<ReportTechnician />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </UserTabProvider>
   );
 }
 

@@ -1,14 +1,15 @@
-import React from "react";
+import React, { useContext } from "react";
 import { BiSearchAlt2 } from "react-icons/bi";
 import { HiChevronDown } from "react-icons/hi"; // ยังคง import ไว้เผื่อใช้งาน
 import BuildingFilter from "./BuildingFilter"; // ตรวจสอบ Path ให้ถูกต้อง
+import { UserTabContext } from "../contexts/UserTabContext"; // ✅ Import Context
 
 const UserToolbar = ({
   searchInput,
   setSearchInput,
   handleSearch,
-  activeTab,
-  setActiveTab, // นี่คือ handleActiveTabChange จาก User.jsx
+  // activeTab,
+  // setActiveTab,
   setPopupCreateUser,
   buildings, // <--- ต้องรับ prop นี้กลับเข้ามา
   filterBuilding, // <--- ต้องรับ prop นี้กลับเข้ามา
@@ -17,6 +18,8 @@ const UserToolbar = ({
   waitForApprove,
   resetFormData,
 }) => {
+  const { activeTab, setActiveTab } = useContext(UserTabContext);
+
   const handleAddCustomer = (e) => {
     resetFormData(); // <--- เรียกใช้ฟังก์ชันนี้ก่อนเปิด Pop-up
     setPopupCreateUser(true);
@@ -27,7 +30,7 @@ const UserToolbar = ({
     setActiveTab('customers'); // <--- คอมเมนต์หรือลบออก ถ้าไม่ต้องการให้เปลี่ยนแท็บอัตโนมัติเมื่อกดเพิ่มผู้ใช้งาน
     setPopupCreateUser(true);
   };
-
+  
   // console.log("activeTab: ", activeTab)
 
   return (
@@ -88,9 +91,12 @@ const UserToolbar = ({
               }`}
             onClick={() => setActiveTab(tab.value)} // นี่คือ handleActiveTabChange
           >
+            {/* {console.log(tab.value)} */}
             {tab.label}
           </button>
         ))}
+
+        {/* {console.log(activeTab)} */}
 
         {/* ปุ่มพิเศษ: รออนุมัติ */}
         <button

@@ -221,7 +221,6 @@ const UserPopup = ({
                   type="submit"
                   className={`w-full mb-2 mt-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition
                     ${activeTab === "technicians" ? (technicianData.id ? "mt-[134px]" : "mt-[262px]") : activeTab === "admin" ? "mt-[262px]" : ""}`}
-                  // ลบการกำหนด mt- ที่ซับซ้อนออก ให้ใช้ margin-top ค่ากลางๆ แล้วให้เนื้อหาดันปุ่มลงมาเอง
                 >
                   {activeTab === "customers" && (customerData.id ? "บันทึกข้อมูลลูกค้า" : "เพิ่มข้อมูลลูกค้า")}
                   {activeTab === "technicians" && (technicianData.id ? "บันทึกข้อมูลเจ้าหน้าที่" : "เพิ่มข้อมูลเจ้าหน้าที่")}
