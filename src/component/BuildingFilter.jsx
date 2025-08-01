@@ -45,7 +45,7 @@ const BuildingFilter = ({
     const displayBuildings = [allOption, ...buildings];
 
     return (
-        <div id="filter-dropdown" className={`${isMobile ? "mr-4 mt-2" : "mr-6 mt-3"}`}>
+        <div id="filter-dropdown"> 
             <div className="relative">
                 {/* ปุ่มหลัก */}
                 <button
@@ -60,7 +60,7 @@ const BuildingFilter = ({
 
                 {/* Dropdown */}
                 {open && (
-                    <div className={`absolute min-w-full bg-[#F4F2ED] rounded-lg shadow-md border border-gray-300 z-10`}>
+                    <div className={`absolute min-w-full bg-[#F4F2ED] rounded-lg shadow-md border border-gray-300 z-20`}>
                         {displayBuildings.map((item, idx) => ( 
                             <div
                                 key={idx}

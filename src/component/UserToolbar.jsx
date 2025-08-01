@@ -55,7 +55,7 @@ const UserToolbar = ({
       </button>
 
       {/* Building Filter Component */}
-      <div className="mb-3">
+      <div className="">
         <BuildingFilter
           isMobile={false}
           buildings={buildings} // <--- ส่ง buildings เข้าไป

@@ -18,7 +18,7 @@ const CustomerTable = ({
             <TableHead className="w-1">ยูนิต</TableHead>
             <TableHead className="w-52">ลูกค้า</TableHead>
             <TableHead className="w-32">เบอร์โทรศัพท์</TableHead>
-            <TableHead className="w-36">สถานะ Line</TableHead>
+            <TableHead className="w-32">สถานะ Line</TableHead>
             <TableHead className="w-28 border-r-[1px]">จัดการ</TableHead>
           </tr>
         </thead>

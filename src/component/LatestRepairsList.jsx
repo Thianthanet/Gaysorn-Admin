@@ -4,7 +4,13 @@ import moment from 'moment'
 import 'moment/locale/th'
 moment.locale('th')
 
-const LatestRepairsList = ({ repairs, STATUS_LABELS, isMobile }) => {
+const LatestRepairsList = ({
+    repairs,
+    STATUS_LABELS,
+    isMobile,
+    startDate,
+    endDate,
+}) => {
     const navigate = useNavigate()
 
     const formatThaiDate = (date) => {
@@ -31,10 +37,15 @@ const LatestRepairsList = ({ repairs, STATUS_LABELS, isMobile }) => {
     //     window.addEventListener("resize", handleResize);
     //     return () => window.removeEventListener("resize", handleResize);
     // }, [isMobile]);
+    
+    const repairsLasterFilter = repairs.map((r) => r.jobNo)
+
+    // console.log("repairs: ", repairs);
+    // console.log("repairsFilter: ", repairsFilter);
 
     return (
         <button
-            onClick={() => navigate('/job')}
+            onClick={() => navigate(`/job?repairsLasterFilter=${repairsLasterFilter}`)}
             className="bg-[#F4F2ED] rounded-2xl border-[1px] border-[#BC9D72]/90 shadow pr-6 pl-6 pt-4">
             <div className="flex flex-col justify-start h-full pb-4">
                 <h2 className={`flex items-start font-semibold mb-2 text-[#837958] ${isMobile ? "text-[18px]" : "text-[26px]"}`}>

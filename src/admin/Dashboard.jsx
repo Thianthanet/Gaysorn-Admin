@@ -54,19 +54,19 @@ export default function Dashboard() {
   // const [filterBuilding, setFilterBuilding] = useState('all');
 
   const fetchBuildings = async () => {
-        try {
-            const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`);
-            // console.log("Fetched buildings from API:", res.data.data); // เพิ่ม log เพื่อดูข้อมูลที่ได้
-            setBuildings(res.data.data); // Array of Objects
-        } catch (error) {
-            console.error('Error fetching buildings:', error);
-        }
-    };
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`);
+      // console.log("Fetched buildings from API:", res.data.data); // เพิ่ม log เพื่อดูข้อมูลที่ได้
+      setBuildings(res.data.data); // Array of Objects
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+    }
+  };
 
-    // 👉 เพิ่ม useEffect นี้เพื่อโหลดข้อมูลอาคารเมื่อ Component mount
-    useEffect(() => {
-        fetchBuildings();
-    }, []); // Empty dependency array means this runs once on mount
+  // 👉 เพิ่ม useEffect นี้เพื่อโหลดข้อมูลอาคารเมื่อ Component mount
+  useEffect(() => {
+    fetchBuildings();
+  }, []); // Empty dependency array means this runs once on mount
 
   useEffect(() => {
     if (dashboardData) {
@@ -96,9 +96,9 @@ export default function Dashboard() {
             // filterBuilding: filterBuilding === "all" ? undefined : filterBuilding,
           },
         });
-        console.log('buildingName:', buildingName)
-        console.log('startDate:', startDate)
-        console.log('endDate:', endDate)
+        console.log('BuildingFilter:', buildingName)
+        console.log('StartDate:', startDate)
+        console.log('EndDate:', endDate)
         console.log('Dashboard data:', res.data)
         console.table(res.data.latestRepairs)
         setDashboard(res.data)
@@ -142,6 +142,8 @@ export default function Dashboard() {
 
     fetchChoices();
   }, []);
+
+  // console.log("Choices: ", choices)
 
   const statusPieData = useMemo(() => {
     if (!dashboard) return [];
@@ -239,7 +241,7 @@ export default function Dashboard() {
   // console.log("choices: ", choices)
 
   // console.log("Buildings: ", buildings)
-  // console.log("dashboard: ", dashboard)
+  // console.log("dashboard.statusCounts: ", dashboard.statusCounts)
 
   return (
     <AdminLayout>
@@ -265,6 +267,9 @@ export default function Dashboard() {
         buildings={buildings}
         selectedBuilding={buildingName}
         setFilterBuilding={setBuildingName}
+        statusCounts={dashboard.statusCounts}
+        startDate={startDate}
+        endDate={endDate}
       />
 
       <JobBarChart
@@ -279,6 +284,8 @@ export default function Dashboard() {
           repairs={dashboard.latestRepairs}
           STATUS_LABELS={STATUS_LABELS}
           isMobile={isMobile}
+          startDate={startDate}
+          endDate={endDate}
         />
 
         <TopCompaniesList

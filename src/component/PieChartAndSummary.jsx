@@ -10,7 +10,19 @@ import {
 } from "recharts";
 import BuildingFilter from "./BuildingFilter";
 
-const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, activeButton, buildings, selectedBuilding, setFilterBuilding }) => {
+const PieChartAndSummary = ({
+    statusPieData, 
+    summaryCards, 
+    iconMap, 
+    isMobile, 
+    activeButton, 
+    buildings, 
+    selectedBuilding, 
+    setFilterBuilding,
+    statusCounts,
+    startDate,
+    endDate,
+}) => {
     const [activeIndex, setActiveIndex] = useState(null);
     const navigate = useNavigate()
 
@@ -81,13 +93,15 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, ac
                         สรุปสถานะของงานประจำ{activeLabel}
                     </h2>
                     {/* <BuildingFilter isMobile={isMobile} setBuildingName={setBuildingName} /> */}
-                    <BuildingFilter
-                        isMobile={isMobile}
-                        buildings={buildings} // <--- ส่ง buildings เข้าไป
-                        // filterBuilding={filterBuilding}
-                        setFilterBuilding={setFilterBuilding} // ซึ่งคือ handleFilterBuildingChange จาก User.jsx
-                        selectedBuilding={selectedBuilding} // <--- ส่ง filterBuilding เข้าไป เพื่อให้ BuildingFilter แสดงค่าที่เลือกปัจจุบัน
-                    />
+                    <div className={`${isMobile ? "mr-4 mt-2" : "mr-6 mt-3"}`}>
+                        <BuildingFilter
+                            isMobile={isMobile}
+                            buildings={buildings} // <--- ส่ง buildings เข้าไป
+                            // filterBuilding={filterBuilding}
+                            setFilterBuilding={setFilterBuilding} // ซึ่งคือ handleFilterBuildingChange จาก User.jsx
+                            selectedBuilding={selectedBuilding} // <--- ส่ง filterBuilding เข้าไป เพื่อให้ BuildingFilter แสดงค่าที่เลือกปัจจุบัน
+                        />
+                    </div>
                 </div> {/*สมดุลคือ ไม่กำหนดความสูง h */}
                 <div className={`w-full ${isMobile ? "h-[180px]" : "ml-[10px] h-[280px]"}`}>
                     <ResponsiveContainer width="100%" height="100%">
@@ -148,13 +162,13 @@ const PieChartAndSummary = ({ statusPieData, summaryCards, iconMap, isMobile, ac
                     </ResponsiveContainer>
                 </div>
             </div>
-
+            {/* {console.log("summaryCards: ", summaryCards)} */}
             {/* ----- SUMMARY CARDS ----- */}
             <div className={`${isMobile ? "" : "md:col-span-4"} grid grid-cols-2 gap-2`}>
                 {summaryCards.map((card) => (
                     <button
                         key={card.key}
-                        onClick={() => navigate('/job')} //ถ้าสมดุล จะไม่กำหนดความสูง h p-2
+                        onClick={() => navigate(`/job?startDate=${startDate}&endDate=${endDate}&status=${card.key}&statusCounts=${card.value}`)} //ถ้าสมดุล จะไม่กำหนดความสูง h p-2
                         className="flex flex-col justify-center items-center h-[150px] bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 hover:shadow-xl transition-shadow duration-300"
                     >
                         <div className="text-[#BC9D72] opacity-60 transform transition-transform duration-300 hover:scale-110">
