@@ -151,9 +151,9 @@ const GroupChoices = () => {
                         <FaToggleOff size={24} className="text-red-500" />
                       )}
                     </button>
-                    <button onClick={() => handleDeleteChoiceFake(choice.id)}>
+                    {/* <button onClick={() => handleDeleteChoiceFake(choice.id)}>
                       <Trash2 className='text-red-500'/>
-                    </button>
+                    </button> */}
                   </div>
                 </td>
               </tr>
