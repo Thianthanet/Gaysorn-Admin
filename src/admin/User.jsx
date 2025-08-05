@@ -56,18 +56,25 @@ const User = () => {
   const [units, setUnits] = useState([]);
   const [selectedBuildings, setSelectedBuildings] = useState([]); // For technician building access
 
+  const [companyId, setCompanyId] = useState("");
+  const [unitId, setUnitId] = useState("");
+  const [buildingId, setBuildingId] = useState("");
+
   // Data for create/edit forms
   const [customerFormData, setCustomerFormData] = useState({
     id: null, // Used for editing existing customer
     name: '',
     phone: '',
-    companyName: '',
-    unitName: '',
-    buildingName: '',
     email: '',
-    buildingId: '', // For API payload
+
+    companyName: '',
     companyId: '', // For API payload
+
+    unitName: '',
     unitId: '', // For API payload
+
+    buildingName: '',
+    buildingId: '', // For API payload
   });
 
   const [technicianFormData, setTechnicianFormData] = useState({
@@ -225,6 +232,7 @@ const User = () => {
   const fetchCompanies = useCallback(async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/getCompany`);
+      // console.log("fetchCompanies: ", res)
       setCompanies(res.data.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -239,6 +247,16 @@ const User = () => {
       console.error('Error fetching units:', error);
     }
   }, []);
+
+  useEffect(() => {
+    fetchBuildings();
+    fetchCompanies();
+    fetchUnits();
+  }, []);
+
+  // console.log("buildings: ", buildings)
+  // console.log("companies: ", companies)
+  // console.log("units: ", units)
 
   const fetchAdmin = useCallback(async () => {
     try {
@@ -403,7 +421,6 @@ const User = () => {
   //   fetchWaitApproveData();
   // }, []);
 
-
   // --- Handlers for Form Changes ---
 
   const handleCustomerChange = useCallback(async (e) => {
@@ -415,8 +432,6 @@ const User = () => {
       setCustomerFormData(prev => ({ ...prev, phone: onlyNums.slice(0, 15) }));
       return;
     }
-
-    // console.log("CustomerFormData: ", customerFormData)
 
     // Email validation (basic client-side, server-side validation is still critical)
     if (name === 'email') {
@@ -432,61 +447,93 @@ const User = () => {
       }
     }
 
+    // Set the form data for the current input
     setCustomerFormData(prev => ({ ...prev, [name]: value }));
 
     // Auto-fill logic for related fields
-    if (name === 'unitName' && value) {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByUnit/${value}`);
-        const { company, building, unitId, companyId, buildingId } = response.data;
-        setCustomerFormData(prev => ({
-          ...prev,
-          companyName: company || '',
-          buildingName: building || '',
-          unitId: unitId || '',
-          companyId: companyId || '',
-          buildingId: buildingId || '',
-        }));
-      } catch (error) {
-        console.error('Error fetching unit data:', error);
-      }
-    } else if (name === 'companyName' && value) {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByCompany/${value}`);
-        const { building, units: fetchedUnits, companyId, buildingId } = response.data;
-        setCustomerFormData(prev => ({
-          ...prev,
-          buildingName: building || '',
-          unitName: fetchedUnits && fetchedUnits.length > 0 ? fetchedUnits[0] : '',
-          companyId: companyId || '',
-          buildingId: buildingId || '',
-        }));
-        if (fetchedUnits) {
-          setUnits(fetchedUnits.map(name => ({ unitName: name }))); // Assuming units are just names
+    if (name === 'companyName') {
+      const selectedCompany = companies.find(c => c.companyName === value);
+
+      // เตรียม object สำหรับอัปเดต state ทั้งหมดในครั้งเดียว
+      const newState = {
+        companyId: selectedCompany?.id || '',
+        companyName: value,
+        unitId: '',
+        unitName: '',
+        buildingId: '',
+        buildingName: '',
+      };
+
+      if (selectedCompany) {
+        const selectedUnit = units.find(u => u.companyId === selectedCompany.id);
+        const selectedBuilding = buildings.find(b => b.id === selectedCompany.buildingId);
+
+        if (selectedUnit) {
+          newState.unitId = selectedUnit.id;
+          newState.unitName = selectedUnit.unitName;
         }
-      } catch (error) {
-        console.error('Error fetching company data:', error);
+        if (selectedBuilding) {
+          newState.buildingId = selectedBuilding.id;
+          newState.buildingName = selectedBuilding.buildingName;
+        }
       }
-    } else if (name === 'buildingName' && value) {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByBuilding/${value}`);
-        const { companies: fetchedCompanies, buildingId } = response.data;
+
+      // อัปเดต state เพียงครั้งเดียว
+      setCustomerFormData(prev => ({ ...prev, ...newState }));
+    } else if (name === 'unitName') {
+      const selectedUnit = units.find(u => u.unitName === value);
+
+      const newState = {
+        unitId: selectedUnit?.id || '',
+      };
+
+      if (selectedUnit) {
+        const selectedCompany = companies.find(c => c.id === selectedUnit.companyId);
+
+        newState.companyId = selectedUnit.companyId;
+        newState.companyName = selectedCompany?.companyName || '';
+        newState.buildingId = selectedCompany?.buildingId || '';
+        newState.buildingName = buildings.find(b => b.id === selectedCompany?.buildingId)?.buildingName || '';
+      } else {
+        newState.companyId = '';
+        newState.companyName = '';
+        newState.buildingId = '';
+        newState.buildingName = '';
+      }
+
+      setCustomerFormData(prev => ({ ...prev, ...newState }));
+    } else {
+      console.log("customerFormData: ", customerFormData)
+      const selectedCompany = companies.find(c => c.id === customerFormData.companyId);
+      const selectedBuilding = buildings.find(b => b.id === customerFormData.buildingId);
+
+      // ตรวจสอบว่า buildingName ไม่ตรงกับค่าใดๆ ใน selectedCompany หรือ selectedUnit
+      if (!selectedCompany || !selectedBuilding) {
+        setErrors(prev => ({ ...prev, buildingName: 'ข้อมูลตึกไม่ถูกต้องหรือไม่ตรงกับบริษัทที่เลือก' }));
+        // อาจจะต้องเคลียร์ค่าที่ผิดออก
         setCustomerFormData(prev => ({
           ...prev,
-          companyName: fetchedCompanies && fetchedCompanies.length > 0 ? fetchedCompanies[0] : '',
-          unitName: '', // Clear unit name as it depends on company
-          buildingId: buildingId || '',
+          companyName: '',
+          buildingId: '',
+          buildingName: '',
         }));
-        if (fetchedCompanies) {
-          setCompanies(fetchedCompanies.map(name => ({ companyName: name })));
-          setUnits([]); // Clear units
-        }
-      } catch (error) {
-        console.error('Error fetching building data:', error);
+      } else {
+        // ถ้าถูกต้อง ให้เคลียร์ Error ออก
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.buildingName;
+          return newErrors;
+        });
+        
+        setCustomerFormData((prev) => ({
+          ...prev,
+          companyName: selectedCompany.companyName,
+          buildingId: selectedCompany.buildingId,
+          buildingName: selectedBuilding.buildingName,
+        }));
       }
     }
-
-  }, [setErrors, setCustomerFormData, setCompanies, setUnits]);
+  }, [setErrors, setCustomerFormData, companies, units, buildings]);
 
   const handleTechnicianChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -539,6 +586,7 @@ const User = () => {
         fetchUnits(),
       ]);
 
+      console.log("CustomerFormData in handleEditCustomer: ", customerFormData)
       setActiveTab('customers');
       setPopupCreateUser(true);
     } catch (err) {
@@ -843,6 +891,11 @@ const User = () => {
           { techId: technicianFormData.userId, buildingIds: selectedBuildings }
         );
       }
+      console.log("payload: ", payload)
+      payload.companyId = companyId
+      payload.buildingId = buildingId
+      payload.unitId = unitId
+      console.log("payload after: ", payload)
 
       handlePopupStatus(successStatus, true); // Show success/update status, then reload
       navigate('/user');
@@ -1029,6 +1082,7 @@ const User = () => {
   // console.log("AllCustomersData: ", allCustomersData)
   // console.log("AllTechniciansData: ", allTechniciansData)
   // console.log("AllAdminData: ", allAdminData)
+  // console.log("customers: ", customers)
 
   // --- Render Logic ---
 
@@ -1092,6 +1146,12 @@ const User = () => {
           selectedBuildings={selectedBuildings}
           handleBuildingToggle={handleBuildingToggle}
           errors={errors}
+          setCompanyId={setCompanyId}
+          setUnitId={setUnitId}
+          setBuildingId={setBuildingId}
+        //         fetchCompanies={fetchCompanies}
+        //         fetchBuildings,
+        // fetchUnits,
         />
 
         {loading ? (

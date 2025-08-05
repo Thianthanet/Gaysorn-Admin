@@ -10,26 +10,26 @@ const TechnicianTable = ({
 }) => {
   // console.log("technicians: ", technicians)
   return (
-    <div className="bg-white shadow-md overflow-hidden">
-      <table className="min-w-full leading-normal text-[14px] text-center">
-        <thead>
+    <div className="overflow-x-auto overflow-y-auto max-h-[80vh] relative text-[14px] text-center">
+      <table className="min-w-full table-fixed leading-normal border-t-[1px] border-r-[1px] border-l-[1px] border-[#837958]">
+        <thead className="sticky top-0 z-10 border-[#837958] text-center font-semibold text-black bg-[#ddceb8] h-[44px] text-[14px]"> {/* bg-[#BC9D72]/50 */}
           <tr className='font-semibold'>
-            <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50  text-black uppercase tracking-wider">
+            <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958]  text-black uppercase tracking-wider">
               ลำดับ
             </th>
-            <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 font-semibold text-black uppercase tracking-wider">
+            <th className="px-4 py-3 border-t-[1px] border-[#837958] font-semibold text-black uppercase tracking-wider">
               เจ้าหน้าที่
             </th>
-            <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 font-semibold text-black uppercase tracking-wider">
+            <th className="px-4 py-3 border-t-[1px] border-[#837958] font-semibold text-black uppercase tracking-wider">
               เบอร์โทรศัพท์
             </th>
-            <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 font-semibold text-black uppercase tracking-wider">
+            <th className="px-4 py-3 border-t-[1px] border-[#837958] font-semibold text-black uppercase tracking-wider">
               สถานะ Line
             </th>
-            <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 font-semibold text-black uppercase tracking-wider">
+            <th className="px-4 py-3 border-t-[1px] border-[#837958] font-semibold text-black uppercase tracking-wider">
               สังกัด
             </th>
-            <th className="px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] bg-[#BC9D72]/50 font-semibold text-black uppercase tracking-wider">
+            <th className="px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] font-semibold text-black uppercase tracking-wider">
               จัดการ
             </th>
           </tr>

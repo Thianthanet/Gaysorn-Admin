@@ -13,15 +13,23 @@ const UserPopup = ({
   handleTechnicianChange,
   handleAdminChange, // <--- รับ prop นี้เข้ามา
   buildings,
-  companies, // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกบริษัทจาก dropdown
-  units,     // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกยูนิตจาก dropdown
+  companies, // Pass companies for customer form
+  units,
+  // setCompanyId, // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกบริษัทจาก dropdown
+  // setUnitId,     // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกยูนิตจาก dropdown
+  setBuildingId,
   selectedBuildings,
   handleBuildingToggle,
   errors,
+  fetchCompanies,
+  fetchBuildings,
+  fetchUnits,
   // isEditModeTechnicians ถูกลบออก เพราะเราจะคำนวณจาก technicianData.id
   // setAdminData ถูกลบออก เพราะเราจะใช้ handleAdminChange แทน
 }) => {
   if (!show) return null;
+
+  // const customerData2 = customerData;
 
   // ตรวจสอบโหมดแก้ไขสำหรับช่าง (Technician Edit Mode)
   const isTechnicianEditMode = !!technicianData.id && !!technicianData.userId;
@@ -29,6 +37,15 @@ const UserPopup = ({
   const isAdminEditMode = !!adminData.id;
 
   // console.log("technicianData: ", technicianData)
+  console.log("customerData: ", customerData)
+  // console.log("customerData2: ", customerData2)
+  
+  // console.log("customerData.buildingId: ", customerData.buildingId)
+  // console.log("customerData.companyId: ", customerData.companyId)
+  // console.log("customerData.unitId: ", customerData.unitId)
+  // console.log("buildings: ", buildings)
+  // console.log("companies: ", companies)
+  // console.log("units in userPopup: ", units)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
@@ -48,6 +65,9 @@ const UserPopup = ({
             onClick={(e) => {
               e.preventDefault();
               setActiveTab('customers');
+              // setCompanyId(customerData.companyId)
+              // setUnitId(customerData.unitId)
+              // setBuildingId(customerData.buildingId)
             }}
           >
             ลูกค้า

@@ -93,44 +93,19 @@ const Jobs = () => {
         `${import.meta.env.VITE_API_BASE_URL}/api/getAllRepair${queryString}`
       );
 
-      // console.log("response.data.data: ", response.data.data)
-      // console.log("repairsLasterFilterParams: ", repairsLasterFilterParams)
+      let jobsToDisplay = response.data.data;
 
-      // แปลง repairsLasterFilterParams เป็น array
-      const repairsFilterArray = repairsLasterFilterParams
-        ? repairsLasterFilterParams.split(",") // ["GA25080001", "GA25070052", ...]
-        : [];
-
-      console.log("statusParams: ", statusParams)
-
-      // ฟิลเตอร์หลายเงื่อนไข
-      const jobFilter = response.data.data.filter((j) => {
-
-        if (statusParams === "total") return true;
-
-        const statusMatch = !statusParams || j.status === statusParams;
-        const repairsMatch =
-          repairsFilterArray.length === 0 || repairsFilterArray.includes(j.jobNo);
-
-        // console.log("j.status: ", j.status)
-        // console.log("statusMatch: ", statusMatch)
-        // console.log("repairsMatch: ", repairsMatch)
-        return statusMatch && repairsMatch;
-      });
-
-      // console.log("jobFilter: ", jobFilter)
-
-      console.log("AllJobs: ", jobFilter.length > 0 ? jobFilter : response.data.data);
-
-      // setJobs(jobFilter.length > 0 ? jobFilter : response.data.data);
-
-      if (statusParams || repairsFilterArray.length > 0) {
-        // มีการตั้ง filter → แสดงผล filter (ถึงจะว่างก็ให้ว่างไป)
-        setJobs(jobFilter);
-      } else {
-        // ไม่มี filter → แสดงข้อมูลทั้งหมด
-        setJobs(response.data.data);
+      // Apply filters based on local parameters
+      if (statusParams && statusParams !== 'total') {
+        jobsToDisplay = jobsToDisplay.filter((job) => job.status === statusParams);
       }
+
+      if (repairsLasterFilterParams) {
+        jobsToDisplay = jobsToDisplay.filter((job) => job.jobNo === repairsLasterFilterParams);
+      }
+
+      console.log("Filtered Jobs:", jobsToDisplay);
+      setJobs(jobsToDisplay);
 
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -151,7 +126,7 @@ const Jobs = () => {
       // รวม "อื่น ๆ" ไว้หน้า ตามด้วยข้อมูลที่เหลือ
       const sortedChoices = [...remaining, ...others];
 
-      console.log("Choices (with 'อื่น ๆ' last): ", sortedChoices);
+      // console.log("Choices (with 'อื่น ๆ' last): ", sortedChoices);
       setChoices(sortedChoices);
     } catch (error) {
       console.error(error);
@@ -175,7 +150,7 @@ const Jobs = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`
       );
-      console.log("Building: ", response.data.data);
+      // console.log("Building: ", response.data.data);
       setBuilding(response.data.data);
     } catch (error) {
       console.error(error);
@@ -404,7 +379,7 @@ const Jobs = () => {
   const getSortIndicator = (key) => {
     const index = sortConfig.keys.indexOf(key);
     // console.log("index in getSortIndicator: ", index)
-    if (index === -1) return "↕"; // Neutral indicator when not sorted
+    if (index === -1) return "⇅"; // Neutral indicator when not sorted
     const direction = sortConfig.directions[index];
     return direction === "asc" ? "↑" : "↓";
   };
@@ -668,8 +643,9 @@ const Jobs = () => {
             </div>
           </div>
         )}
+        <div className="overflow-x-auto overflow-y-auto max-h-[80vh] relative">
         <table className="min-w-full table-fixed leading-normal border-t-[1px] border-r-[1px] border-l-[1px] border-[#837958]">
-          <thead className="sticky top-0 z-10 border-[#837958] text-center font-semibold text-black bg-[#BC9D72]/50 h-[44px] text-[14px]">
+          <thead className="sticky top-0 z-10 border-[#837958] text-center font-semibold text-black bg-[#ddceb8] h-[44px] text-[14px]"> {/* bg-[#BC9D72]/50 */}
             <tr>
               <th className="relative"
                 style={{ width: `24px` }}
@@ -682,7 +658,7 @@ const Jobs = () => {
               <th className="w-[64px] truncate">อาคาร</th>
               <th className="w-[64px] truncate">บริษัท</th>
               <th className="w-[64px] truncate">กลุ่มงาน</th>
-              <th
+              {/* <th
                 onClick={() => requestSort("createDate")}
                 className="cursor-pointer hover:underline w-[96px]"
               >
@@ -690,8 +666,15 @@ const Jobs = () => {
                 {getSortPriority("createDate") && (
                   <sup>{getSortPriority("createDate")}</sup>
                 )}
+              </th> */}
+
+              <th onClick={() => requestSort("createDate")}
+                className="cursor-pointer hover:underline w-[96px]"
+              >
+                วันที่แจ้ง {getSortIndicator("createDate")}
               </th>
-              <th
+
+              {/* <th
                 onClick={() => requestSort("acceptDate")}
                 className="cursor-pointer hover:underline w-[96px]"
               >
@@ -699,8 +682,15 @@ const Jobs = () => {
                 {getSortPriority("acceptDate") && (
                   <sup>{getSortPriority("acceptDate")}</sup>
                 )}
+              </th> */}
+
+              <th onClick={() => requestSort("acceptDate")}
+                className="cursor-pointer hover:underline w-[96px]"
+              >
+                วันที่รับงาน {getSortIndicator("acceptDate")}
               </th>
-              <th
+
+              {/* <th
                 onClick={() => requestSort("completeDate")}
                 className="cursor-pointer hover:underline w-[96px]"
               >
@@ -708,13 +698,21 @@ const Jobs = () => {
                 {getSortPriority("completeDate") && (
                   <sup>{getSortPriority("completeDate")}</sup>
                 )}
+              </th> */}
+
+              <th onClick={() => requestSort("completeDate")}
+                className="cursor-pointer hover:underline w-[96px]"
+              >
+                วันที่เสร็จสิ้น {getSortIndicator("completeDate")}
               </th>
               <th className="w-[96px]">เจ้าหน้าที่</th>
               <th className="w-[64px]">สถานะ</th>
             </tr>
           </thead>
           <tbody>
-            {jobs.length > 0 ? (
+            {/* {console.log("jobs: " jobs)} */}
+            {jobs.length > 0 && getPaginatedJobs().length > 0 ? (
+              // console.log("getPaginatedJobs: ", getPaginatedJobs()),
               getPaginatedJobs().map((job, index) => (
                 <tr
                   key={job.id}
@@ -795,6 +793,7 @@ const Jobs = () => {
             )}
           </tbody>
         </table>
+        </div>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
