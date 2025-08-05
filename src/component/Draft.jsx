@@ -66,7 +66,7 @@ const Draft = () => {
 
     const handleDeleteContractorFake = async (id) => {
         try {
-            const response = await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/deleteContractorFake/${id}`)
+            const response = await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/deleteContractor/${id}`)
             console.log(response.data.data)
             handleGetContractor()
         } catch (error) {
@@ -105,7 +105,7 @@ const Draft = () => {
                     </thead>
                     <tbody>
                         {note
-                        
+                        .filter((item => !item.fakeDelete))
                         .map((item) => (
                             <tr key={item.id} className="bg-white hover:bg-gray-50">
                                 <td className="border px-4 py-2">{item.id}</td>
@@ -152,9 +152,9 @@ const Draft = () => {
                                             <FaToggleOn className="text-green-500 text-xl" />
                                         )}
                                     </button>
-                                    {/* <button onClick={() => handleDeleteContractorFake(item.id)}>
+                                    <button onClick={() => handleDeleteContractorFake(item.id)}>
                                         <Trash2 className='text-red-500'/>
-                                    </button> */}
+                                    </button>
                                 </td>
                             </tr>
                         ))}
