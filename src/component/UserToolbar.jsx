@@ -86,8 +86,8 @@ const UserToolbar = ({
           <button
             key={tab.value}
             className={`px-4 h-[32px] text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-[#837958]/80 hover:text-white ${activeTab === tab.value
-                ? "bg-[#BC9D72] text-white"
-                : "bg-[#F4F2ED] text-black"
+              ? "bg-[#BC9D72] text-white"
+              : "bg-[#F4F2ED] text-black"
               }`}
             onClick={() => setActiveTab(tab.value)} // นี่คือ handleActiveTabChange
           >
@@ -107,9 +107,11 @@ const UserToolbar = ({
             }`}
           onClick={() => setActiveTab("waitApprove")}
         >
-          รออนุมัติ
-          <span className={`ml-[1px] text-[14px] font-medium"}`}>
-            ({waitForApprove?.length ?? 0})
+          <span className="flex items-center space-x-2">
+            <span>รออนุมัติ</span>
+            <span className="text-[14px] text-red-500 font-medium">
+              ({waitForApprove?.length ?? 0})
+            </span>
           </span>
         </button>
       </div>

@@ -56,8 +56,9 @@ const LatestRepairsList = ({
                     {repairs.slice(0, 10).map((item) => {
                         const companyName = item.companyName?.trim() || "-";
                         console.log("item: ", item)
-                        console.log("item.jobNo: ", item?.jobNo)
-                        console.log("item.companyName: ", item?.building?.companies?.companyName)
+                        console.log("item.jobNo: ", item.jobNo)
+                        console.log("item.buildingName: ", item.building?.buildingName)
+                        console.log("item.companyName: ", item.companyName)
                         return (
                             <button 
                                 key={item.id} 

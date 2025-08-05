@@ -1,6 +1,6 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
-import { Edit, SquarePlus, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Edit, SquarePlus, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react'
 import { FaToggleOff, FaToggleOn } from 'react-icons/fa'
 
 const GroupChoices = () => {
@@ -17,6 +17,7 @@ const GroupChoices = () => {
     try {
       const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getChoices`)
       setGroupChoices(response.data.data)
+      console.log(response.data.data)
     } catch (error) {
       console.error('Error fetching group choices:', error)
     }
@@ -66,6 +67,16 @@ const GroupChoices = () => {
     }
   }
 
+  const handleDeleteChoiceFake = async (id) => {
+    try {
+      const response = await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/deleteChoiceFake/${id}`)
+      console.log(response.data.data)
+      handleGetGroupChoices()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">กลุ่มงาน</h2>
@@ -92,13 +103,15 @@ const GroupChoices = () => {
         <table className="min-w-full border border-gray-200">
           <thead className="bg-gray-100 sticky top-0">
             <tr>
-              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]">ลำดับ</th>
-              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]">ชื่อกลุ่มงาน</th>
-              <th className="px-4 py-2 text-center border-b bg-[#BC9D72]">การจัดการ</th>
+              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]/50">ลำดับ</th>
+              <th className="px-4 py-2 text-left border-b bg-[#BC9D72]/50">ชื่อกลุ่มงาน</th>
+              <th className="px-4 py-2 text-center border-b bg-[#BC9D72]/50">การจัดการ</th>
             </tr>
           </thead>
           <tbody>
-            {groupChoices.map((choice, index) => (
+            {groupChoices
+            .filter(choice => !choice.fakeDelete)
+            .map((choice, index) => (
               <tr key={choice.id} className="bg-white hover:bg-gray-50">
                 <td className="px-4 py-2 border-b">{index + 1}</td>
                 <td className="px-4 py-2 border-b">
@@ -137,6 +150,9 @@ const GroupChoices = () => {
                       ) : (
                         <FaToggleOff size={24} className="text-red-500" />
                       )}
+                    </button>
+                    <button onClick={() => handleDeleteChoiceFake(choice.id)}>
+                      <Trash2 className='text-red-500'/>
                     </button>
                   </div>
                 </td>

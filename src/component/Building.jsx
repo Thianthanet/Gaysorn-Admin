@@ -92,7 +92,7 @@ const Building = () => {
       </h1>
 
       {/* ฟอร์มสร้าง */}
-      <form
+      {/* <form
         onSubmit={handleCreateBuilding}
         className="space-y-4 mb-8"
       >
@@ -129,7 +129,7 @@ const Building = () => {
         >
          <SquarePlus /> สร้างตึก
         </button>
-      </form>
+      </form> */}
 
       {/* ฟอร์มแก้ไข */}
       {editId && (
@@ -176,11 +176,11 @@ const Building = () => {
       )}
 
       {/* รายการตึก */}
-      <div className="space-y-2 bg-white">
+      <div className="space-y-2">
         {buildings.map((building) => (
           <div
             key={building.id}
-            className="flex items-center justify-between border border-gray-200 rounded-md p-3 hover:shadow transition"
+            className="flex items-center justify-between border border-gray-200 rounded-md p-3 hover:shadow transition bg-white"
           >
             <div className="text-gray-700 font-semibold">
               {building.id}

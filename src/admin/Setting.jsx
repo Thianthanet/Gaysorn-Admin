@@ -9,7 +9,7 @@ import Draft from '../component/Draft';
 const Setting = () => {
   return (
     <AdminLayout>
-      <div className="text-2xl font-semibold mb-6">Setting</div>
+      {/* <div className="text-2xl font-semibold mb-6">Setting</div> */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-[#F4F2ED] shadow-md rounded-2xl border border-[#837958] p-6">
           <Building />

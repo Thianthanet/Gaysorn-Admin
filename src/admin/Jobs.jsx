@@ -180,7 +180,14 @@ const Jobs = () => {
       วันที่เสร็จสิ้น: job.completeDate
         ? formatDateTimeThaiShort(job.completeDate)
         : "-",
-      เจ้าหน้าที่: job.acceptedBy?.name?.trim() || "-",
+      // เจ้าหน้าที่: job.acceptedBy?.name?.trim() || "-",
+      เจ้าหน้าที่:
+        [
+          job.acceptedBy?.name?.trim() ? `${job.acceptedBy.name} (รับงาน)` : null,
+          job.completedBy?.name?.trim() ? `${job.completedBy.name} (ดำเนินการ)` : null,
+        ]
+          .filter(Boolean)
+          .join("\n") || "-",
       สถานะ:
         job.status === "pending"
           ? "รอดำเนินการ"
@@ -202,7 +209,7 @@ const Jobs = () => {
       { wch: 20 }, // วันที่แจ้ง
       { wch: 20 }, // วันที่รับงาน
       { wch: 20 }, // วันที่เสร็จสิ้น
-      { wch: 20 }, // เจ้าหน้าที่
+      { wch: 30 }, // เจ้าหน้าที่
       { wch: 20 }, // สถานะ
     ];
 

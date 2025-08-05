@@ -1,4 +1,5 @@
 // components/WaitApproveTable.jsx
+import axios from 'axios';
 import React from 'react';
 import { FaLine } from 'react-icons/fa';
 
