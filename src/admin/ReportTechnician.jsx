@@ -93,7 +93,9 @@ const ReportTechnician = () => {
           </p>
           <p className="text-sm">
             <span className="font-semibold">การประเมินเฉลี่ย :</span>{" "}
-            {"รอเพิ่มใน Api"}
+            {technicianReport?.technician?.averageWorkStar != null
+              ? Number(technicianReport.technician.averageWorkStar).toFixed(1)
+              : "-"}{" "}
           </p>
         </div>
         {technicianReport.accepted?.map((job, index) => (

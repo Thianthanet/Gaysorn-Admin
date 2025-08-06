@@ -141,6 +141,35 @@ const Report = () => {
     setTimePeriod(period);
   };
 
+  const getWeeklyRanges = (year, month) => {
+    const weeks = [];
+    const firstDayOfMonth = new Date(year, month - 1, 1);
+    const lastDayOfMonth = new Date(year, month, 0);
+    let start = new Date(firstDayOfMonth);
+
+    // หาเริ่มต้นวันจันทร์ก่อนหน้า (หรือเท่ากับวันแรกของเดือน)
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+
+    let weekIndex = 1;
+
+    while (start <= lastDayOfMonth) {
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      weeks.push({
+        key: `week_${weekIndex}`,
+        label: `สัปดาห์ ${weekIndex}`,
+        fullLabel: `สัปดาห์ที่ ${weekIndex} (${start.getDate()}-${end.getDate()} ${
+          months[month - 1].label
+        })`,
+      });
+
+      start.setDate(start.getDate() + 7);
+      weekIndex++;
+    }
+
+    return weeks;
+  };
+
   const generateYears = () => {
     const currentYear = new Date().getFullYear();
     const years = [];
@@ -171,45 +200,35 @@ const Report = () => {
   const generateTimeColumnsForCustomer = () => {
     if (timePeriod === "daily") {
       const columns = [];
-      const today = new Date();
-      const day = today.getDay(); // 0 (Sun) - 6 (Sat)
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - ((day + 6) % 7)); // หา Monday ของสัปดาห์นี้
+
+      const year = selectedYear;
+      const month = selectedMonth;
+      const firstDate = new Date(year, month - 1, 1);
+      const firstDayOfMonth = firstDate.getDay();
+
+      // หา "วันจันทร์" ของสัปดาห์แรก
+      const monday = new Date(firstDate);
+      const offset = (firstDayOfMonth + 6) % 7; // ปรับให้ จันทร์ = 0
+      monday.setDate(firstDate.getDate() - offset);
 
       for (let i = 0; i < 7; i++) {
         const currentDate = new Date(monday);
         currentDate.setDate(monday.getDate() + i);
+
+        const day = currentDate.getDate();
         const dayOfWeek = currentDate.getDay();
+        const currentMonth = currentDate.getMonth() + 1;
 
         columns.push({
-          key: `day${i + 1}`, // day1, day2, ...
-          label: dayNamesThai[dayOfWeek],
-          fullLabel: `วันที่ ${currentDate.getDate()} (${
-            dayNamesThai[dayOfWeek]
-          })`,
+          key: `day${day}`, // ใช้ key ของวันที่
+          label: `${dayNamesThai[dayOfWeek]} ${day}`,
+          fullLabel: `วันที่ ${day} (${dayNamesThai[dayOfWeek]})`,
         });
       }
+
       return columns;
     } else if (timePeriod === "weekly") {
-      return [
-        { key: "week_1", label: "สัปดาห์ 1", fullLabel: "สัปดาห์ที่ 1 (1-7)" },
-        { key: "week_2", label: "สัปดาห์ 2", fullLabel: "สัปดาห์ที่ 2 (8-14)" },
-        {
-          key: "week_3",
-          label: "สัปดาห์ 3",
-          fullLabel: "สัปดาห์ที่ 3 (15-21)",
-        },
-        {
-          key: "week_4",
-          label: "สัปดาห์ 4",
-          fullLabel: "สัปดาห์ที่ 4 (22-28)",
-        },
-        {
-          key: "week_5",
-          label: "สัปดาห์ 5",
-          fullLabel: "สัปดาห์ที่ 5 (29-31)",
-        },
-      ];
+      return getWeeklyRanges(selectedYear, selectedMonth);
     } else if (timePeriod === "yearly") {
       return months.map((month) => ({
         key: `month_${month.value}`,
