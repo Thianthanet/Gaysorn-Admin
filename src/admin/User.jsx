@@ -11,7 +11,7 @@ import StatusPopup from '../component/StatusPopup';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 import WaitApproveTable from '../component/WaitApproveTable';
-import { FaLine } from 'react-icons/fa'; 
+import { FaLine } from 'react-icons/fa';
 import { CircleCheck, CircleX, Trash2, UserPen } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -271,6 +271,54 @@ const User = () => {
           return newErrors;
         });
       }
+    }
+
+    // สำหรับ dropdown building
+    if (name === 'buildingId') {
+      // const selectedBuilding = buildings.find(b => b.id === value);
+      const selectedBuilding = buildings.find(b => b.id.toString() === value.toString());
+      setCustomerFormData(prev => ({
+        ...prev,
+        // buildingName: value,
+        // buildingId: selectedBuilding ? selectedBuilding.id : '',
+        buildingId: value,
+        buildingName: selectedBuilding ? selectedBuilding.buildingName : '',
+        // companyName: '', // รีเซ็ต company เมื่อเปลี่ยน building
+        companyId: '',
+        // unitName: '', // รีเซ็ต unit เมื่อเปลี่ยน building
+        unitId: '',
+      }));
+      return;
+    }
+
+    // สำหรับ dropdown company
+    if (name === 'companyName') {
+      const selectedCompany = companies.find(c => c.companyName === value);
+      setCustomerFormData(prev => ({
+        ...prev,
+        companyName: value,
+        companyId: selectedCompany ? selectedCompany.id : '',
+        // unitName: '', // รีเซ็ต unit เมื่อเปลี่ยน company
+        unitId: '',
+      }));
+      return;
+    }
+
+    // สำหรับ dropdown unit
+    if (name === 'unitName') {
+      const selectedUnit = units.find(u => u.unitName === value);
+      setCustomerFormData(prev => ({
+        ...prev,
+        unitName: value,
+        unitId: selectedUnit ? selectedUnit.id : '',
+        companyId: selectedUnit ? selectedUnit.companyId : prev.companyId,
+        // อัปเดต companyName จาก unit ที่เลือก
+        companyName: selectedUnit ? companies.find(c => c.id === selectedUnit.companyId)?.companyName || '' : prev.companyName,
+        // อัปเดต buildingName และ buildingId จาก company ที่เกี่ยวข้อง
+        buildingName: selectedUnit ? buildings.find(b => b.id === (companies.find(c => c.id === selectedUnit.companyId)?.buildingId || ''))?.buildingName || '' : prev.buildingName,
+        buildingId: selectedUnit ? companies.find(c => c.id === selectedUnit.companyId)?.buildingId || '' : prev.buildingId,
+      }));
+      return;
     }
 
     setCustomerFormData(prev => ({ ...prev, [name]: value }));
@@ -904,7 +952,7 @@ const User = () => {
                               อนุมัติ
                             </button>
                             <button onClick={() => handleDeleteApprove(user.id)}>
-                              <Trash2 className='text-red-500'/>
+                              <Trash2 className='text-red-500' />
                             </button>
                           </td>
                         </tr>
@@ -1142,9 +1190,9 @@ const User = () => {
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                      <CircleX size={50} strokeWidth={1} className="mb-2" />
+                      <CircleCheck size={50} strokeWidth={1} className="mb-2" />
                       <h2 className="text-lg font-semibold">
-                        {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าไม่สำเร็จ" : activeTab === "technicians" ? "เพิ่มข้อมูลเจ้าหน้าที่ไม่สำเร็จ" : "เพิ่มข้อมูลแอดมินไม่สำเร็จ"}
+                        {activeTab === "customers" ? "แก้ไขข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "แก้ไขข้อมูลเจ้าหน้าที่สำเร็จ" : "แก้ไขข้อมูลแอดมินไม่สำเร็จ"}
                       </h2>
                     </div>
                   )}

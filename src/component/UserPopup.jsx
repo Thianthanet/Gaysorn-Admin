@@ -116,8 +116,8 @@ const UserPopup = ({
                       อาคาร<span className="text-red-500">*</span>
                     </label>
                     <select
-                      name="buildingName"
-                      value={customerData.buildingName}
+                      name="buildingId"
+                      value={customerData.buildingId}
                       onChange={handleCustomerChange}
                       className={`w-[320px] text-[12px] text-[#BC9D72]/50 border ${errors.buildingName
                           ? "border-red-500"
@@ -128,7 +128,7 @@ const UserPopup = ({
                       {buildings.map((building) => (
                         <option
                           key={building.id}
-                          value={building.buildingName}
+                          value={building.id}
                         >
                           {building.buildingName}
                         </option>
