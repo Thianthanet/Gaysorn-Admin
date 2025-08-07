@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { FaStar, FaRegStar, FaTimes } from "react-icons/fa";
+import { FaStar, FaRegStar } from "react-icons/fa";
 
 const JobModal = ({ jobId, onClose }) => {
   const [job, setJob] = useState(null);
@@ -117,20 +117,20 @@ const JobModal = ({ jobId, onClose }) => {
   const signatureImage = techImages?.slice(-1)[0];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center ">
-      <div className="bg-white max-w-2xl w-full rounded-lg p-12 overflow-y-auto max-h-[90vh] relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div className="bg-white max-w-4xl w-full rounded-lg p-6 overflow-y-auto max-h-[90vh] relative">
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 bg-red-600 rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700"
+          className="absolute top-3 right-3 text-gray-600 hover:text-black"
         >
-          <FaTimes className="text-white text-xs" />
+          ❌
         </button>
 
-        <h1 className="text-[#837958] font-bold mb-2 text-xl">
+        <h1 className="text-[#837958] font-bold mb-4">
           หมายเลขงาน : {job.jobNo}
         </h1>
 
-        <div className="text-[14px]">
+        <div>
           <h1>วันที่แจ้ง : {job?.createDate}</h1>
           <h1>วันที่นัดเข้าซ่อม : {job?.preworkDate || "-"}</h1>
           <h1>บริษัท : {job?.company?.companyName || "-"}</h1>
@@ -148,8 +148,8 @@ const JobModal = ({ jobId, onClose }) => {
           </h1>
 
           {/* ภาพแจ้งซ่อม */}
-          <div>
-            <h1>ภาพแจ้งซ่อม:</h1>
+          <div className="mt-4">
+            <h1 className="font-semibold text-[#837958]">ภาพแจ้งซ่อม:</h1>
             <div className="flex flex-wrap gap-3 mt-2">
               {allImages?.length > 0 ? (
                 allImages.map((img) => (
@@ -182,8 +182,10 @@ const JobModal = ({ jobId, onClose }) => {
           </h1>
 
           {/* ภาพดำเนินการโดยช่าง */}
-          <div>
-            <h1>ภาพ:</h1>
+          <div className="mt-6">
+            <h1 className="font-semibold text-[#837958]">
+              ภาพดำเนินการโดยช่าง :
+            </h1>
             <div className="flex flex-wrap gap-3 mt-2">
               {techImages?.length > 1 ? (
                 techImages
@@ -204,8 +206,8 @@ const JobModal = ({ jobId, onClose }) => {
           </div>
 
           {/* ลายเซ็นลูกค้า */}
-          <div>
-            <h1>ลายเซ็นลูกค้า :</h1>
+          <div className="mt-6">
+            <h1 className="font-semibold text-[#837958]">ลายเซ็นลูกค้า :</h1>
             {signatureImage ? (
               <img
                 src={signatureImage.url}
@@ -219,8 +221,8 @@ const JobModal = ({ jobId, onClose }) => {
           </div>
 
           {/* ความพึงพอใจ */}
-          <div className="flex items-center gap-2">
-            <h1 className="whitespace-nowrap">ความพึงพอใจ :</h1>
+          <div className="mt-4">
+            <h1 className="font-semibold text-black mb-1">ความพึงพอใจ :</h1>
             <div className="flex gap-1 items-center">
               {[...Array(5)].map((_, index) =>
                 index < (job?.workStar || 0) ? (
@@ -229,12 +231,11 @@ const JobModal = ({ jobId, onClose }) => {
                   <FaRegStar key={index} style={{ color: "#e0e0e0" }} />
                 )
               )}
+              <span className="ml-2 text-sm text-gray-600">
+                {job?.workStar ? `${job.workStar} ดาว` : "ยังไม่มีการประเมิน"}
+              </span>
             </div>
-            <span className="text-sm text-gray-600 whitespace-nowrap">
-              {job?.workStar ? `${job.workStar} ดาว` : "ยังไม่มีการประเมิน"}
-            </span>
           </div>
-
           {/* ปุ่มปิดด้านล่าง */}
           <div className="mt-8 flex justify-center">
             <button
