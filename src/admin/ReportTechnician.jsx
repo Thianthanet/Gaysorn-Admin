@@ -3,8 +3,8 @@ import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 
-const ReportTechnician = () => {
-  const { userId } = useParams();
+const ReportTechnician = ({ userId }) => {
+  // const { userId } = useParams();
   const [technicianReport, setTechnicianReport] = useState([]);
   const [jobs, setJobs] = useState([]);
 
@@ -72,8 +72,8 @@ const ReportTechnician = () => {
     });
   };
   return (
-    <AdminLayout>
-      <div className="p-6">
+
+      <div className="p-6 mr-5">
         {" "}
         <div className="sticky top-0 bg-white z-10 pt-2 pb-6 mb-6 border-b border-[#C3A96B] -mt-4">
           <h1 className="text-xl font-bold text-[#86754D] mb-2">
@@ -171,7 +171,7 @@ const ReportTechnician = () => {
           </div>
         ))}
       </div>
-    </AdminLayout>
+    
   );
 };
 

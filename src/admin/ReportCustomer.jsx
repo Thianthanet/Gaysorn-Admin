@@ -90,8 +90,8 @@ const ReportCustomer = ({ id: propId }) => {
   const unitName = firstJob?.unit?.unitName || "-";
 
   return (
-    <AdminLayout>
-      <div className="p-6">
+    
+      <div className="p-6 mr-5">
         {/* แสดงชื่อบริษัทและข้อมูลสถานที่ */}
         <div className="sticky top-0 bg-white z-10 pt-2 pb-6 mb-6 border-b border-[#C3A96B] -mt-4">
           <h1 className="text-xl font-bold text-[#86754D] mb-2">
@@ -191,7 +191,6 @@ const ReportCustomer = ({ id: propId }) => {
           </div>
         ))}
       </div>
-    </AdminLayout>
   );
 };
 
