@@ -339,7 +339,7 @@ const Jobs = () => {
 
       setJobs(res.data.data);
       setCurrentPage(1);
-      setShowFilters(false); // ปิดฟิลเตอร์หลังจากค้นหา
+    //  setShowFilters(false); // ปิดฟิลเตอร์หลังจากค้นหา
     } catch (err) {
       console.error("Error fetching filtered jobs:", err);
     }
