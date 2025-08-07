@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useContext } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import AdminLayout from './AdminLayout';
 import { useNavigate } from 'react-router-dom';
 import UserToolbar from '../component/UserToolbar';
@@ -11,9 +11,8 @@ import StatusPopup from '../component/StatusPopup';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 import WaitApproveTable from '../component/WaitApproveTable';
-import { Pagination } from '../component/Pagination'; // ตรวจสอบ path ให้ถูกต้อง
-
-import { UserTabContext } from "../contexts/UserTabContext";
+import { FaLine } from 'react-icons/fa';
+import { CircleCheck, CircleX, Trash2, UserPen } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,16 +24,8 @@ const User = () => {
   const [admin, setAdmin] = useState([]);
   const [waitForApprove, setWaitForApprove] = useState([]);
 
-  // NEW: State to hold ALL filtered data (before pagination) for each tab
-  const [allCustomersData, setAllCustomersData] = useState([]);
-  const [allTechniciansData, setAllTechniciansData] = useState([]);
-  const [allAdminData, setAllAdminData] = useState([]);
-  const [allWaitForApproveData, setAllWaitForApproveData] = useState([]);
-
   // UI state
-  // const [activeTab, setActiveTab] = useState('');
-  const { activeTab, setActiveTab } = useContext(UserTabContext);
-
+  const [activeTab, setActiveTab] = useState('customers');
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
@@ -42,7 +33,7 @@ const User = () => {
   // Search and Filter state
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterBuilding, setFilterBuilding] = useState('all');
+  const [filterBuilding, setFilterBuilding] = useState('');
 
   // Popup and Form state
   const [popupCreateUser, setPopupCreateUser] = useState(false);
@@ -56,25 +47,18 @@ const User = () => {
   const [units, setUnits] = useState([]);
   const [selectedBuildings, setSelectedBuildings] = useState([]); // For technician building access
 
-  const [companyId, setCompanyId] = useState("");
-  const [unitId, setUnitId] = useState("");
-  const [buildingId, setBuildingId] = useState("");
-
   // Data for create/edit forms
   const [customerFormData, setCustomerFormData] = useState({
     id: null, // Used for editing existing customer
     name: '',
     phone: '',
-    email: '',
-
     companyName: '',
-    companyId: '', // For API payload
-
     unitName: '',
-    unitId: '', // For API payload
-
     buildingName: '',
+    email: '',
     buildingId: '', // For API payload
+    companyId: '', // For API payload
+    unitId: '', // For API payload
   });
 
   const [technicianFormData, setTechnicianFormData] = useState({
@@ -93,14 +77,6 @@ const User = () => {
   // Delete Confirmation state
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [showConfirmPopup, setShowConfirmPopup] = useState(false);
-
-  // === New States for Pagination ===
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(25); // You can make this configurable if needed
-
-  // --- NEW States for Approve Confirmation Popup ---
-  const [showConfirmApprovePopup, setShowConfirmApprovePopup] = useState(false);
-  const [approveUserId, setApproveUserId] = useState(null); // เก็บ userId ที่จะอนุมัติ
 
   // --- Helper Functions ---
 
@@ -130,11 +106,11 @@ const User = () => {
    * @param {string} message - The message to display.
    * @param {number} duration - How long the message should be visible in ms.
    */
-  const showTempPopupMessage = useCallback((message) => {
+  const showTempPopupMessage = useCallback((message, duration = 3000) => {
     setPopupMessage(message);
     setTimeout(() => {
       setPopupMessage('');
-    }, 3000);
+    }, duration);
   }, []);
 
   /**
@@ -146,77 +122,13 @@ const User = () => {
     setPopupStatus(statusType);
     setTimeout(() => {
       setPopupStatus(null);
-      setPopupCreateUser(false);
+      setPopupCreateUser(false); // Close popup on success
       if (shouldReload) {
-        // console.log("fetchData")
-        setCurrentPage(1);
-        // setActiveTab(activeTab)
-        fetchData();
-        // window.location.reload();
+        window.location.reload();
       }
-    }, 2500);
-  }, [activeTab]);
-
-  const handleSearch = () => {
-    setSearchTerm(searchInput); // อัปเดต searchTerm จาก searchInput
-    setCurrentPage(1); // รีเซ็ตหน้าเมื่อค้นหา
-  };
-
-  const handleActiveTabChange = (tabValue) => {
-    setActiveTab(tabValue);
-    setCurrentPage(1); // รีเซ็ตหน้าเมื่อเปลี่ยน Tab
-    setSearchTerm(''); // รีเซ็ต searchTerm
-    setSearchInput(''); // รีเซ็ต input field
-    setFilterBuilding('all'); // รีเซ็ต filterBuilding
-  };
-
-  const handleFilterBuildingChange = (buildingName) => {
-    setFilterBuilding(buildingName);
-    setCurrentPage(1); // รีเซ็ตหน้าเมื่อ filter อาคาร
-  };
-
-  // const handlePageChange = (pageNumber) => {
-  //   setCurrentPage(pageNumber);
-  //   // Scroll to top of the page when changing page
-  //   // window.scrollTo({ top: 0, behavior: "smooth" }); // ย้ายไปใน Pagination Component แล้ว
-  // };
-
-  const handleItemsPerPageChange = (num) => {
-    setItemsPerPage(num);
-    setCurrentPage(1); // เมื่อเปลี่ยนจำนวนรายการต่อหน้า ให้กลับไปหน้าแรก
-  };
-
-  // Filter and Search Logic
-  const filterAndSearchData = (data, isBuildingFilterable = true) => {
-    let filteredData = data;
-
-    // console.log("filteredData in filterAndSearchData: ", filteredData)
-
-    // Filter by Building (ถ้าเป็น Technician หรือ Customer และ filterBuilding ไม่ใช่ 'all')
-    if (activeTab === 'customers' && filterBuilding !== 'all' && filterBuilding !== '') {
-      filteredData = filteredData.filter(item => item?.unit?.company?.building?.buildingName === filterBuilding);
-    }
-
-    if (activeTab === 'technicians' && filterBuilding !== 'all' && filterBuilding !== '') {
-      filteredData = filteredData.filter(item =>
-        // ตรวจสอบว่า item.techBuilds เป็น array และมีอย่างน้อย 1 building ที่ตรงกับ filterBuilding
-        item.techBuilds && Array.isArray(item.techBuilds) && item.techBuilds.some(t => t?.building?.buildingName === filterBuilding)
-      );
-    }
-
-    // Search by searchTerm
-    if (searchTerm) {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      filteredData = filteredData.filter(item =>
-        item.username?.toLowerCase().includes(lowerCaseSearchTerm) ||
-        item.firstName?.toLowerCase().includes(lowerCaseSearchTerm) ||
-        item.lastName?.toLowerCase().includes(lowerCaseSearchTerm) ||
-        item.email?.toLowerCase().includes(lowerCaseSearchTerm) ||
-        (item.buildingName && item.buildingName.toLowerCase().includes(lowerCaseSearchTerm))
-      );
-    }
-    return filteredData;
-  };
+      // fetchData();
+    }, 3000); // Popup visible for 2 seconds
+  }, []);
 
   // --- API Fetching Functions ---
 
@@ -232,7 +144,6 @@ const User = () => {
   const fetchCompanies = useCallback(async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/getCompany`);
-      // console.log("fetchCompanies: ", res)
       setCompanies(res.data.data);
     } catch (error) {
       console.error('Error fetching companies:', error);
@@ -247,16 +158,6 @@ const User = () => {
       console.error('Error fetching units:', error);
     }
   }, []);
-
-  useEffect(() => {
-    fetchBuildings();
-    fetchCompanies();
-    fetchUnits();
-  }, []);
-
-  // console.log("buildings: ", buildings)
-  // console.log("companies: ", companies)
-  // console.log("units: ", units)
 
   const fetchAdmin = useCallback(async () => {
     try {
@@ -278,148 +179,73 @@ const User = () => {
     }
   }, []);
 
-  // console.log("filterBuilding: ", filterBuilding)
-
-  // Centralized data fetching, filtering, and storing in `all...Data` states
   const fetchData = useCallback(async () => {
     setLoading(true);
-    setCurrentPage(1); // Reset page to 1 on new data fetch/filter/search
-    const term = searchTerm.toLowerCase();
-
-    console.log(`[fetchData] Fetching for activeTab: ${activeTab}, searchTerm: '${term}', filterBuilding: '${filterBuilding}'`);
-
     try {
-      let response;
-      let rawData = [];
-      let filteredData = [];
+      let data = [];
+      const term = searchTerm.toLowerCase();
+      // console.log("filterBuilding: ", filterBuilding)
 
-      switch (activeTab) {
-        case 'customers':
-          response = await axios.get(`${API_BASE_URL}/api/allCustomer`);
-          // rawData = response.data.data;
-          const sortedCustomers = response.data.data.sort((a, b) => {
-            return new Date(b.createdAt) - new Date(a.createdAt); // b - a สำหรับใหม่ไปเก่า (Descending)
-          });
-          filteredData = sortedCustomers.filter(c => {
-            const matchesSearch =
-              (c.name?.toLowerCase().includes(term) ||
-                c.phone?.toLowerCase().includes(term) ||
-                // console.log(c.phone?.toLowerCase().includes(term))||
-                // console.log(c.phone?.toLowerCase()) ||
-                c.unit?.company?.building?.buildingName?.toLowerCase().includes(term) ||
-                c.unit?.unitName?.toLowerCase().includes(term) ||
-                c.unit?.company?.companyName?.toLowerCase().includes(term));
-            const matchesBuilding = filterBuilding === 'all' || !filterBuilding || c.unit?.company?.building?.buildingName === filterBuilding;
-            return matchesSearch && matchesBuilding;
-          });
-          console.log("CustomersData:", filteredData)
-          setAllCustomersData(filteredData);
-          break;
-
-        case 'technicians':
-          response = await axios.get(`${API_BASE_URL}/api/getTech`);
-          // rawData = response.data.data;
-          // console.log("rawData: ", rawData)
-          const sortedTechnicians = response.data.data.sort((a, b) => {
-            return new Date(b.createdAt) - new Date(a.createdAt); // b - a สำหรับใหม่ไปเก่า (Descending)
-          });
-          filteredData = sortedTechnicians.filter(t => {
-            const matchesSearch =
-              (t.name?.toLowerCase().includes(term) ||
-                t.phone?.toLowerCase().includes(term) ||
-                t.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term)));
-            const matchesBuilding = filterBuilding === 'all' || !filterBuilding || t.techBuilds?.some(b => b.building?.buildingName === filterBuilding);
-            return matchesSearch && matchesBuilding;
-          });
-          console.log("TechniciansData:", filteredData)
-          setAllTechniciansData(filteredData);
-          break;
-
-        case 'waitApprove':
-          response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
-          // rawData = response.data.data;
-          const sortedWaitApproves = response.data.data.sort((a, b) => {
-            return new Date(b.createdAt) - new Date(a.createdAt); // b - a สำหรับใหม่ไปเก่า (Descending)
-          });
-          // console.log("sortedWaitApproves: ", sortedWaitApproves)
-          filteredData = sortedWaitApproves.filter(w => {
-            const matchesSearch =
-              (w.name?.toLowerCase().includes(term) ||
-                w.phone?.toLowerCase().includes(term) ||
-                w.unit?.unitName?.toLowerCase().includes(term) ||
-                w.unit?.company?.companyName?.toLowerCase().includes(term) ||
-                w.unit?.company?.building?.buildingName?.toLowerCase().includes(term));
-            const matchesBuilding = filterBuilding === 'all' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
-            return matchesSearch && matchesBuilding;
-          });
-          console.log("WaitForApproveData:", filteredData)
-          setAllWaitForApproveData(filteredData);
-          // setWaitForApprove(filteredData);
-          break;
-
-        case 'admin':
-          response = await axios.get(`${API_BASE_URL}/api/getAdmin`);
-          // rawData = response.data.data;
-          const sortedAdmin = response.data.data.sort((a, b) => {
-            return new Date(b.createdAt) - new Date(a.createdAt); // b - a สำหรับใหม่ไปเก่า (Descending)
-          });
-          filteredData = sortedAdmin.filter(a => {
-            const matchesSearch = a.username?.toLowerCase().includes(term);
-            // Admin tab does not seem to use building filter based on your code
-            return matchesSearch;
-          });
-          console.log("AdminData:", filteredData)
-          setAllAdminData(filteredData);
-          break;
-
-        default:
-          break;
+      if (activeTab === 'customers') {
+        const response = await axios.get(`${API_BASE_URL}/api/allCustomer`);
+        data = response.data.data.filter(c => {
+          const matchesSearch =
+            c.name?.toLowerCase().includes(term) ||
+            c.phone?.toLowerCase().includes(term) ||
+            c.unit?.company?.building?.buildingName?.toLowerCase().includes(term) ||
+            c.unit?.unitName?.toLowerCase().includes(term) ||
+            c.unit?.company?.companyName?.toLowerCase().includes(term);
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || c.unit?.company?.building?.buildingName === filterBuilding;
+          return matchesSearch && matchesBuilding;
+        });
+        console.log("customerData: ", data)
+        setCustomers(data);
+      } else if (activeTab === 'technicians') {
+        const response = await axios.get(`${API_BASE_URL}/api/getTech`);
+        data = response.data.data.filter(t => {
+          const matchesSearch =
+            t.name?.toLowerCase().includes(term) ||
+            t.phone?.toLowerCase().includes(term) ||
+            t.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || t.techBuilds?.some(b => b.building?.buildingName === filterBuilding);
+          return matchesSearch && matchesBuilding;
+        });
+        console.log("techniciansData: ", data)
+        setTechnicians(data);
+      } else if (activeTab === 'waitApprove') {
+        // const response = await fetchWaitForApprove(); // This fetches and sets state directly
+        const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
+        data = response.data.data.filter(w => {
+          const matchesSearch =
+            w.name?.toLowerCase().includes(term) ||
+            w.phone?.toLowerCase().includes(term) ||
+            w.unit?.unitName?.toLowerCase().includes(term) ||
+            w.unit?.company?.companyName?.toLowerCase().includes(term) ||
+            w.unit?.company?.building?.buildingName?.toLowerCase().includes(term); //c.unit?.company?.building?.buildingName === filterBuilding
+          const matchesBuilding = filterBuilding === 'ทั้งหมด' || !filterBuilding || w.unit?.company?.building?.buildingName === filterBuilding;
+          return matchesSearch && matchesBuilding;
+        });
+        console.log("waitApprove: ", data)
+        setWaitForApprove(data);
+      } else if (activeTab === 'admin') {
+        // await fetchAdmin(); // This fetches and sets state directly
+        const response = await axios.get(`${API_BASE_URL}/api/getAdmin`);
+        data = response.data.data.filter(a => {
+          const matchesSearch =
+            a.username?.toLowerCase().includes(term)
+          // a.phone?.toLowerCase().includes(term) ||
+          // a.techBuilds?.some(b => b.building?.buildingName?.toLowerCase().includes(term));
+          return matchesSearch;
+        });
+        console.log("adminData: ", data)
+        setAdmin(data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      // Clear data states on error
-      setAllCustomersData([]);
-      setAllTechniciansData([]);
-      setAllAdminData([]);
-      setAllWaitForApproveData([]);
     } finally {
       setLoading(false);
     }
-  }, [activeTab, searchTerm, filterBuilding]); //activeTab
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  // const fetchWaitApproveData = async (term, filterBuilding) => {
-  //   const response = await axios.get(`${API_BASE_URL}/api/waitApprove`);
-
-  //   const sortedWaitApproves = response.data.data.sort((a, b) => {
-  //     return new Date(b.createdAt) - new Date(a.createdAt); // ใหม่ -> เก่า
-  //   });
-
-  //   const filteredData = sortedWaitApproves.filter(w => {
-  //     const matchesSearch =
-  //       (w.name?.toLowerCase().includes(term) ||
-  //         w.phone?.toLowerCase().includes(term) ||
-  //         w.unit?.unitName?.toLowerCase().includes(term) ||
-  //         w.unit?.company?.companyName?.toLowerCase().includes(term) ||
-  //         w.unit?.company?.building?.buildingName?.toLowerCase().includes(term));
-
-  //     const matchesBuilding =
-  //       filterBuilding === 'all' || !filterBuilding ||
-  //       w.unit?.company?.building?.buildingName === filterBuilding;
-
-  //     return matchesSearch && matchesBuilding;
-  //   });
-
-  //   console.log("WaitForApproveData:", filteredData);
-  //   setAllWaitForApproveData(filteredData);
-  // };
-
-  // useEffect(() => {
-  //   fetchWaitApproveData();
-  // }, []);
+  }, [activeTab, searchTerm, filterBuilding]); // Dependencies for useCallback
 
   // --- Handlers for Form Changes ---
 
@@ -447,93 +273,109 @@ const User = () => {
       }
     }
 
-    // Set the form data for the current input
+    // สำหรับ dropdown building
+    if (name === 'buildingId') {
+      // const selectedBuilding = buildings.find(b => b.id === value);
+      const selectedBuilding = buildings.find(b => b.id.toString() === value.toString());
+      setCustomerFormData(prev => ({
+        ...prev,
+        // buildingName: value,
+        // buildingId: selectedBuilding ? selectedBuilding.id : '',
+        buildingId: value,
+        buildingName: selectedBuilding ? selectedBuilding.buildingName : '',
+        // companyName: '', // รีเซ็ต company เมื่อเปลี่ยน building
+        companyId: '',
+        // unitName: '', // รีเซ็ต unit เมื่อเปลี่ยน building
+        unitId: '',
+      }));
+      return;
+    }
+
+    // สำหรับ dropdown company
+    if (name === 'companyName') {
+      const selectedCompany = companies.find(c => c.companyName === value);
+      setCustomerFormData(prev => ({
+        ...prev,
+        companyName: value,
+        companyId: selectedCompany ? selectedCompany.id : '',
+        // unitName: '', // รีเซ็ต unit เมื่อเปลี่ยน company
+        unitId: '',
+      }));
+      return;
+    }
+
+    // สำหรับ dropdown unit
+    if (name === 'unitName') {
+      const selectedUnit = units.find(u => u.unitName === value);
+      setCustomerFormData(prev => ({
+        ...prev,
+        unitName: value,
+        unitId: selectedUnit ? selectedUnit.id : '',
+        companyId: selectedUnit ? selectedUnit.companyId : prev.companyId,
+        // อัปเดต companyName จาก unit ที่เลือก
+        companyName: selectedUnit ? companies.find(c => c.id === selectedUnit.companyId)?.companyName || '' : prev.companyName,
+        // อัปเดต buildingName และ buildingId จาก company ที่เกี่ยวข้อง
+        buildingName: selectedUnit ? buildings.find(b => b.id === (companies.find(c => c.id === selectedUnit.companyId)?.buildingId || ''))?.buildingName || '' : prev.buildingName,
+        buildingId: selectedUnit ? companies.find(c => c.id === selectedUnit.companyId)?.buildingId || '' : prev.buildingId,
+      }));
+      return;
+    }
+
     setCustomerFormData(prev => ({ ...prev, [name]: value }));
 
     // Auto-fill logic for related fields
-    if (name === 'companyName') {
-      const selectedCompany = companies.find(c => c.companyName === value);
-
-      // เตรียม object สำหรับอัปเดต state ทั้งหมดในครั้งเดียว
-      const newState = {
-        companyId: selectedCompany?.id || '',
-        companyName: value,
-        unitId: '',
-        unitName: '',
-        buildingId: '',
-        buildingName: '',
-      };
-
-      if (selectedCompany) {
-        const selectedUnit = units.find(u => u.companyId === selectedCompany.id);
-        const selectedBuilding = buildings.find(b => b.id === selectedCompany.buildingId);
-
-        if (selectedUnit) {
-          newState.unitId = selectedUnit.id;
-          newState.unitName = selectedUnit.unitName;
-        }
-        if (selectedBuilding) {
-          newState.buildingId = selectedBuilding.id;
-          newState.buildingName = selectedBuilding.buildingName;
-        }
-      }
-
-      // อัปเดต state เพียงครั้งเดียว
-      setCustomerFormData(prev => ({ ...prev, ...newState }));
-    } else if (name === 'unitName') {
-      const selectedUnit = units.find(u => u.unitName === value);
-
-      const newState = {
-        unitId: selectedUnit?.id || '',
-      };
-
-      if (selectedUnit) {
-        const selectedCompany = companies.find(c => c.id === selectedUnit.companyId);
-
-        newState.companyId = selectedUnit.companyId;
-        newState.companyName = selectedCompany?.companyName || '';
-        newState.buildingId = selectedCompany?.buildingId || '';
-        newState.buildingName = buildings.find(b => b.id === selectedCompany?.buildingId)?.buildingName || '';
-      } else {
-        newState.companyId = '';
-        newState.companyName = '';
-        newState.buildingId = '';
-        newState.buildingName = '';
-      }
-
-      setCustomerFormData(prev => ({ ...prev, ...newState }));
-    } else {
-      console.log("customerFormData: ", customerFormData)
-      const selectedCompany = companies.find(c => c.id === customerFormData.companyId);
-      const selectedBuilding = buildings.find(b => b.id === customerFormData.buildingId);
-
-      // ตรวจสอบว่า buildingName ไม่ตรงกับค่าใดๆ ใน selectedCompany หรือ selectedUnit
-      if (!selectedCompany || !selectedBuilding) {
-        setErrors(prev => ({ ...prev, buildingName: 'ข้อมูลตึกไม่ถูกต้องหรือไม่ตรงกับบริษัทที่เลือก' }));
-        // อาจจะต้องเคลียร์ค่าที่ผิดออก
+    if (name === 'unitName' && value) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByUnit/${value}`);
+        const { company, building, unitId, companyId, buildingId } = response.data;
         setCustomerFormData(prev => ({
           ...prev,
-          companyName: '',
-          buildingId: '',
-          buildingName: '',
+          companyName: company || '',
+          buildingName: building || '',
+          unitId: unitId || '',
+          companyId: companyId || '',
+          buildingId: buildingId || '',
         }));
-      } else {
-        // ถ้าถูกต้อง ให้เคลียร์ Error ออก
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.buildingName;
-          return newErrors;
-        });
-        
-        setCustomerFormData((prev) => ({
+      } catch (error) {
+        console.error('Error fetching unit data:', error);
+      }
+    } else if (name === 'companyName' && value) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByCompany/${value}`);
+        const { building, units: fetchedUnits, companyId, buildingId } = response.data;
+        setCustomerFormData(prev => ({
           ...prev,
-          companyName: selectedCompany.companyName,
-          buildingId: selectedCompany.buildingId,
-          buildingName: selectedBuilding.buildingName,
+          buildingName: building || '',
+          unitName: fetchedUnits && fetchedUnits.length > 0 ? fetchedUnits[0] : '',
+          companyId: companyId || '',
+          buildingId: buildingId || '',
         }));
+        if (fetchedUnits) {
+          setUnits(fetchedUnits.map(name => ({ unitName: name }))); // Assuming units are just names
+        }
+      } catch (error) {
+        console.error('Error fetching company data:', error);
+      }
+    } else if (name === 'buildingName' && value) {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/getRelatedByBuilding/${value}`);
+        const { companies: fetchedCompanies, buildingId } = response.data;
+        setCustomerFormData(prev => ({
+          ...prev,
+          companyName: fetchedCompanies && fetchedCompanies.length > 0 ? fetchedCompanies[0] : '',
+          unitName: '', // Clear unit name as it depends on company
+          buildingId: buildingId || '',
+        }));
+        if (fetchedCompanies) {
+          setCompanies(fetchedCompanies.map(name => ({ companyName: name })));
+          setUnits([]); // Clear units
+        }
+      } catch (error) {
+        console.error('Error fetching building data:', error);
       }
     }
-  }, [setErrors, setCustomerFormData, companies, units, buildings]);
+
+  }, [setErrors, setCustomerFormData, setCompanies, setUnits]);
 
   const handleTechnicianChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -544,8 +386,6 @@ const User = () => {
       setTechnicianFormData(prev => ({ ...prev, [name]: value }));
     }
   }, []);
-
-  // console.log("TechnicianFormData: ", technicianFormData)
 
   const handleAdminChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -566,7 +406,7 @@ const User = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/getCustomerById/${userId}`);
       const customer = res.data.data;
-      console.log("customer in handleEditCustomer: ", customer)
+
       setCustomerFormData({
         id: customer.id,
         name: customer.name,
@@ -586,7 +426,6 @@ const User = () => {
         fetchUnits(),
       ]);
 
-      console.log("CustomerFormData in handleEditCustomer: ", customerFormData)
       setActiveTab('customers');
       setPopupCreateUser(true);
     } catch (err) {
@@ -667,9 +506,6 @@ const User = () => {
       }
       handlePopupStatus('loading');
       await axios.delete(`${API_BASE_URL}${endpoint}`);
-      // fetchData();
-      // setCurrentPage(1);
-      // setConfirmDeleteId(null);
       handlePopupStatus('delete', true); // Show delete status, then reload
     } catch (error) {
       console.error(`Error deleting ${type}:`, error);
@@ -677,51 +513,6 @@ const User = () => {
       showTempPopupMessage(`ไม่สามารถลบ${type}ได้`);
     }
   }, [handlePopupStatus, showTempPopupMessage]);
-
-  // --- handleApproveAuto ที่ถูกเรียกจาก proceedApprove ---
-  const handleApproveAuto = useCallback(async (userId) => {
-    handlePopupStatus('loading');
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/approve/${userId}`);
-      console.log("Approve API response:", response.data.data);
-
-      handlePopupStatus('success', true); // แสดง popup สถานะและสั่งให้โหลดข้อมูลใหม่ (ของตารางรออนุมัติ)
-      // ไม่ต้อง window.location.reload() แล้ว
-
-    } catch (error) {
-      console.error("Error approving user:", error.response?.data || error.message);
-      handlePopupStatus('error'); // แสดง popup สถานะ error
-    }
-  }, []);
-
-  // --- NEW Approve Confirmation Functions ---
-  const confirmApprove = useCallback((userId) => {
-    setApproveUserId(userId);
-    setShowConfirmApprovePopup(true);
-  }, []);
-
-  const cancelApprove = useCallback(() => {
-    setApproveUserId(null);
-    setShowConfirmApprovePopup(false);
-  }, []);
-
-  const proceedApprove = useCallback(async () => {
-    setShowConfirmApprovePopup(false); // ปิด popup ยืนยันทันที
-    if (approveUserId !== null) {
-      await handleApproveAuto(approveUserId); // เรียกฟังก์ชันอนุมัติจริง
-    }
-    setApproveUserId(null); // ล้าง ID หลังดำเนินการ
-  }, [approveUserId, activeTab, handleApproveAuto]);
-
-
-  const handleDeleteApprove = async (id) => {
-    try {
-      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`)
-      console.log(response.data)
-    } catch (error) {
-      console.error(error)
-    }
-  }
 
   const confirmDelete = useCallback((id) => {
     setConfirmDeleteId(id);
@@ -754,116 +545,21 @@ const User = () => {
       if (!customerFormData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
       if (!customerFormData.companyName) newErrors.companyName = 'กรุณากรอกบริษัท';
       if (!customerFormData.buildingName) newErrors.buildingName = 'กรุณากรอกอาคาร';
-
-      // --- เพิ่มการตรวจสอบการมีอยู่ของ Company, Unit, Building ใน DB ---
-      try {
-        // ตรวจสอบ CompanyName
-        if (customerFormData.companyName) {
-          const companyRes = await axios.get(`${API_BASE_URL}/api/getRelatedByCompany/${customerFormData.companyName}`);
-          // ตรวจสอบจาก companyId ที่ API คืนมา (ถ้า API ส่งกลับมา)
-          // console.log("companyRes: ", companyRes)
-          // หรือตรวจสอบจาก company ที่ส่งกลับมา หรือ building ที่ส่งกลับมา (ถ้ามีบริษัท ก็ควรจะมี building ด้วย)
-          if (!companyRes.data.company) { // ตรวจสอบจาก companyId ที่ควรจะเป็น Unique Identifier
-            newErrors.companyName = 'ไม่พบข้อมูลบริษัทนี้ในระบบ';
-          }
-        }
-
-        // ตรวจสอบ UnitName (unitName ไม่ได้ required, จึงเช็คเฉพาะเมื่อมีค่า)
-        if (customerFormData.unitName) {
-          const unitRes = await axios.get(`${API_BASE_URL}/api/getRelatedByUnit/${customerFormData.unitName}`);
-          // ตรวจสอบจาก unitId ที่ API คืนมา
-          // console.log("unitRes: ", unitRes)
-          if (!unitRes.data.unit || unitRes.data.unit.length === 0) {
-            newErrors.unitName = 'ไม่พบข้อมูลยูนิตนี้ในระบบ';
-          }
-        }
-
-        // ตรวจสอบ BuildingName
-        // console.log("customerFormData: ", customerFormData)
-        // if (customerFormData.buildingName) {
-        //   // console.log("customerFormData.buildingName: ", customerFormData.unit?.company?.building?.buildingName)
-        //   const buildingName = String(customerFormData.buildingName); // ✅
-        //   const buildingRes = await axios.get(
-        //     `${API_BASE_URL}/api/getRelatedByBuilding/${encodeURIComponent(buildingName)}`
-        //   );
-
-        //   console.log("buildingRes: ", buildingRes)
-
-        // ตรวจสอบจาก buildingId ที่ API คืนมา
-        // หรือตรวจสอบจาก fetchedCompanies ว่ามีข้อมูลกลับมาหรือไม่
-
-        // if (!buildingRes.data.buildingId) {
-        //   newErrors.buildingName = 'ไม่พบข้อมูลอาคารนี้ในระบบ';
-        // }
-        // }
-
-      } catch (error) {
-        console.error('Error during DB existence check (using getRelated APIs):', error);
-        // กรณีเกิดข้อผิดพลาดในการเรียก API ตรวจสอบ (เช่น network error, server error)
-        // ให้แจ้งผู้ใช้ว่าเกิดข้อผิดพลาดในการตรวจสอบ
-        if (error.response && error.response.status === 404) {
-          // ถ้า API ตอบกลับ 404 แสดงว่าไม่พบ (อาจจะปรับ backend ให้ 404 เมื่อไม่พบ)
-          if (error.config.url.includes('getRelatedByCompany') && customerFormData.companyName && !newErrors.companyName) {
-            newErrors.companyName = 'ไม่พบข้อมูลบริษัทนี้ในระบบ';
-          }
-          if (error.config.url.includes('getRelatedByBuilding') && customerFormData.buildingName && !newErrors.buildingName) {
-            newErrors.buildingName = 'ไม่พบข้อมูลอาคารนี้ในระบบ';
-          }
-          if (error.config.url.includes('getRelatedByUnit') && customerFormData.unitName && !newErrors.unitName) {
-            newErrors.unitName = 'ไม่พบข้อมูลยูนิตนี้ในระบบ';
-          }
-        } else {
-          // สำหรับ Error อื่นๆ ที่ไม่ใช่ 404 (เช่น server error)
-          if (customerFormData.companyName && !newErrors.companyName) newErrors.companyName = 'เกิดข้อผิดพลาดในการตรวจสอบบริษัท';
-          if (customerFormData.buildingName && !newErrors.buildingName) newErrors.buildingName = 'เกิดข้อผิดพลาดในการตรวจสอบอาคาร';
-          if (customerFormData.unitName && !newErrors.unitName) newErrors.unitName = 'เกิดข้อผิดพลาดในการตรวจสอบยูนิต';
-        }
-      }
-
-      if (Object.keys(newErrors).length > 0) {
-        setErrors(newErrors);
-        const firstErrorKey = Object.keys(newErrors)[0];
-        showTempPopupMessage(newErrors[firstErrorKey]);
-        return;
-      }
-
-      // --- เตรียม Payload และ API Call หากไม่มี Error ---
       payload = customerFormData;
-      const randomSuffix = Math.random().toString(36).substring(2, 7);
-      if (!payload.phone) {
-        payload.phone = `NO_PHONE_${randomSuffix}`;
-      }
-
-      apiCall = payload.id
+      apiCall = customerFormData.id
         ? axios.patch(`${API_BASE_URL}/api/updateCustomer`, payload)
         : axios.post(`${API_BASE_URL}/api/createCustomer`, payload);
-      successStatus = payload.id ? 'update' : 'success';
-      // console.log("apiCall: ", apiCall);
-
+      successStatus = customerFormData.id ? 'update' : 'success';
     } else if (activeTab === 'technicians') {
       if (!technicianFormData.name) newErrors.name = 'กรุณากรอกชื่อ-สกุล';
-
       payload = technicianFormData;
-      // console.log("customerFormData in technicians: ", technicianFormData)
-      // console.log("payload in technicians: ", payload)
-      const randomSuffix = Math.random().toString(36).substring(2, 7);
-      if (!payload.phone) {
-        payload.phone = `NO_PHONE_${randomSuffix}`;
-      }
-
-      if (!payload.userId) {
-        payload.techBuilds = ["-"];
-      }
-
-      apiCall = payload.id
+      apiCall = technicianFormData.id
         ? axios.patch(`${API_BASE_URL}/api/updateTechnician`, payload)
         : axios.post(`${API_BASE_URL}/api/createTechnician`, payload);
-      successStatus = payload.id ? 'update' : 'success';
-
+      successStatus = technicianFormData.id ? 'update' : 'success';
     } else if (activeTab === 'admin') {
       if (!adminFormData.username) newErrors.username = 'กรุณากรอกชื่อผู้ใช้งาน';
       if (!adminFormData.password && !adminFormData.id) newErrors.password = 'กรุณากรอกรหัสผ่าน'; // Password required only for new admin
-
       payload = adminFormData;
       apiCall = adminFormData.id
         ? axios.patch(`${API_BASE_URL}/api/updateAdmin`, payload)
@@ -885,29 +581,21 @@ const User = () => {
       await apiCall;
 
       // Handle technician's building assignments after technician update/creation
-      if (activeTab === 'technicians' && technicianFormData.userId) {
+      if (activeTab === 'technicians' && technicianFormData.id) {
         await axios.post(
           `${API_BASE_URL}/api/techUpdateBuilding`,
           { techId: technicianFormData.userId, buildingIds: selectedBuildings }
         );
       }
-      console.log("payload: ", payload)
-      payload.companyId = companyId
-      payload.buildingId = buildingId
-      payload.unitId = unitId
-      console.log("payload after: ", payload)
 
       handlePopupStatus(successStatus, true); // Show success/update status, then reload
-      navigate('/user');
+      navigate('/user'); // Redirect to user page
     } catch (error) {
       console.error('Submission error:', error);
       handlePopupStatus('error');
       showTempPopupMessage('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     }
   }, [activeTab, customerFormData, technicianFormData, adminFormData, selectedBuildings, handlePopupStatus, showTempPopupMessage, navigate]);
-
-  // console.log("errors: ", errors)
-  // console.log("customerFormData: ", customerFormData)
 
   // --- Export Function ---
   const exportToExcel = useCallback(() => {
@@ -990,46 +678,13 @@ const User = () => {
   }, [fetchBuildings]);
 
   // Fetch data whenever activeTab, searchTerm, or filterBuilding changes
-  // useEffect(() => {
-  //   fetchData();
-  // }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     fetchWaitForApprove(); // เรียกใช้ฟังก์ชันที่ถูก memoize ไว้
   }, [fetchWaitForApprove]); // เพิ่ม fetchWaitForApprove ใน dependencies ของ useEffect เพื่อให้เรียกใหม่เมื่อฟังก์ชันเปลี่ยน (ในกรณีที่มี dependencies ใน useCallback)
-
-  // Handle pagination slicing for `customers` tab
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    setCustomers(allCustomersData.slice(startIndex, endIndex));
-  }, [allCustomersData, currentPage, itemsPerPage]);
-
-  // Handle pagination slicing for `technicians` tab
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    setTechnicians(allTechniciansData.slice(startIndex, endIndex));
-  }, [allTechniciansData, currentPage, itemsPerPage]);
-
-  // Handle pagination slicing for `admin` tab
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    setAdmin(allAdminData.slice(startIndex, endIndex));
-  }, [allAdminData, currentPage, itemsPerPage]);
-
-  // Handle pagination slicing for `waitApprove` tab
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    setWaitForApprove(allWaitForApproveData.slice(startIndex, endIndex));
-  }, [allWaitForApproveData, currentPage, itemsPerPage]);
-
-  // Function to handle page change from pagination controls
-  const handlePageChange = useCallback((pageNumber) => {
-    setCurrentPage(pageNumber);
-  }, []);
 
   // Adjust isMobile state on window resize
   useEffect(() => {
@@ -1041,81 +696,42 @@ const User = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // เตรียมข้อมูลสำหรับแต่ละ Tab (Filtered and Sliced)
-  // const filteredCustomers = filterAndSearchData(allCustomersData, true);
-  const totalCustomers = allCustomersData.length;
-  const totalCustomerPages = Math.ceil(totalCustomers / itemsPerPage);
-  const slicedCustomers = allCustomersData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // const filteredTechnicians = filterAndSearchData(allTechniciansData, true);
-  // console.log("filteredTechnicians: ", filteredTechnicians)
-  const totalTechnicians = allTechniciansData.length;
-  const totalTechnicianPages = Math.ceil(totalTechnicians / itemsPerPage);
-  const slicedTechnicians = allTechniciansData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-  // console.log("allTechniciansData: ", allTechniciansData)
-
-  // const filteredAdmin = filterAndSearchData(allAdminData, false); // Admin ไม่มี filter อาคาร
-  const totalAdmin = allAdminData.length;
-  const totalAdminPages = Math.ceil(totalAdmin / itemsPerPage);
-  const slicedAdmin = allAdminData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // const filteredWaitForApprove = filterAndSearchData(allWaitForApproveData, false); // WaitApprove ไม่มี filter อาคาร
-  const totalWaitForApprove = allWaitForApproveData.length;
-  const totalWaitForApprovePages = Math.ceil(totalWaitForApprove / itemsPerPage);
-  const slicedWaitForApprove = allWaitForApproveData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // console.log("allWaitForApproveData: ", allWaitForApproveData)
-  // console.log("WaitForApprove: ", waitForApprove)
-
-  // console.log("AllCustomersData: ", allCustomersData)
-  // console.log("AllTechniciansData: ", allTechniciansData)
-  // console.log("AllAdminData: ", allAdminData)
-  // console.log("customers: ", customers)
-
   // --- Render Logic ---
+
+  const handleApproveAuto = async (userId) => {
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/approve/${userId}`)
+      console.log(response.data.data)
+      window.location.reload()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleDeleteApprove = async (id) => {
+    try {
+      const response = await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/api/deleteCustomer/${id}`)
+      console.log(response.data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   return (
     <AdminLayout>
       <div className="container mx-auto px-4 py-2">
-        {/* {console.log("buildings: ", buildings)} */}
-        {/* {console.log("filterBuilding: ", filterBuilding)} */}
         <UserToolbar
           searchInput={searchInput}
           setSearchInput={setSearchInput}
-          handleSearch={() => {
-            setSearchTerm(searchInput); // Update searchTerm to trigger fetchData
-            setCurrentPage(1); // Reset page to 1 on search
-          }}
-          // activeTab={activeTab}
-          // setActiveTab={(tab) => {
-          //   setActiveTab(tab);
-          //   setSearchInput(''); // Clear search input on tab change
-          //   setSearchTerm(''); // Clear search term on tab change
-          //   setFilterBuilding('all'); // Reset filter on tab change
-          //   setCurrentPage(1); // Reset page to 1 on tab change
-          // }}
+          handleSearch={() => setSearchTerm(searchInput)} // Trigger search when button is clicked
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
           setPopupCreateUser={setPopupCreateUser}
           exportToExcel={exportToExcel}
           buildings={buildings}
           filterBuilding={filterBuilding}
-          setFilterBuilding={(value) => {
-            setFilterBuilding(value);
-            setCurrentPage(1); // Reset page to 1 on filter change
-          }}
-          // setFilterBuilding={setFilterBuilding}
-          waitForApprove={waitForApprove} // Pass the full count for the badge, not paged
+          setFilterBuilding={setFilterBuilding}
+          waitForApprove={waitForApprove}
           resetFormData={() => { // Reset form data when opening new create popup
             setCustomerFormData({
               id: null, name: '', phone: '', companyName: '', unitName: '', buildingName: '', email: '',
@@ -1146,12 +762,6 @@ const User = () => {
           selectedBuildings={selectedBuildings}
           handleBuildingToggle={handleBuildingToggle}
           errors={errors}
-          setCompanyId={setCompanyId}
-          setUnitId={setUnitId}
-          setBuildingId={setBuildingId}
-        //         fetchCompanies={fetchCompanies}
-        //         fetchBuildings,
-        // fetchUnits,
         />
 
         {loading ? (
@@ -1161,130 +771,438 @@ const User = () => {
         ) : (
           <>
             {activeTab === 'customers' && (
-              <>
-                <CustomerTable
-                  customers={slicedCustomers} // ส่งข้อมูลที่ถูก slice แล้ว
-                  handleEditCustomer={handleEditCustomer}
-                  confirmDelete={confirmDelete}
-                />
-                <Pagination
-                  currentPage={currentPage}
-                  itemsPerPage={itemsPerPage}
-                  totalItems={totalCustomers} // จำนวนรายการทั้งหมดหลังจาก filter แล้ว
-                  totalPages={totalCustomerPages}
-                  onPageChange={handlePageChange}
-                  onItemsPerPageChange={handleItemsPerPageChange}
-                  advancedPagination={true} // เลือกใช้ advancedPagination
-                />
-              </>
+              <div className="bg-white shadow-md overflow-hidden">
+                <table className="min-w-full leading-normal">
+                  <thead>
+                    <tr>
+                      <th className="w-1 px-4 py-3 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        ลำดับ
+                      </th>
+                      <th className="w-52 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        อาคาร
+                      </th>
+                      <th className="w-48 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        บริษัท/ร้านค้า
+                      </th>
+                      <th className="w-1 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        ยูนิต
+                      </th>
+                      <th className="w-52 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        ลูกค้า
+                      </th>
+                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        เบอร์โทรศัพท์
+                      </th>
+                      {/* <th className="px-5 py-3 border-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        Email
+                      </th> */}
+                      <th className="w-32 px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        สถานะ Line
+                      </th>
+                      <th className="w-28 px-4 py-3 border-t-[1px] border-r-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                        จัดการ
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customers.length > 0 ? (
+                      customers.map((customer, index) => (
+                        <tr key={customer.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                            {index + 1}
+                          </td>
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                            {customer.unit?.company?.building?.buildingName || '-'}
+                          </td>
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                            {customer.unit?.company?.companyName || '-'}
+                          </td>
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                            {customer.unit?.unitName || '-'}
+                          </td>
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                            {customer.name || '-'}
+                          </td>
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                            {customer.phone || '-'}
+                          </td>
+                          {/* <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {customer.email || '-'}
+                          </td> */}
+                          <td className="px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm">
+                            {customer.userId ? (
+                              <FaLine className="text-green-500 text-xl ml-8 p-0" title="เชื่อมต่อ Line แล้ว" />
+                            ) : (
+                              <FaLine className="text-red-500 text-xl ml-8 p-0" title="ยังไม่ได้เชื่อมต่อ Line" />
+                            )}
+                          </td>
+                          <td className="px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                            <button
+                              className="text-blue-500 hover:text-blue-700 mr-3"
+                              title="แก้ไข"
+                              onClick={() => {
+                                // setPopupEditUser(true)
+                                handleEditCustomer(customer.id)
+                              }}
+                            >
+                              <UserPen className="inline-block" />
+                            </button>
+                            <button
+                              className="text-red-500 hover:text-red-700"
+                              title="ลบ"
+                              onClick={() => confirmDelete(customer.id)} //confirmDeleteId handleDeleteCustomer
+                            >
+                              <Trash2 className="inline-block" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="9" className="px-5 py-4 text-center text-gray-500">
+                          ไม่พบข้อมูลลูกค้า
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
 
             {activeTab === 'technicians' && (
-              <>
-                <TechnicianTable
-                  technicians={slicedTechnicians} // ส่งข้อมูลที่ถูก slice แล้ว
-                  getUniqueBuildings={getUniqueBuildings}
-                  handleEditTechnician={handleEditTechnician}
-                  confirmDelete={confirmDelete}
-                />
-                <Pagination
-                  currentPage={currentPage}
-                  itemsPerPage={itemsPerPage}
-                  totalItems={totalTechnicians}
-                  totalPages={totalTechnicianPages}
-                  onPageChange={handlePageChange}
-                  onItemsPerPageChange={handleItemsPerPageChange}
-                  advancedPagination={true}
-                />
-              </>
+              <TechnicianTable
+                technicians={technicians}
+                getUniqueBuildings={getUniqueBuildings}
+                handleEditTechnician={handleEditTechnician}
+                confirmDelete={confirmDelete}
+              />
             )}
 
             {activeTab === 'waitApprove' && (
-              <>
-                <WaitApproveTable
-                  activeTab={activeTab}
-                  waitForApprove={slicedWaitForApprove} // ส่งข้อมูลที่ถูก slice แล้ว
-                  // handleApprove={handleApproveAuto}
-                  confirmApprove={confirmApprove}
-                />
-                <Pagination
-                  currentPage={currentPage}
-                  itemsPerPage={itemsPerPage}
-                  totalItems={totalWaitForApprove}
-                  totalPages={totalWaitForApprovePages}
-                  onPageChange={handlePageChange}
-                  onItemsPerPageChange={handleItemsPerPageChange}
-                  advancedPagination={true}
-                />
-              </>
+              <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                <table className="min-w-full leading-normal">
+                  <thead>
+                    <tr>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        ลำดับ
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        อาคาร
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        บริษัท
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        ยูนิต
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        ผู้ใช้
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        เบอร์โทรศัพท์
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        Line
+                      </th>
+                      <th className="px-5 py-3 border-b-2 border-gray-200 bg-[#BC9D72] text-left text-sm font-semibold text-white uppercase tracking-wider">
+                        จัดการ
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {waitForApprove.length > 0 ? (
+                      waitForApprove.map((user, index) => (
+                        <tr key={user.id} className="hover:bg-gray-50">
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {index + 1}
+                          </td>
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {user.unit.company.building.buildingName || '-'}
+                          </td>
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {user.unit.company.companyName || '-'}
+                          </td>
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {user.unit.unitName || '-'}
+                          </td>
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {user.name || '-'}
+                          </td>
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {user.phone || '-'}
+                          </td>
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {user.email || '-'}
+                          </td>
+                          <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            {user.userId ? (
+                              <FaLine className="text-green-500 text-xl" title="เชื่อมต่อ Line แล้ว" />
+                            ) : (
+                              <FaLine className="text-red-500 text-xl" title="ยังไม่ได้เชื่อมต่อ Line" />
+                            )}
+                          </td>
+                          <td className="flex gap-2 px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                            <button
+                              className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
+                              onClick={() => handleApproveAuto(user.userId)}
+                            >
+                              อนุมัติ
+                            </button>
+                            <button onClick={() => handleDeleteApprove(user.id)}>
+                              <Trash2 className='text-red-500' />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="px-5 py-4 text-center text-gray-500">
+                          ไม่พบข้อมูลรออนุมัติ
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             )}
 
-            {activeTab === 'admin' && (
-              <>
-                <AdminTable
-                  admin={slicedAdmin} // ส่งข้อมูลที่ถูก slice แล้ว
-                  handleEditAdmin={handleEditAdmin}
-                  confirmDelete={confirmDelete}
-                />
-                <Pagination
-                  currentPage={currentPage}
-                  itemsPerPage={itemsPerPage}
-                  totalItems={totalAdmin}
-                  totalPages={totalAdminPages}
-                  onPageChange={handlePageChange}
-                  onItemsPerPageChange={handleItemsPerPageChange}
-                  advancedPagination={true}
-                />
-              </>
-            )}
+            {/* Admin */}
+            {
+              activeTab === "admin" && (
+                <div className="bg-white shadow-md overflow-hidden">
+                  <table className="min-w-full leading-normal">
+                    <thead>
+                      <tr>
+                        <th className="w-1 px-4 py-2 border-l-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                          ลำดับ
+                        </th>
+                        <th className="px-4 py-2 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                          ชื่อผู้ใช้งาน
+                        </th>
+                        {/* <th className="px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                          รหัสผ่าน
+                        </th> */}
+                        <th className="w-24 px-4 py-3 border-r-[1px] border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider">
+                          จัดการ
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        admin.length > 0 ? (
+                          admin.map((admin, index) => (
+                            <tr key={admin.id} className="hover:bg-gray-50">
+                              <td className="px-4 border-l-[1px] border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                                {index + 1}
+                              </td>
+                              <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                                {admin.username}
+                              </td>
+                              {/* <td className="px-4 border-b-[1px] border-[#837958] bg-white text-sm text-center">
+                                <span className='mx-2'>
+                                  {showPasswords[admin.id] ? admin.password : "********"}
+                                </span>
+                                <button onClick={() => toggleShowPassword(admin.id)} className="focus:outline-none">
+                                  {showPasswords[admin.id] ? <FaEyeSlash /> : <FaEye />}
+                                </button>
+                              </td> */}
+                              <td className="h-[16px] px-4 py-2 border-r-[1px] border-b-[1px] border-[#837958] text-sm">
+                                <button
+                                  className="text-blue-500 hover:text-blue-700 mr-3"
+                                  title="แก้ไข"
+                                  onClick={() => handleEditAdmin(admin.id)}
+                                >
+                                  <UserPen className="inline-block" />
+                                </button>
+                                <button
+                                  className="text-red-500 hover:text-red-700"
+                                  title="ลบ"
+                                  onClick={() => confirmDelete(admin.id)}
+                                >
+                                  <Trash2 className="inline-block" />
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="4" className="text-center py-4 text-gray-500">
+                              ไม่มีข้อมูลผู้ใช้งาน
+                            </td>
+                          </tr>
+                        )
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
 
-            <ConfirmDeletePopup
-              show={showConfirmPopup}
-              onCancel={cancelDelete}
-              onConfirm={proceedDelete}
-              activeTab={activeTab}
-            />
+            {/* {popupEditUser && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+                <div className="bg-white max-w-xl w-full mx-4 rounded-lg shadow-lg p-6 relative">
 
-            {/* NEW: Confirmation Popup for Approve */}
-            {showConfirmApprovePopup && (
+                 
+                  <button
+                    className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+                    onClick={() => setPopupEditUser(false)}
+                  >
+                    &times;
+                  </button>
+                  <h2 className="text-xl font-bold mb-4 text-center text-[#726140]">แก้ไขข้อมูลผู้ใช้</h2>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block mb-1 font-medium">ชื่อ-สกุล<span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                        placeholder="ชื่อ-สกุล"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">เบอร์โทรศัพท์<span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                        placeholder="เบอร์โทรศัพท์"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">อาคาร</label>
+                      <select
+                        name="buildingId"
+                        value={formData.buildingId}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                      >
+                        <option value="">เลือกอาคาร</option>
+                        {buildings.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.buildingName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">บริษัท<span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        list="companyList"
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                        placeholder="พิมพ์หรือเลือกบริษัท"
+                        required
+                      />
+                      <datalist id="companyList">
+                        {companies.map((c) => (
+                          <option key={c.id} value={c.companyName} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    <div>
+                      <label className="block mb-1 font-medium">ยูนิต<span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        list="unitList"
+                        name="unitName"
+                        value={formData.unitName}
+                        onChange={handleCustomerChange}
+                        className="border p-2 w-full rounded-md"
+                        placeholder="พิมพ์หรือเลือกยูนิต"
+                        required
+                      />
+                      <datalist id="unitList">
+                        {units.map((u) => (
+                          <option key={u.id} value={u.unitName} />
+                        ))}
+                      </datalist>
+                    </div>
+
+                    <div className="pt-4">
+                      <button
+                        type="submit"
+                        className="w-full bg-[#a08b5f] hover:bg-[#8a784e] text-white font-medium py-2 rounded-md transition duration-200"
+                      >
+                        บันทึกการเปลี่ยนแปลง
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )} */}
+
+            {/* Popup ยืนยันการลบ */}
+            {showConfirmPopup && (
               <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
                 <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] h-[120px] text-center">
-                  {/* <h3 className="text-[20px] font-semibold mb-[2px] text-[#837958]">ยืนยันการอนุมัติ ?</h3> */}
-                  <p className="text-[16px] font-semibold text-[#837958]">ต้องการอนุมัติคำร้องของงานนี้?</p>
+                  <p className="text-lg font-semibold text-[#837958]">ยืนยันการลบ{activeTab === 'customers' ? "ลูกค้า" : activeTab === 'technicians' ? "เจ้าหน้าที่" : "แอดมิน"}</p>
                   <div className="flex flex-rows items-center justify-center text-[#837958] text-center mt-6 gap-x-4">
-                    <button
-                      onClick={cancelApprove}
-                      className="bg-white text-[12px] text-[#BC9D72] border-[1px] w-64 h-6 border-[#BC9D72] rounded hover:opacity-80"
-                    >
+                    <button onClick={cancelDelete} className="bg-white text-[12px] text-[#BC9D72] border-[1px] w-64 h-6 border-[#BC9D72] rounded hover:opacity-80">
                       ยกเลิก
                     </button>
-                    <button
-                      onClick={proceedApprove}
-                      // className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                      className="bg-[#BC9D72] text-[12px] w-64 h-6 text-white rounded hover:opacity-90"
-                    >
-                      อนุมัติ
+                    <button onClick={proceedDelete} className="bg-[#BC9D72] text-[12px] w-64 h-6 text-white rounded hover:opacity-90">
+                      ยืนยัน
                     </button>
                   </div>
                 </div>
               </div>
             )}
 
-            <StatusPopup
-              show={!!popupStatus}
-              status={popupStatus}
-              activeTab={activeTab}
-            />
-
-            {popupMessage && (
-              <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-red-500 text-white text-sm px-4 py-2 rounded-xl shadow-md z-50 transition">
-                {popupMessage}
+            {popupStatus && (
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/70">
+                <div className="bg-white rounded-2xl shadow-lg p-6 w-[360px] text-center">
+                  {popupStatus === "loading" ? (
+                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                      {/* ไอคอนหรือวงกลม loading */}
+                      <div className="animate-spin rounded-full border-4 border-t-[#837958] border-gray-200 h-12 w-12 mb-4"></div>
+                      <h2 className="text-lg font-semibold">กำลังโหลด...</h2>
+                    </div>
+                  ) : popupStatus === "success" ? (
+                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                      <CircleCheck size={50} strokeWidth={1} className="mb-2" />
+                      <h2 className="text-lg font-semibold">
+                        {activeTab === "customers" ? "เพิ่มข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "เพิ่มข้อมูลเจ้าหน้าที่สำเร็จ" : "เพิ่มข้อมูลแอดมินสำเร็จ"}
+                      </h2>
+                    </div>
+                  ) : popupStatus === "delete" ? (
+                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                      <CircleCheck size={50} strokeWidth={1} className="mb-2" />
+                      <h2 className="text-lg font-semibold">
+                        {activeTab === "customers" ? "ลบข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "ลบข้อมูลเจ้าหน้าที่สำเร็จ" : "ลบข้อมูลแอดมินสำเร็จ"}
+                      </h2>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                      <CircleCheck size={50} strokeWidth={1} className="mb-2" />
+                      <h2 className="text-lg font-semibold">
+                        {activeTab === "customers" ? "แก้ไขข้อมูลลูกค้าสำเร็จ" : activeTab === "technicians" ? "แก้ไขข้อมูลเจ้าหน้าที่สำเร็จ" : "แก้ไขข้อมูลแอดมินไม่สำเร็จ"}
+                      </h2>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </>
         )}
       </div>
-    </AdminLayout >
+    </AdminLayout>
   );
 };
 

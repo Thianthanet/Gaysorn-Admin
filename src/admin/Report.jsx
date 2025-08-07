@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 
 //component
 import JobFiltersBar from "../component/JobFiltersBar";
@@ -9,23 +12,224 @@ import JobFiltersBar from "../component/JobFiltersBar";
 const Report = () => {
   const [customer, setCustomer] = useState([]);
   const [technician, setTechnician] = useState([]);
-  const [activeTab, setActiveTab] = useState("customer"); // ✅ state สำหรับสลับ tab
+  const [activeTab, setActiveTab] = useState("customer");
+  const [timePeriod, setTimePeriod] = useState("daily"); // daily, weekly, yearly
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const getStartAndEndDate = () => {
+    let start, end;
+
+    if (timePeriod === "daily") {
+      start = new Date(selectedYear, selectedMonth - 1, 1);
+      end = new Date(selectedYear, selectedMonth, 0); // วันสุดท้ายของเดือน
+    } else if (timePeriod === "weekly") {
+      start = new Date(selectedYear, selectedMonth - 1, 1);
+      end = new Date(selectedYear, selectedMonth, 0);
+    } else if (timePeriod === "yearly") {
+      start = new Date(selectedYear, 0, 1);
+      end = new Date(selectedYear, 11, 31);
+    }
+
+    return {
+      startDate: formatDateToYYYYMMDD(start),
+      endDate: formatDateToYYYYMMDD(end),
+    };
+  };
+
+  const formatDateToYYYYMMDD = (date) => {
+    const d = new Date(date);
+    const month = `${d.getMonth() + 1}`.padStart(2, "0");
+    const day = `${d.getDate()}`.padStart(2, "0");
+    return `${d.getFullYear()}-${month}-${day}`;
+  };
+
   useEffect(() => {
-    handleGetCompanyReport();
-    handleGetTechnicianReport();
-  }, []);
+    fetchReportData();
+  }, [timePeriod, selectedYear, selectedMonth, activeTab]);
+
+  const fetchReportData = () => {
+    if (activeTab === "customer") {
+      handleGetCompanyReport();
+    } else {
+      handleGetTechnicianReport();
+    }
+  };
 
   const handleGetCompanyReport = async () => {
+    setLoading(true);
     try {
+      const { startDate, endDate } = getStartAndEndDate();
+      const params = {
+        startDate,
+        endDate,
+      };
+
       const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/getCompanyRepairCount`
+        `${import.meta.env.VITE_API_BASE_URL}/api/getCompanyRepairCount`,
+        { params }
       );
-      console.log(response.data.data);
-      setCustomer(response.data.data);
+      console.log("Customer", response.data.data);
+
+      let data = response.data.data;
+
+      if (timePeriod === "weekly") {
+        data = data.map((item) => {
+          const weeks = {
+            week_1: 0,
+            week_2: 0,
+            week_3: 0,
+            week_4: 0,
+            week_5: 0,
+          };
+
+          for (let day = 1; day <= 31; day++) {
+            const dayKey = `day${day}`;
+            const value = item[dayKey] ?? 0;
+
+            if (day >= 1 && day <= 7) weeks.week_1 += value;
+            else if (day >= 8 && day <= 14) weeks.week_2 += value;
+            else if (day >= 15 && day <= 21) weeks.week_3 += value;
+            else if (day >= 22 && day <= 28) weeks.week_4 += value;
+            else if (day >= 29) weeks.week_5 += value;
+          }
+
+          const transformedItem = {
+            ...item,
+            ...weeks,
+          };
+
+          console.log("transformed item:", transformedItem);
+
+          return transformedItem;
+        });
+      }
+
+      if (timePeriod === "yearly") {
+        const monthMap = {
+          Jan: 1,
+          Feb: 2,
+          Mar: 3,
+          Apr: 4,
+          May: 5,
+          Jun: 6,
+          Jul: 7,
+          Aug: 8,
+          Sep: 9,
+          Oct: 10,
+          Nov: 11,
+          Dec: 12,
+        };
+
+        data = data.map((item) => {
+          const timeData = {};
+
+          Object.entries(monthMap).forEach(([monthLabel, monthIndex]) => {
+            const value = item[monthLabel];
+            timeData[`month_${monthIndex}`] = value ?? 0; // ป้องกัน undefined
+          });
+
+          return {
+            ...item,
+            ...timeData,
+          };
+        });
+
+        console.log("Transformed customer data for yearly:", data);
+      }
+
+      setCustomer(data);
     } catch (error) {
       console.error("Error fetching company report:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGetTechnicianReport = async () => {
+    setLoading(true);
+    try {
+      const { startDate, endDate } = getStartAndEndDate();
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/getTechnicianReport`,
+        {
+          params: {
+            startDate,
+            endDate,
+          },
+        }
+      );
+
+      const transformTechnicianData = (data) => {
+        return data.map((item) => {
+          let timeData = {};
+          const weekRanges = getWeeklyRanges(selectedYear, selectedMonth);
+          const weekMap = {};
+          weekRanges.forEach((range, index) => {
+            const weekKey = `week_${index + 1}`;
+            weekMap[weekKey] = 0;
+
+            // รวมค่าจากวันทั้งหมดในช่วงนั้น
+            Object.entries(item.weekly || {}).forEach(([day, value]) => {
+              const dayDate = dayjs(day);
+              if (
+                range &&
+                range.start &&
+                range.end &&
+                dayDate.isBetween(range.start, range.end, "day", "[]")
+              ) {
+                weekMap[weekKey] += value;
+              }
+            });
+          });
+
+          Object.assign(timeData, weekMap);
+
+          if (timePeriod === "daily") {
+            Object.entries(item.daily || {}).forEach(([key, value]) => {
+              const dayNum = key.replace("day", "");
+              timeData[`day_${dayNum}`] = value;
+            });
+          } else if (timePeriod === "weekly") {
+            Object.entries(item.weekly || {}).forEach(([day, value], index) => {
+              timeData[`week_${index + 1}`] = value;
+            });
+          } else if (timePeriod === "yearly") {
+            const monthMap = {
+              Jan: 1,
+              Feb: 2,
+              Mar: 3,
+              Apr: 4,
+              May: 5,
+              Jun: 6,
+              Jul: 7,
+              Aug: 8,
+              Sep: 9,
+              Oct: 10,
+              Nov: 11,
+              Dec: 12,
+            };
+            Object.entries(item.monthly || {}).forEach(([month, value]) => {
+              const monthIndex = monthMap[month];
+              if (monthIndex) timeData[`month_${monthIndex}`] = value;
+            });
+          }
+
+          return {
+            ...item,
+            ...timeData,
+          };
+        });
+      };
+
+      setTechnician(transformTechnicianData(response.data.data));
+    } catch (error) {
+      console.error("Error fetching technician report:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -45,39 +249,232 @@ const Report = () => {
     }
   };
 
-  const handleGetTechnicianReport = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/getTechnicianReport`
-      );
-      console.log(response.data.data);
-      setTechnician(response.data.data);
-    } catch (error) {
-      console.error("Error fetching technician report:", error);
-    }
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
   };
 
+  const handleTimePeriodChange = (period) => {
+    setTimePeriod(period);
+  };
+
+  const getWeeklyRanges = (year, month) => {
+    const weeks = [];
+    const firstDayOfMonth = new Date(year, month - 1, 1);
+    const lastDayOfMonth = new Date(year, month, 0);
+    let start = new Date(firstDayOfMonth);
+
+    // หาเริ่มต้นวันจันทร์ก่อนหน้า (หรือเท่ากับวันแรกของเดือน)
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+
+    let weekIndex = 1;
+
+    while (start <= lastDayOfMonth) {
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      weeks.push({
+        key: `week_${weekIndex}`,
+        label: `สัปดาห์ ${weekIndex}`,
+        fullLabel: `สัปดาห์ที่ ${weekIndex} (${start.getDate()}-${end.getDate()} ${
+          months[month - 1].label
+        })`,
+      });
+
+      start.setDate(start.getDate() + 7);
+      weekIndex++;
+    }
+
+    return weeks;
+  };
+
+  const generateYears = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear - 5; i <= currentYear + 1; i++) {
+      years.push(i);
+    }
+    return years;
+  };
+
+  const dayNamesThai = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+
+  const months = [
+    { value: 1, label: "ม.ค." },
+    { value: 2, label: "ก.พ." },
+    { value: 3, label: "มี.ค." },
+    { value: 4, label: "เม.ย." },
+    { value: 5, label: "พ.ค." },
+    { value: 6, label: "มิ.ย." },
+    { value: 7, label: "ก.ค." },
+    { value: 8, label: "ส.ค." },
+    { value: 9, label: "ก.ย." },
+    { value: 10, label: "ต.ค." },
+    { value: 11, label: "พ.ย." },
+    { value: 12, label: "ธ.ค" },
+  ];
+
+  // Generate columns for customer tab
+  const generateTimeColumnsForCustomer = () => {
+    if (timePeriod === "daily") {
+      const columns = [];
+
+      const year = selectedYear;
+      const month = selectedMonth;
+      const firstDate = new Date(year, month - 1, 1);
+      const firstDayOfMonth = firstDate.getDay();
+
+      // หา "วันจันทร์" ของสัปดาห์แรก
+      const monday = new Date(firstDate);
+      const offset = (firstDayOfMonth + 6) % 7; // ปรับให้ จันทร์ = 0
+      monday.setDate(firstDate.getDate() - offset);
+
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(monday);
+        currentDate.setDate(monday.getDate() + i);
+
+        const day = currentDate.getDate();
+        const dayOfWeek = currentDate.getDay();
+        const currentMonth = currentDate.getMonth() + 1;
+
+        columns.push({
+          key: `day${day}`, // ใช้ key ของวันที่
+          label: `${dayNamesThai[dayOfWeek]} ${day}`,
+          fullLabel: `วันที่ ${day} (${dayNamesThai[dayOfWeek]})`,
+        });
+      }
+
+      return columns;
+    } else if (timePeriod === "weekly") {
+      return getWeeklyRanges(selectedYear, selectedMonth);
+    } else if (timePeriod === "yearly") {
+      return months.map((month) => ({
+        key: `month_${month.value}`,
+        label: month.label.substring(0, 3),
+        fullLabel: month.label,
+      }));
+    }
+    return [];
+  };
+
+  // Generate columns for technician tab
+  const generateTimeColumnsForTechnician = () => {
+    if (timePeriod === "daily") {
+      const columns = [];
+      const today = new Date();
+      const day = today.getDay(); // 0-6
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - ((day + 6) % 7));
+
+      for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(monday);
+        currentDate.setDate(monday.getDate() + i);
+        const dayOfWeek = currentDate.getDay();
+
+        columns.push({
+          key: `day_${i}`, // day_0, day_1, ...
+          label: dayNamesThai[dayOfWeek],
+          fullLabel: `วันที่ ${currentDate.getDate()} (${
+            dayNamesThai[dayOfWeek]
+          })`,
+        });
+      }
+      return columns;
+    } else if (timePeriod === "weekly") {
+      return getWeeklyRanges(selectedYear, selectedMonth);
+    } else if (timePeriod === "yearly") {
+      return months.map((month) => ({
+        key: `month_${month.value}`,
+        label: month.label.substring(0, 3),
+        fullLabel: month.label,
+      }));
+    }
+    return [];
+  };
+
+  // เลือก columns ให้เหมาะกับ tab
+  const timeColumns =
+    activeTab === "customer"
+      ? generateTimeColumnsForCustomer()
+      : generateTimeColumnsForTechnician();
   return (
     <AdminLayout>
       <div className="p-6">
-        {/* <JobFiltersBar
-          searchInput={searchInput}
-          setSearchInput={setSearchInput}
-          handleSearch={handleSearch}
-          selectedBuilding={selectedBuilding}
-          setSelectedBuilding={setSelectedBuilding}
-          building={building}
-          selectedStatus={selectedStatus}
-          setSelectedStatus={setSelectedStatus}
-          showFilters={showFilters}
-          setShowFilters={setShowFilters}
-          exportToExcel={exportToExcel}
-        /> */}
+        {/* Time Period Controls */}
+        <div className="mb-6 bg-white p-4 rounded-lg border">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Period Selection */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleTimePeriodChange("daily")}
+                className={`px-4 py-2 rounded ${
+                  timePeriod === "daily"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                รายสัปดาห์
+              </button>
+              <button
+                onClick={() => handleTimePeriodChange("weekly")}
+                className={`px-4 py-2 rounded ${
+                  timePeriod === "weekly"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                รายเดือน
+              </button>
+              <button
+                onClick={() => handleTimePeriodChange("yearly")}
+                className={`px-4 py-2 rounded ${
+                  timePeriod === "yearly"
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-200"
+                }`}
+              >
+                รายปี
+              </button>
+            </div>
 
-        {/* ✅ ปุ่มเลือก */}
+            {/* Year Selection */}
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">ปี:</label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="px-3 py-2 border rounded"
+              >
+                {generateYears().map((year) => (
+                  <option key={year} value={year}>
+                    {year + 543}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Month Selection (only for daily view) */}
+            {timePeriod === "daily" && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">เดือน:</label>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                  className="px-3 py-2 border rounded"
+                >
+                  {months.map((month) => (
+                    <option key={month.value} value={month.value}>
+                      {month.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tab Selection */}
         <div className="mb-4 flex gap-4">
           <button
-            onClick={() => setActiveTab("customer")}
+            onClick={() => handleTabChange("customer")}
             className={`px-4 py-2 rounded ${
               activeTab === "customer"
                 ? "bg-[#BC9D72] text-white"
@@ -87,7 +484,7 @@ const Report = () => {
             ลูกค้า
           </button>
           <button
-            onClick={() => setActiveTab("technician")}
+            onClick={() => handleTabChange("technician")}
             className={`px-4 py-2 rounded ${
               activeTab === "technician"
                 ? "bg-[#BC9D72] text-white"
@@ -98,59 +495,93 @@ const Report = () => {
           </button>
         </div>
 
+        {loading && (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-lg">กำลังโหลดข้อมูล...</div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           {activeTab === "customer" && (
             <table className="min-w-full bg-white border border-gray-300 rounded-lg">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center sticky left-0 bg-[#BC9D72]/50 z-10">
                     ลำดับ
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center sticky left-12 bg-[#BC9D72]/50 z-10">
                     ชื่อบริษัท
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center">
                     อาคาร
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
-                    จำนวนงานที่แจ้งซ่อม
+                  {timeColumns.map((col) => (
+                    <th
+                      key={col.key}
+                      className="py-2 px-2 bg-[#BC9D72]/50 border-b text-center min-w-16"
+                      title={col.fullLabel}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center">
+                    รวม
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
-                    รอดำเนินการ
-                  </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
-                    อยู่ระหว่างดำเนินการ
-                  </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center">
                     เสร็จสิ้น
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center">
                     เปอร์เซ็นต์สำเร็จ
                   </th>
                 </tr>
               </thead>
+
               <tbody>
                 {customer.map((item, index) => (
                   <tr
                     key={index}
-                    className="hover:bg-gray-50"
+                    className="hover:bg-gray-50 cursor-pointer"
                     onClick={() =>
                       handleNavigateToCustomerReport(item.companyId)
                     }
                   >
-                    <td className="py-2 px-4 border-b">{index + 1}</td>
-                    <td className="py-2 px-4 border-b">{item.companyName}</td>
-                    <td className="py-2 px-4 border-b">{item.buildingName}</td>
-                    <td className="py-2 px-4 border-b">{item.total}</td>
-                    <td className="py-2 px-4 border-b">{item.pending}</td>
-                    <td className="py-2 px-4 border-b">{item.in_progress}</td>
-                    <td className="py-2 px-4 border-b">{item.completed}</td>
-                    <td className="py-2 px-4 border-b">{item.completedPercent}</td>
+                    <td className="py-2 px-4 border-b sticky left-0 bg-white z-10 text-center align-middle">
+                      {index + 1}
+                    </td>
+                    <td className="py-2 px-4 border-b sticky left-12 bg-white z-10 text-center align-middle">
+                      {item.companyName}
+                    </td>
+                    <td className="py-2 px-4 border-b text-center align-middle">
+                      {item.buildingName}
+                    </td>
+                    {timeColumns.map((col) => (
+                      <td
+                        key={col.key}
+                        className="py-2 px-2 border-b text-center align-middle"
+                      >
+                        {item[col.key] || "-"}
+                      </td>
+                    ))}
+                    <td className="py-2 px-4 border-b text-center align-middle">
+                      {item.total || 0}
+                    </td>
+                    <td className="py-2 px-4 border-b text-center align-middle">
+                      {item.completed || 0}
+                    </td>
+                    <td className="py-2 px-4 border-b text-center align-middle">
+                      {/* เติม % ด้วย */}
+                      {item.completedPercent
+                        ? `${item.completedPercent}%`
+                        : "0%"}
+                    </td>
                   </tr>
                 ))}
-                {customer.length === 0 && (
+                {customer.length === 0 && !loading && (
                   <tr>
-                    <td colSpan="4" className="text-center py-4">
+                    <td
+                      colSpan={timeColumns.length + 6}
+                      className="text-center py-4 align-middle"
+                    >
                       ไม่มีข้อมูล
                     </td>
                   </tr>
@@ -163,52 +594,121 @@ const Report = () => {
             <table className="min-w-full bg-white border border-gray-300 rounded-lg">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle sticky left-0 bg-[#BC9D72]/50 z-10">
                     ลำดับ
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle sticky left-0 bg-[#BC9D72]/50 z-10">
+                    ดาว
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle sticky left-12 bg-[#BC9D72]/50 z-10">
                     ชื่อพนักงาน
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
                     สังกัด
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  {timeColumns.map((col) => (
+                    <th
+                      key={col.key}
+                      className="py-2 px-2 bg-[#BC9D72]/50 border-b text-center align-middle min-w-16"
+                      title={col.fullLabel}
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
                     งานที่รับ
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
-                    เสร็จสิ้น
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
+                    งานที่ดำเนินการเอง
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-left">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
+                    งานที่ดำเนินการแทน
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
+                    เสร็จสิ้น{" "}
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
                     เปอร์เซ็นต์จบงาน
                   </th>
                 </tr>
               </thead>
+
               <tbody>
-                {technician.map((item, index) => (
-                  <tr
-                    key={index}
-                    className="hover:bg-gray-50"
-                    onClick={() =>
-                      handleNavigateToTechnicianReport(item.techUserId)
-                    }
-                  >
-                    <td className="py-2 px-4 border-b">{index + 1}</td>
-                    <td className="py-2 px-4 border-b">
-                      {item.technicianName}
-                    </td>
-                    <td className="py-2 px-4 border-b">
-                      {Array.isArray(item.buildings)
-                        ? item.buildings.join(", ")
-                        : item.buildings}
-                    </td>
-                    <td className="py-2 px-4 border-b">{item.acceptedJobs}</td>
-                    <td className="py-2 px-4 border-b">{item.completedJobs}</td>
-                    <td className="py-2 px-4 border-b">{item.successRate || "0"}%</td>
-                  </tr>
-                ))}
-                {technician.length === 0 && (
+                {technician.map((item, index) => {
+                  // const a = 12; //งานที่รับ
+                  // const c = 1; // งานที่ทำให้คนอื่น
+                  // const d = 3; //งานที่คนอื่นเอาไปทำ
+                  // const x = 9; //งานที่ทั้งหมดที่ทำ
+                  // const b = x - c || 0;
+                  // console.log("B", b);
+
+                  // const percen1 = ((b + c) / (a + c - d)) * 100 || 0;
+                  // console.log("percen1:", percen1);
+                  const completeMe =
+                    item.completedJobs - item.tekenFromOtherCount || 0;
+                  const percen =
+                    ((completeMe + item.tekenFromOtherCount) /
+                      (item.acceptedJobs +
+                        item.tekenFromOtherCount -
+                        item.takenByOtherCount)) *
+                      100 || 0;
+                  console.log("completeMe:", completeMe);
+                  return (
+                    <tr
+                      key={index}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() =>
+                        handleNavigateToTechnicianReport(item.techUserId)
+                      }
+                    >
+                      <td className="py-2 px-4 border-b text-center align-middle sticky left-0 bg-white z-10">
+                        {index + 1}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle sticky left-0 bg-white z-10">
+                        {item?.averageStar != null
+                          ? item.averageStar.toFixed(1)
+                          : "-"}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle sticky left-12 bg-white z-10">
+                        {item.technicianName}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {Array.isArray(item.buildings)
+                          ? item.buildings.join(", ")
+                          : item.buildings}
+                      </td>
+                      {timeColumns.map((col) => (
+                        <td
+                          key={col.key}
+                          className="py-2 px-2 border-b text-center align-middle"
+                        >
+                          {item[col.key] || "-"}
+                        </td>
+                      ))}
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {item.acceptedJobs || 0}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {completeMe}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {item.tekenFromOtherCount || 0}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {completeMe + (item.tekenFromOtherCount || 0) || 0}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {item.successRate || "0"}%
+                      </td>
+                    </tr>
+                  );
+                })}
+                {technician.length === 0 && !loading && (
                   <tr>
-                    <td colSpan="3" className="text-center py-4">
+                    <td
+                      colSpan={timeColumns.length + 6}
+                      className="text-center py-4 align-middle"
+                    >
                       ไม่มีข้อมูล
                     </td>
                   </tr>
