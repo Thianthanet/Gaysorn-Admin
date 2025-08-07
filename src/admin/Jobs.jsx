@@ -111,7 +111,7 @@ const Jobs = () => {
 
     const dataToExport = filteredSortedJobs.map((job, index) => ({
       ลำดับ: index + 1,
-      ความพึงพอใจ: job.workStar ? "★".repeat(job.workStar) : "-",
+      ความพึงพอใจ: job.workStar || "-",
       หมายเลขงาน: job.jobNo || "-",
       อาคาร: job.building?.buildingName || "-",
       บริษัท: job.company?.companyName || "-",
