@@ -136,9 +136,7 @@ const Login = () => {
       <form
         ref={formRef}
         onSubmit={handleLogin}
-        //max-w-xs //backdrop-blur-lg
-        className="bg-[#E5E5E5]/10 backdrop-blur-[2px] w-[368px] shadow-2xl rounded-2xl border border-white flex flex-col p-8"
-        style={{ fontFamily: "Helvetica, Arial, sans-serif" }}
+        className="bg-[#E5E5E5]/10 backdrop-blur-[2px] w-[368px] shadow-2xl rounded-2xl border border-white flex flex-col p-8 font-prompt"
       >
         <img src={LogoLogin} alt="Logo" className="w-12 mx-auto mb-4" />
         <h2 className="text-center font-bold text-[28px] mb-2 bg-gradient-to-r from-[#4f4833] to-[#fff1c7] bg-clip-text text-transparent">
@@ -211,20 +209,24 @@ const Login = () => {
               <div className="flex flex-col items-center justify-center text-[#837958] text-center">
                 <CircleX size={50} className="mb-2" />
                 <h2 className="text-lg font-semibold">กรุณากรอก</h2>
-                <h2 className="text-lg font-semibold">ชื่อผู้ใช้หรือรหัสผ่าน</h2>
+                <h2 className="text-lg font-semibold">
+                  ชื่อผู้ใช้หรือรหัสผ่าน
+                </h2>
               </div>
             ) : popupStatus === "success" ? (
-                <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                  <CircleCheck size={50} className="mb-2" />
-                  <h2 className="text-lg font-semibold">เข้าสู่ระบบสำเร็จ</h2>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-[#837958] text-center">
-                  <CircleX size={50} className="mb-2" />
-                  <h2 className="text-lg font-semibold">เข้าสู่ระบบไม่สำเร็จ</h2>
-                  <h2 className="text-lg font-semibold">กรุณาลองใหม่อีกครั้งค่ะ / ครับ</h2>
-                </div>
-              )}
+              <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                <CircleCheck size={50} className="mb-2" />
+                <h2 className="text-lg font-semibold">เข้าสู่ระบบสำเร็จ</h2>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-[#837958] text-center">
+                <CircleX size={50} className="mb-2" />
+                <h2 className="text-lg font-semibold">เข้าสู่ระบบไม่สำเร็จ</h2>
+                <h2 className="text-lg font-semibold">
+                  กรุณาลองใหม่อีกครั้งค่ะ / ครับ
+                </h2>
+              </div>
+            )}
           </div>
         </div>
       )}
