@@ -4,143 +4,207 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
-dayjs.extend(isBetween);
+import isoWeek from "dayjs/plugin/isoWeek";
+import localeData from "dayjs/plugin/localeData";
+import "dayjs/locale/th";
+import ReportCustomer from "./ReportCustomer";
+import ReportTechnician from "./ReportTechnician";
 
-//component
-import JobFiltersBar from "../component/JobFiltersBar";
+dayjs.extend(isBetween);
+dayjs.extend(isoWeek);
+dayjs.extend(localeData);
+dayjs.locale("th");
 
 const Report = () => {
   const [customer, setCustomer] = useState([]);
   const [technician, setTechnician] = useState([]);
+  const [allCustomers, setAllCustomers] = useState([]); // เก็บข้อมูลลูกค้าทั้งหมด
+  const [allTechnicians, setAllTechnicians] = useState([]); // เก็บข้อมูลพนักงานทั้งหมด
   const [activeTab, setActiveTab] = useState("customer");
-  const [timePeriod, setTimePeriod] = useState("daily"); // daily, weekly, yearly
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [timePeriod, setTimePeriod] = useState("weekly");
+  const [selectedYear, setSelectedYear] = useState(dayjs().year());
+  const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [buildings, setBuildings] = useState([]);
+  const [selectedBuilding, setSelectedBuilding] = useState(""); // อาคารที่เลือก
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
+  const [isTechnicianModalOpen, setIsTechnicianModalOpen] = useState(false);
+
+  const handleOpenModalCustomer = (companyId) => {
+    setSelectedCompanyId(companyId);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModalCustomer = () => {
+    setIsModalOpen(false);
+    setSelectedCompanyId(null);
+  };
+
+  const handleOpenModalTechnician = (technicianId) => {
+    setSelectedTechnicianId(technicianId);
+    setIsTechnicianModalOpen(true);
+  };
+
+  const handleCloseModalTechnician = () => {
+    setIsTechnicianModalOpen(false);
+    setSelectedTechnicianId(null);
+  };
+
+  // โหลดข้อมูลทั้งหมดครั้งแรก
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        // โหลดข้อมูลลูกค้าทั้งหมด
+        const customerResponse = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/getCompanyRepairCount`,
+          { params: { startDate: "2000-01-01", endDate: dayjs().add(10, 'year').format("YYYY-MM-DD") } }
+        );
+        setAllCustomers(customerResponse.data.data);
+
+        // โหลดข้อมูลพนักงานทั้งหมด
+        const technicianResponse = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/api/getTechnicianReport`,
+          { params: { startDate: "2000-01-01", endDate: dayjs().add(10, 'year').format("YYYY-MM-DD") } }
+        );
+        setAllTechnicians(technicianResponse.data.data);
+
+        // โหลดข้อมูลปัจจุบัน
+        fetchReportData();
+      } catch (error) {
+        console.error("Error fetching all data:", error);
+      }
+    };
+
+    fetchAllData();
+  }, []);
+
+  useEffect(() => {
+    handleGetBuilding()
+  }, [])
+
+  const handleGetBuilding = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`,)
+      console.log(res.data.data);
+      setBuildings(res.data.data);
+    } catch (error) {
+      console.error("Error fetching buildings:", error);
+    }
+  }
+
+  // Helper functions for date calculations
+  const getWeekRange = (date) => {
+    const start = dayjs(date).startOf("isoWeek");
+    const end = start.add(6, "day");
+    return { start, end };
+  };
+
+  const getMonthRange = (year, month) => {
+    const start = dayjs().year(year).month(month - 1).startOf("month");
+    const end = start.endOf("month");
+    return { start, end };
+  };
+
+  const getYearRange = (year) => {
+    const start = dayjs().year(year).startOf("year");
+    const end = start.endOf("year");
+    return { start, end };
+  };
 
   const getStartAndEndDate = () => {
     let start, end;
 
-    if (timePeriod === "daily") {
-      start = new Date(selectedYear, selectedMonth - 1, 1);
-      end = new Date(selectedYear, selectedMonth, 0); // วันสุดท้ายของเดือน
-    } else if (timePeriod === "weekly") {
-      start = new Date(selectedYear, selectedMonth - 1, 1);
-      end = new Date(selectedYear, selectedMonth, 0);
+    if (timePeriod === "weekly") {
+      const weekRange = getWeekRange(selectedDate);
+      start = weekRange.start;
+      end = weekRange.end;
+    } else if (timePeriod === "monthly") {
+      const monthRange = getMonthRange(selectedYear, selectedMonth);
+      start = monthRange.start;
+      end = monthRange.end;
     } else if (timePeriod === "yearly") {
-      start = new Date(selectedYear, 0, 1);
-      end = new Date(selectedYear, 11, 31);
+      const yearRange = getYearRange(selectedYear);
+      start = yearRange.start;
+      end = yearRange.end;
     }
 
     return {
-      startDate: formatDateToYYYYMMDD(start),
-      endDate: formatDateToYYYYMMDD(end),
+      startDate: start.format("YYYY-MM-DD"),
+      endDate: end.format("YYYY-MM-DD"),
     };
   };
 
-  const formatDateToYYYYMMDD = (date) => {
-    const d = new Date(date);
-    const month = `${d.getMonth() + 1}`.padStart(2, "0");
-    const day = `${d.getDate()}`.padStart(2, "0");
-    return `${d.getFullYear()}-${month}-${day}`;
-  };
-
-  useEffect(() => {
-    fetchReportData();
-  }, [timePeriod, selectedYear, selectedMonth, activeTab]);
-
-  const fetchReportData = () => {
-    if (activeTab === "customer") {
-      handleGetCompanyReport();
-    } else {
-      handleGetTechnicianReport();
-    }
-  };
-
+  // API calls
   const handleGetCompanyReport = async () => {
     setLoading(true);
     try {
       const { startDate, endDate } = getStartAndEndDate();
-      const params = {
-        startDate,
-        endDate,
-      };
-
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/api/getCompanyRepairCount`,
-        { params }
+        { params: { startDate, endDate } }
       );
-      console.log("Customer", response.data.data);
 
-      let data = response.data.data;
+      // ผสานข้อมูลส่วนตัวจาก allCustomers กับข้อมูลช่วงเวลาจาก API
+      const mergedData = allCustomers.map(customer => {
+        const timeData = response.data.data.find(item => item.companyId === customer.companyId) || {};
 
-      if (timePeriod === "weekly") {
-        data = data.map((item) => {
-          const weeks = {
-            week_1: 0,
-            week_2: 0,
-            week_3: 0,
-            week_4: 0,
-            week_5: 0,
-          };
+        let processedData = { ...customer };
+
+        if (timePeriod === "weekly") {
+          const { start } = getWeekRange(selectedDate);
+          for (let i = 0; i < 7; i++) {
+            const currentDay = start.add(i, "day");
+            const dayKey = `day${currentDay.date()}`;
+            processedData[`day_${i + 1}`] = timeData[dayKey] || 0;
+          }
+        } else if (timePeriod === "monthly") {
+          // สำหรับรายเดือน แบ่งเป็นสัปดาห์ (5 สัปดาห์)
+          processedData.week_1 = 0;
+          processedData.week_2 = 0;
+          processedData.week_3 = 0;
+          processedData.week_4 = 0;
+          processedData.week_5 = 0;
 
           for (let day = 1; day <= 31; day++) {
             const dayKey = `day${day}`;
-            const value = item[dayKey] ?? 0;
+            const value = timeData[dayKey] || 0;
 
-            if (day >= 1 && day <= 7) weeks.week_1 += value;
-            else if (day >= 8 && day <= 14) weeks.week_2 += value;
-            else if (day >= 15 && day <= 21) weeks.week_3 += value;
-            else if (day >= 22 && day <= 28) weeks.week_4 += value;
-            else if (day >= 29) weeks.week_5 += value;
+            if (day >= 1 && day <= 7) processedData.week_1 += value;
+            else if (day >= 8 && day <= 14) processedData.week_2 += value;
+            else if (day >= 15 && day <= 21) processedData.week_3 += value;
+            else if (day >= 22 && day <= 28) processedData.week_4 += value;
+            else if (day >= 29) processedData.week_5 += value;
           }
-
-          const transformedItem = {
-            ...item,
-            ...weeks,
+        } else if (timePeriod === "yearly") {
+          const monthMap = {
+            Jan: "month_1", Feb: "month_2", Mar: "month_3", Apr: "month_4",
+            May: "month_5", Jun: "month_6", Jul: "month_7", Aug: "month_8",
+            Sep: "month_9", Oct: "month_10", Nov: "month_11", Dec: "month_12"
           };
 
-          console.log("transformed item:", transformedItem);
-
-          return transformedItem;
-        });
-      }
-
-      if (timePeriod === "yearly") {
-        const monthMap = {
-          Jan: 1,
-          Feb: 2,
-          Mar: 3,
-          Apr: 4,
-          May: 5,
-          Jun: 6,
-          Jul: 7,
-          Aug: 8,
-          Sep: 9,
-          Oct: 10,
-          Nov: 11,
-          Dec: 12,
-        };
-
-        data = data.map((item) => {
-          const timeData = {};
-
-          Object.entries(monthMap).forEach(([monthLabel, monthIndex]) => {
-            const value = item[monthLabel];
-            timeData[`month_${monthIndex}`] = value ?? 0; // ป้องกัน undefined
+          Object.entries(monthMap).forEach(([monthKey, monthField]) => {
+            processedData[monthField] = timeData[monthKey] || 0;
           });
+        }
 
-          return {
-            ...item,
-            ...timeData,
-          };
-        });
+        // คำนวณค่าสรุป
+        processedData.total = timeData.total || 0;
+        processedData.completed = timeData.completed || 0;
+        processedData.completedPercent = timeData.completedPercent || "0.00";
 
-        console.log("Transformed customer data for yearly:", data);
-      }
+        return processedData;
+      });
 
-      setCustomer(data);
+      setCustomer(mergedData);
     } catch (error) {
       console.error("Error fetching company report:", error);
     } finally {
@@ -152,80 +216,68 @@ const Report = () => {
     setLoading(true);
     try {
       const { startDate, endDate } = getStartAndEndDate();
-
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/api/getTechnicianReport`,
-        {
-          params: {
-            startDate,
-            endDate,
-          },
-        }
+        { params: { startDate, endDate } }
       );
 
-      const transformTechnicianData = (data) => {
-        return data.map((item) => {
-          let timeData = {};
-          const weekRanges = getWeeklyRanges(selectedYear, selectedMonth);
-          const weekMap = {};
-          weekRanges.forEach((range, index) => {
-            const weekKey = `week_${index + 1}`;
-            weekMap[weekKey] = 0;
+      console.log(response.data.data);
 
-            // รวมค่าจากวันทั้งหมดในช่วงนั้น
-            Object.entries(item.weekly || {}).forEach(([day, value]) => {
-              const dayDate = dayjs(day);
-              if (
-                range &&
-                range.start &&
-                range.end &&
-                dayDate.isBetween(range.start, range.end, "day", "[]")
-              ) {
-                weekMap[weekKey] += value;
-              }
-            });
-          });
+      // ผสานข้อมูลส่วนตัวจาก allTechnicians กับข้อมูลช่วงเวลาจาก API
+      const mergedData = allTechnicians.map(tech => {
+        const timeData = response.data.data.find(item => item.techUserId === tech.techUserId) || {};
 
-          Object.assign(timeData, weekMap);
+        let processedData = { ...tech };
 
-          if (timePeriod === "daily") {
-            Object.entries(item.daily || {}).forEach(([key, value]) => {
-              const dayNum = key.replace("day", "");
-              timeData[`day_${dayNum}`] = value;
-            });
-          } else if (timePeriod === "weekly") {
-            Object.entries(item.weekly || {}).forEach(([day, value], index) => {
-              timeData[`week_${index + 1}`] = value;
-            });
-          } else if (timePeriod === "yearly") {
-            const monthMap = {
-              Jan: 1,
-              Feb: 2,
-              Mar: 3,
-              Apr: 4,
-              May: 5,
-              Jun: 6,
-              Jul: 7,
-              Aug: 8,
-              Sep: 9,
-              Oct: 10,
-              Nov: 11,
-              Dec: 12,
-            };
-            Object.entries(item.monthly || {}).forEach(([month, value]) => {
-              const monthIndex = monthMap[month];
-              if (monthIndex) timeData[`month_${monthIndex}`] = value;
-            });
+        if (timePeriod === "weekly") {
+          const { start } = getWeekRange(selectedDate);
+          for (let i = 0; i < 7; i++) {
+            const currentDay = start.add(i, "day");
+            const dayKey = `day${currentDay.date()}`;
+            processedData[`day_${i + 1}`] = timeData.daily?.[dayKey] || 0;
           }
+        } else if (timePeriod === "monthly") {
+          // สำหรับรายเดือน แบ่งเป็นสัปดาห์ (5 สัปดาห์) เหมือนกับลูกค้า
+          processedData.week_1 = 0;
+          processedData.week_2 = 0;
+          processedData.week_3 = 0;
+          processedData.week_4 = 0;
+          processedData.week_5 = 0;
 
-          return {
-            ...item,
-            ...timeData,
+          for (let day = 1; day <= 31; day++) {
+            const dayKey = `day${day}`;
+            const value = timeData.daily?.[dayKey] || 0;
+
+            if (day >= 1 && day <= 7) processedData.week_1 += value;
+            else if (day >= 8 && day <= 14) processedData.week_2 += value;
+            else if (day >= 15 && day <= 21) processedData.week_3 += value;
+            else if (day >= 22 && day <= 28) processedData.week_4 += value;
+            else if (day >= 29) processedData.week_5 += value;
+          }
+        } else if (timePeriod === "yearly") {
+          const monthMap = {
+            Jan: "month_1", Feb: "month_2", Mar: "month_3", Apr: "month_4",
+            May: "month_5", Jun: "month_6", Jul: "month_7", Aug: "month_8",
+            Sep: "month_9", Oct: "month_10", Nov: "month_11", Dec: "month_12"
           };
-        });
-      };
 
-      setTechnician(transformTechnicianData(response.data.data));
+          Object.entries(monthMap).forEach(([monthKey, monthField]) => {
+            processedData[monthField] = timeData.monthly?.[monthKey] || 0;
+          });
+        }
+
+        // คำนวณค่าสรุป
+        processedData.acceptedJobs = timeData.acceptedJobs || 0;
+        processedData.completedJobs = timeData.completedJobs || 0;
+        processedData.tekenFromOtherCount = timeData.tekenFromOtherCount || 0;
+        processedData.takenByOtherCount = timeData.takenByOtherCount || 0;
+        processedData.successRate = timeData.successRate || 0;
+        processedData.averageStar = timeData.averageStar || 0;
+
+        return processedData;
+      });
+
+      setTechnician(mergedData);
     } catch (error) {
       console.error("Error fetching technician report:", error);
     } finally {
@@ -233,22 +285,56 @@ const Report = () => {
     }
   };
 
-  const handleNavigateToCustomerReport = (companyId) => {
-    try {
-      navigate(`/reportCustomer/${companyId}`);
-    } catch (error) {
-      console.error("Error navigating to customer report:", error);
+  // Column generators
+  const generateCustomerColumns = () => {
+    const thaiDayNames = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
+    const thaiMonthNames = [
+      "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+      "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+    ];
+
+    if (timePeriod === "weekly") {
+      const { start } = getWeekRange(selectedDate);
+      const columns = [];
+
+      for (let i = 0; i < 7; i++) {
+        const currentDay = start.add(i, "day");
+        columns.push({
+          key: `day_${i + 1}`,
+          label: `${thaiDayNames[currentDay.day()]} ${currentDay.date()}`,
+          fullLabel: `วันที่ ${currentDay.date()} ${thaiMonthNames[currentDay.month()]} (${thaiDayNames[currentDay.day()]})`,
+          date: currentDay
+        });
+      }
+
+      return columns;
+    } else if (timePeriod === "monthly") {
+      // สำหรับรายเดือน แสดงเป็นสัปดาห์ (5 สัปดาห์)
+      return [
+        { key: "week_1", label: "สัปดาห์ 1", fullLabel: "สัปดาห์ที่ 1 (1-7)" },
+        { key: "week_2", label: "สัปดาห์ 2", fullLabel: "สัปดาห์ที่ 2 (8-14)" },
+        { key: "week_3", label: "สัปดาห์ 3", fullLabel: "สัปดาห์ที่ 3 (15-21)" },
+        { key: "week_4", label: "สัปดาห์ 4", fullLabel: "สัปดาห์ที่ 4 (22-28)" },
+        { key: "week_5", label: "สัปดาห์ 5", fullLabel: "สัปดาห์ที่ 5 (29-31)" },
+      ];
+    } else if (timePeriod === "yearly") {
+      return thaiMonthNames.map((month, index) => ({
+        key: `month_${index + 1}`,
+        label: month,
+        fullLabel: `เดือน${month}`,
+        monthIndex: index + 1
+      }));
     }
+
+    return [];
   };
 
-  const handleNavigateToTechnicianReport = (techCompleteUserId) => {
-    try {
-      navigate(`/reportTechnician/${techCompleteUserId}`);
-    } catch (error) {
-      console.error("Error navigating to technician report:", error);
-    }
+  const generateTechnicianColumns = () => {
+    // ใช้ฟังก์ชันเดียวกันกับลูกค้าเพื่อให้แสดงเหมือนกัน
+    return generateCustomerColumns();
   };
 
+  // Event handlers
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
@@ -257,210 +343,169 @@ const Report = () => {
     setTimePeriod(period);
   };
 
-  const getWeeklyRanges = (year, month) => {
-    const weeks = [];
-    const firstDayOfMonth = new Date(year, month - 1, 1);
-    const lastDayOfMonth = new Date(year, month, 0);
-    let start = new Date(firstDayOfMonth);
-
-    // หาเริ่มต้นวันจันทร์ก่อนหน้า (หรือเท่ากับวันแรกของเดือน)
-    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
-
-    let weekIndex = 1;
-
-    while (start <= lastDayOfMonth) {
-      const end = new Date(start);
-      end.setDate(start.getDate() + 6);
-      weeks.push({
-        key: `week_${weekIndex}`,
-        label: `สัปดาห์ ${weekIndex}`,
-        fullLabel: `สัปดาห์ที่ ${weekIndex} (${start.getDate()}-${end.getDate()} ${
-          months[month - 1].label
-        })`,
-      });
-
-      start.setDate(start.getDate() + 7);
-      weekIndex++;
+  const handleDateChange = (date) => {
+    setSelectedDate(dayjs(date));
+    if (timePeriod === "monthly" || timePeriod === "yearly") {
+      setSelectedYear(dayjs(date).year());
+      setSelectedMonth(dayjs(date).month() + 1);
     }
-
-    return weeks;
   };
 
+  const handleYearChange = (year) => {
+    setSelectedYear(year);
+    if (timePeriod === "weekly") {
+      // Keep the same week number in the new year
+      const weekNum = dayjs(selectedDate).isoWeek();
+      const newDate = dayjs().year(year).isoWeek(weekNum).startOf("isoWeek");
+      setSelectedDate(newDate);
+    }
+  };
+
+  const handleMonthChange = (month) => {
+    setSelectedMonth(month);
+    if (timePeriod === "weekly") {
+      // Keep the same week number in the new month
+      const weekNum = dayjs(selectedDate).isoWeek();
+      const newDate = dayjs().year(selectedYear).month(month - 1).isoWeek(weekNum).startOf("isoWeek");
+      setSelectedDate(newDate);
+    }
+  };
+
+  // Fetch data when parameters change
+  const fetchReportData = () => {
+    if (activeTab === "customer") {
+      handleGetCompanyReport();
+    } else {
+      handleGetTechnicianReport();
+    }
+  };
+
+  useEffect(() => {
+    if (allCustomers.length > 0 || allTechnicians.length > 0) {
+      fetchReportData();
+    }
+  }, [activeTab, timePeriod, selectedYear, selectedMonth, selectedDate, allCustomers, allTechnicians]);
+
+  // Navigation handlers
+  const handleNavigateToCustomerReport = (companyId) => {
+    navigate(`/reportCustomer/${companyId}`);
+  };
+
+  const handleNavigateToTechnicianReport = (techUserId) => {
+    navigate(`/reportTechnician/${techUserId}`);
+  };
+
+  // Generate year options
   const generateYears = () => {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let i = currentYear - 5; i <= currentYear + 1; i++) {
-      years.push(i);
-    }
-    return years;
+    const currentYear = dayjs().year();
+    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
   };
 
-  const dayNamesThai = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
-
-  const months = [
-    { value: 1, label: "ม.ค." },
-    { value: 2, label: "ก.พ." },
-    { value: 3, label: "มี.ค." },
-    { value: 4, label: "เม.ย." },
-    { value: 5, label: "พ.ค." },
-    { value: 6, label: "มิ.ย." },
-    { value: 7, label: "ก.ค." },
-    { value: 8, label: "ส.ค." },
-    { value: 9, label: "ก.ย." },
-    { value: 10, label: "ต.ค." },
-    { value: 11, label: "พ.ย." },
-    { value: 12, label: "ธ.ค" },
-  ];
-
-  // Generate columns for customer tab
-  const generateTimeColumnsForCustomer = () => {
-    if (timePeriod === "daily") {
-      const columns = [];
-
-      const year = selectedYear;
-      const month = selectedMonth;
-      const firstDate = new Date(year, month - 1, 1);
-      const firstDayOfMonth = firstDate.getDay();
-
-      // หา "วันจันทร์" ของสัปดาห์แรก
-      const monday = new Date(firstDate);
-      const offset = (firstDayOfMonth + 6) % 7; // ปรับให้ จันทร์ = 0
-      monday.setDate(firstDate.getDate() - offset);
-
-      for (let i = 0; i < 7; i++) {
-        const currentDate = new Date(monday);
-        currentDate.setDate(monday.getDate() + i);
-
-        const day = currentDate.getDate();
-        const dayOfWeek = currentDate.getDay();
-        const currentMonth = currentDate.getMonth() + 1;
-
-        columns.push({
-          key: `day${day}`, // ใช้ key ของวันที่
-          label: `${dayNamesThai[dayOfWeek]} ${day}`,
-          fullLabel: `วันที่ ${day} (${dayNamesThai[dayOfWeek]})`,
-        });
-      }
-
-      return columns;
-    } else if (timePeriod === "weekly") {
-      return getWeeklyRanges(selectedYear, selectedMonth);
-    } else if (timePeriod === "yearly") {
-      return months.map((month) => ({
-        key: `month_${month.value}`,
-        label: month.label.substring(0, 3),
-        fullLabel: month.label,
-      }));
-    }
-    return [];
+  // Generate month options
+  const generateMonths = () => {
+    return [
+      { value: 1, label: "มกราคม" },
+      { value: 2, label: "กุมภาพันธ์" },
+      { value: 3, label: "มีนาคม" },
+      { value: 4, label: "เมษายน" },
+      { value: 5, label: "พฤษภาคม" },
+      { value: 6, label: "มิถุนายน" },
+      { value: 7, label: "กรกฎาคม" },
+      { value: 8, label: "สิงหาคม" },
+      { value: 9, label: "กันยายน" },
+      { value: 10, label: "ตุลาคม" },
+      { value: 11, label: "พฤศจิกายน" },
+      { value: 12, label: "ธันวาคม" }
+    ];
   };
 
-  // Generate columns for technician tab
-  const generateTimeColumnsForTechnician = () => {
-    if (timePeriod === "daily") {
-      const columns = [];
-      const today = new Date();
-      const day = today.getDay(); // 0-6
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - ((day + 6) % 7));
+  // Get current time columns based on active tab
+  const timeColumns = activeTab === "customer"
+    ? generateCustomerColumns()
+    : generateTechnicianColumns();
 
-      for (let i = 0; i < 7; i++) {
-        const currentDate = new Date(monday);
-        currentDate.setDate(monday.getDate() + i);
-        const dayOfWeek = currentDate.getDay();
 
-        columns.push({
-          key: `day_${i}`, // day_0, day_1, ...
-          label: dayNamesThai[dayOfWeek],
-          fullLabel: `วันที่ ${currentDate.getDate()} (${
-            dayNamesThai[dayOfWeek]
-          })`,
-        });
-      }
-      return columns;
-    } else if (timePeriod === "weekly") {
-      return getWeeklyRanges(selectedYear, selectedMonth);
-    } else if (timePeriod === "yearly") {
-      return months.map((month) => ({
-        key: `month_${month.value}`,
-        label: month.label.substring(0, 3),
-        fullLabel: month.label,
-      }));
-    }
-    return [];
-  };
+  const filteredCustomers = customer.filter((item) => {
+    const matchesSearch =
+      (item.companyName?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
+      (item.buildingName?.toLowerCase() ?? "").includes(searchTerm.toLowerCase());
 
-  // เลือก columns ให้เหมาะกับ tab
-  const timeColumns =
-    activeTab === "customer"
-      ? generateTimeColumnsForCustomer()
-      : generateTimeColumnsForTechnician();
+    const matchesBuilding =
+      selectedBuilding === "" || item.buildingName === selectedBuilding;
+
+    return matchesSearch && matchesBuilding;
+  });
+
+  const filteredTechnicians = technician.filter((item) => {
+    const buildingList = Array.isArray(item.buildings)
+      ? item.buildings
+      : [item.buildings ?? ""];
+
+    const matchesSearch =
+      (item.technicianName?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
+      buildingList.join(", ").toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesBuilding =
+      selectedBuilding === "" || buildingList.includes(selectedBuilding);
+
+    return matchesSearch && matchesBuilding;
+  });
+
+
+
   return (
     <AdminLayout>
       <div className="p-6">
         {/* Time Period Controls */}
         <div className="mb-6 bg-white p-4 rounded-lg border">
           <div className="flex flex-wrap items-center gap-4">
-            {/* Period Selection */}
+
             <div className="flex gap-2">
               <button
-                onClick={() => handleTimePeriodChange("daily")}
-                className={`px-4 py-2 rounded ${
-                  timePeriod === "daily"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200"
-                }`}
+                onClick={() => handleTimePeriodChange("weekly")}
+                className={`px-4 py-2 rounded ${timePeriod === "weekly" ? "bg-blue-500 text-white" : "bg-gray-200"
+                  }`}
               >
                 รายสัปดาห์
               </button>
               <button
-                onClick={() => handleTimePeriodChange("weekly")}
-                className={`px-4 py-2 rounded ${
-                  timePeriod === "weekly"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200"
-                }`}
+                onClick={() => handleTimePeriodChange("monthly")}
+                className={`px-4 py-2 rounded ${timePeriod === "monthly" ? "bg-blue-500 text-white" : "bg-gray-200"
+                  }`}
               >
                 รายเดือน
               </button>
               <button
                 onClick={() => handleTimePeriodChange("yearly")}
-                className={`px-4 py-2 rounded ${
-                  timePeriod === "yearly"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200"
-                }`}
+                className={`px-4 py-2 rounded ${timePeriod === "yearly" ? "bg-blue-500 text-white" : "bg-gray-200"
+                  }`}
               >
                 รายปี
               </button>
             </div>
 
-            {/* Year Selection */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">ปี:</label>
               <select
                 value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                onChange={(e) => handleYearChange(parseInt(e.target.value))}
                 className="px-3 py-2 border rounded"
               >
                 {generateYears().map((year) => (
-                  <option key={year} value={year}>
-                    {year + 543}
-                  </option>
+                  <option key={year} value={year}>{year + 543}</option>
                 ))}
               </select>
             </div>
 
-            {/* Month Selection (only for daily view) */}
-            {timePeriod === "daily" && (
+            {(timePeriod === "weekly" || timePeriod === "monthly") && (
               <div className="flex items-center gap-2">
                 <label className="text-sm font-medium">เดือน:</label>
                 <select
                   value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                  onChange={(e) => handleMonthChange(parseInt(e.target.value))}
                   className="px-3 py-2 border rounded"
                 >
-                  {months.map((month) => (
+                  {generateMonths().map((month) => (
                     <option key={month.value} value={month.value}>
                       {month.label}
                     </option>
@@ -468,28 +513,36 @@ const Report = () => {
                 </select>
               </div>
             )}
+
+            {timePeriod === "weekly" && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">สัปดาห์:</label>
+                <input
+                  type="date"
+                  value={selectedDate.format("YYYY-MM-DD")}
+                  onChange={(e) => handleDateChange(e.target.value)}
+                  className="px-3 py-2 border rounded"
+                />
+              </div>
+            )}
           </div>
         </div>
+
+
 
         {/* Tab Selection */}
         <div className="mb-4 flex gap-4">
           <button
             onClick={() => handleTabChange("customer")}
-            className={`px-4 py-2 rounded ${
-              activeTab === "customer"
-                ? "bg-[#BC9D72] text-white"
-                : "bg-gray-200"
-            }`}
+            className={`px-4 py-2 rounded ${activeTab === "customer" ? "bg-[#BC9D72] text-white" : "bg-gray-200"
+              }`}
           >
             ลูกค้า
           </button>
           <button
             onClick={() => handleTabChange("technician")}
-            className={`px-4 py-2 rounded ${
-              activeTab === "technician"
-                ? "bg-[#BC9D72] text-white"
-                : "bg-gray-200"
-            }`}
+            className={`px-4 py-2 rounded ${activeTab === "technician" ? "bg-[#BC9D72] text-white" : "bg-gray-200"
+              }`}
           >
             พนักงาน
           </button>
@@ -501,7 +554,43 @@ const Report = () => {
           </div>
         )}
 
+        <div className="flex gap-5">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="w-full">
+              <input
+                type="text"
+                placeholder={
+                  activeTab === "customer"
+                    ? "ค้นหา: ชื่อบริษัท / อาคาร"
+                    : "ค้นหา: ชื่อพนักงาน / อาคาร"
+                }
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 border rounded"
+              />
+            </div>
+          </div>
+
+          <div className="mb-4 flex items-center gap-2">
+            <select
+              className="px-3 py-2 border rounded"
+              value={selectedBuilding}
+              onChange={(e) => setSelectedBuilding(e.target.value)}
+            >
+              <option value="">อาคาร</option>
+              {buildings.map((building) => (
+                <option key={building.id} value={building.buildingName}>
+                  {building.buildingName}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+
+
         <div className="overflow-x-auto">
+          {/* Customer Table */}
           {activeTab === "customer" && (
             <table className="min-w-full bg-white border border-gray-300 rounded-lg">
               <thead>
@@ -537,13 +626,12 @@ const Report = () => {
               </thead>
 
               <tbody>
-                {customer.map((item, index) => (
+                {filteredCustomers.map((item, index) => (
                   <tr
                     key={index}
                     className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() =>
-                      handleNavigateToCustomerReport(item.companyId)
-                    }
+                    // onClick={() => handleNavigateToCustomerReport(item.companyId)}
+                    onClick={() => handleOpenModalCustomer(item.companyId)}
                   >
                     <td className="py-2 px-4 border-b sticky left-0 bg-white z-10 text-center align-middle">
                       {index + 1}
@@ -559,7 +647,7 @@ const Report = () => {
                         key={col.key}
                         className="py-2 px-2 border-b text-center align-middle"
                       >
-                        {item[col.key] || "-"}
+                        {item[col.key] || 0}
                       </td>
                     ))}
                     <td className="py-2 px-4 border-b text-center align-middle">
@@ -569,27 +657,30 @@ const Report = () => {
                       {item.completed || 0}
                     </td>
                     <td className="py-2 px-4 border-b text-center align-middle">
-                      {/* เติม % ด้วย */}
-                      {item.completedPercent
-                        ? `${item.completedPercent}%`
-                        : "0%"}
+                      {item.completedPercent ? `${item.completedPercent}%` : "0%"}
                     </td>
                   </tr>
                 ))}
-                {customer.length === 0 && !loading && (
-                  <tr>
-                    <td
-                      colSpan={timeColumns.length + 6}
-                      className="text-center py-4 align-middle"
-                    >
-                      ไม่มีข้อมูล
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           )}
 
+          {isModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white max-h-[90vh] overflow-y-auto w-[90vw] max-w-5xl rounded-lg shadow-lg relative">
+                <button
+                  onClick={handleCloseModalCustomer}
+                  className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow"
+                >
+                  ✕
+                </button>
+                <ReportCustomer id={selectedCompanyId} />
+              </div>
+            </div>
+          )}
+
+
+          {/* Technician Table */}
           {activeTab === "technician" && (
             <table className="min-w-full bg-white border border-gray-300 rounded-lg">
               <thead>
@@ -597,7 +688,7 @@ const Report = () => {
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle sticky left-0 bg-[#BC9D72]/50 z-10">
                     ลำดับ
                   </th>
-                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle sticky left-0 bg-[#BC9D72]/50 z-10">
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
                     ดาว
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle sticky left-12 bg-[#BC9D72]/50 z-10">
@@ -625,7 +716,7 @@ const Report = () => {
                     งานที่ดำเนินการแทน
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
-                    เสร็จสิ้น{" "}
+                    เสร็จสิ้น
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
                     เปอร์เซ็นต์จบงาน
@@ -634,40 +725,26 @@ const Report = () => {
               </thead>
 
               <tbody>
-                {technician.map((item, index) => {
-                  // const a = 12; //งานที่รับ
-                  // const c = 1; // งานที่ทำให้คนอื่น
-                  // const d = 3; //งานที่คนอื่นเอาไปทำ
-                  // const x = 9; //งานที่ทั้งหมดที่ทำ
-                  // const b = x - c || 0;
-                  // console.log("B", b);
-
-                  // const percen1 = ((b + c) / (a + c - d)) * 100 || 0;
-                  // console.log("percen1:", percen1);
-                  const completeMe =
-                    item.completedJobs - item.tekenFromOtherCount || 0;
+                {filteredTechnicians.map((item, index) => {
+                  const completeMe = item.completedJobs - (item.tekenFromOtherCount || 0);
                   const percen =
-                    ((completeMe + item.tekenFromOtherCount) /
+                    ((completeMe + (item.tekenFromOtherCount || 0)) /
                       (item.acceptedJobs +
-                        item.tekenFromOtherCount -
-                        item.takenByOtherCount)) *
-                      100 || 0;
-                  console.log("completeMe:", completeMe);
+                        (item.tekenFromOtherCount || 0) -
+                        (item.takenByOtherCount || 0))) *
+                    100 || 0;
                   return (
                     <tr
                       key={index}
                       className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() =>
-                        handleNavigateToTechnicianReport(item.techUserId)
-                      }
+                      // onClick={() => handleNavigateToTechnicianReport(item.techUserId)}
+                      onClick={() => handleOpenModalTechnician(item.techUserId)}
                     >
                       <td className="py-2 px-4 border-b text-center align-middle sticky left-0 bg-white z-10">
                         {index + 1}
                       </td>
-                      <td className="py-2 px-4 border-b text-center align-middle sticky left-0 bg-white z-10">
-                        {item?.averageStar != null
-                          ? item.averageStar.toFixed(1)
-                          : "-"}
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {item?.averageStar != null ? item.averageStar.toFixed(1) : "-"}
                       </td>
                       <td className="py-2 px-4 border-b text-center align-middle sticky left-12 bg-white z-10">
                         {item.technicianName}
@@ -682,7 +759,7 @@ const Report = () => {
                           key={col.key}
                           className="py-2 px-2 border-b text-center align-middle"
                         >
-                          {item[col.key] || "-"}
+                          {item[col.key] || 0}
                         </td>
                       ))}
                       <td className="py-2 px-4 border-b text-center align-middle">
@@ -703,18 +780,24 @@ const Report = () => {
                     </tr>
                   );
                 })}
-                {technician.length === 0 && !loading && (
-                  <tr>
-                    <td
-                      colSpan={timeColumns.length + 6}
-                      className="text-center py-4 align-middle"
-                    >
-                      ไม่มีข้อมูล
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
+          )}
+
+          {isTechnicianModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+              <div className="bg-white max-h-[90vh] overflow-y-auto w-[90vw] max-w-5xl rounded-lg shadow-lg relative">
+                <button
+                  onClick={handleCloseModalTechnician}
+                  className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow"
+                >
+                  ✕ 
+                </button>
+                <ReportTechnician userId={selectedTechnicianId} />
+                
+              </div>
+              
+            </div>
           )}
         </div>
       </div>
