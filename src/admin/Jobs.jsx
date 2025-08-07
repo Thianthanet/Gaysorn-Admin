@@ -43,12 +43,12 @@ const Jobs = () => {
 
   const [selectedJob, setSelectedJob] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterBuilding, setFilterBuilding] = useState('all')
+  const [filterBuilding, setFilterBuilding] = useState("all");
 
   const [searchParams] = useSearchParams();
   const startDateParams = searchParams.get("startDate"); // "2025-07-28"
-  const endDateParams = searchParams.get("endDate");     // "2025-08-03"
-  const statusParams = searchParams.get("status");       // "pending"
+  const endDateParams = searchParams.get("endDate"); // "2025-08-03"
+  const statusParams = searchParams.get("status"); // "pending"
   // const statusCountsParams = searchParams.get("statusCounts"); // "6"
   const repairsLasterFilterParams = searchParams.get("repairsLasterFilter"); // "6"
 
@@ -96,17 +96,20 @@ const Jobs = () => {
       let jobsToDisplay = response.data.data;
 
       // Apply filters based on local parameters
-      if (statusParams && statusParams !== 'total') {
-        jobsToDisplay = jobsToDisplay.filter((job) => job.status === statusParams);
+      if (statusParams && statusParams !== "total") {
+        jobsToDisplay = jobsToDisplay.filter(
+          (job) => job.status === statusParams
+        );
       }
 
       if (repairsLasterFilterParams) {
-        jobsToDisplay = jobsToDisplay.filter((job) => job.jobNo === repairsLasterFilterParams);
+        jobsToDisplay = jobsToDisplay.filter(
+          (job) => job.jobNo === repairsLasterFilterParams
+        );
       }
 
       console.log("Filtered Jobs:", jobsToDisplay);
       setJobs(jobsToDisplay);
-
     } catch (error) {
       console.error("Error fetching jobs:", error);
     }
@@ -120,8 +123,8 @@ const Jobs = () => {
       let choicesData = response.data.data;
 
       // ดึง "อื่น ๆ" ออกมาแยก
-      const others = choicesData.filter(c => c.choiceName === "อื่น ๆ");
-      const remaining = choicesData.filter(c => c.choiceName !== "อื่น ๆ");
+      const others = choicesData.filter((c) => c.choiceName === "อื่น ๆ");
+      const remaining = choicesData.filter((c) => c.choiceName !== "อื่น ๆ");
 
       // รวม "อื่น ๆ" ไว้หน้า ตามด้วยข้อมูลที่เหลือ
       const sortedChoices = [...remaining, ...others];
@@ -183,8 +186,12 @@ const Jobs = () => {
       // เจ้าหน้าที่: job.acceptedBy?.name?.trim() || "-",
       เจ้าหน้าที่:
         [
-          job.acceptedBy?.name?.trim() ? `${job.acceptedBy.name} (รับงาน)` : null,
-          job.completedBy?.name?.trim() ? `${job.completedBy.name} (ดำเนินการ)` : null,
+          job.acceptedBy?.name?.trim()
+            ? `${job.acceptedBy.name} (รับงาน)`
+            : null,
+          job.completedBy?.name?.trim()
+            ? `${job.completedBy.name} (ดำเนินการ)`
+            : null,
         ]
           .filter(Boolean)
           .join("\n") || "-",
@@ -192,10 +199,10 @@ const Jobs = () => {
         job.status === "pending"
           ? "รอดำเนินการ"
           : job.status === "in_progress"
-            ? "อยู่ระหว่างดำเนินการ"
-            : job.status === "completed"
-              ? "เสร็จสิ้น"
-              : job.status || "-",
+          ? "อยู่ระหว่างดำเนินการ"
+          : job.status === "completed"
+          ? "เสร็จสิ้น"
+          : job.status || "-",
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
 
@@ -293,7 +300,8 @@ const Jobs = () => {
       if (endDate) params.append("endDate", endDate);
 
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL
+        `${
+          import.meta.env.VITE_API_BASE_URL
         }/api/getAllRepair?${params.toString()}`
       );
 
@@ -417,14 +425,13 @@ const Jobs = () => {
       <div>
         <div className="flex items-center gap-2 flex-wrap mb-6">
           {/* ช่องค้นหา */}
-          <div className="flex items-center flex-1 min-w-[250px] border-b-[1px] border-[#837958]">
+          <div className="flex items-center max-w-[350px] w-full border-b-[1px] border-[#837958]">
             <BiSearchAlt2 size={20} className="text-[#837958] ml-2" />
             <input
               type="text"
               placeholder="ค้นหา"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               className="w-full pl-2 pr-3 py-1 outline-none"
             />
           </div>
@@ -439,7 +446,7 @@ const Jobs = () => {
           </button>
 
           {/* ปุ่มอาคาร */}
-          {/* <div className="relative inline-block">
+          <div className="relative inline-block">
             <select
               value={selectedBuilding}
               onChange={(e) => {
@@ -470,21 +477,10 @@ const Jobs = () => {
               size={18}
               className="text-white pointer-events-none absolute top-1/2 right-2 -translate-y-1/2"
             />
-          </div> */}
-
-          {/* Building Filter Component */}
-          <div className="">
-            <BuildingFilter
-              isMobile={false}
-              buildings={building} // <--- ส่ง buildings เข้าไป
-              // filterBuilding={filterBuilding}
-              setFilterBuilding={setFilterBuilding} // ซึ่งคือ handleFilterBuildingChange จาก User.jsx
-              selectedBuilding={filterBuilding} // <--- ส่ง filterBuilding เข้าไป เพื่อให้ BuildingFilter แสดงค่าที่เลือกปัจจุบัน
-            />
           </div>
 
           {/* ปุ่มสถานะ */}
-          {/* <div className="relative inline-block">
+          <div className="relative inline-block">
             <select
               value={selectedStatus}
               onChange={(e) => {
@@ -523,21 +519,6 @@ const Jobs = () => {
               size={18}
               className="text-white pointer-events-none absolute top-1/2 right-2 -translate-y-1/2"
             />
-          </div> */}
-
-          {/* {console.log("selectedStatus", selectedStatus)} */}
-          {/* {console.log("jobs", jobs)} */}
-          {/* {console.log("statusMap", statusMap)} */}
-
-          {/* ปุ่มสถานะ */}
-          <div className="">
-            <StatusFilter
-              isMobile={false}
-              status={statusMap} // <--- ส่ง buildings เข้าไป
-              // filterBuilding={filterBuilding}
-              setSelectedStatus={setSelectedStatus} // ซึ่งคือ handleFilterBuildingChange จาก User.jsx
-              selectedStatus={selectedStatus} // <--- ส่ง filterBuilding เข้าไป เพื่อให้ BuildingFilter แสดงค่าที่เลือกปัจจุบัน
-            />
           </div>
 
           {/* ปุ่มเงื่อนไข */}
@@ -546,126 +527,100 @@ const Jobs = () => {
             onClick={() => setShowFilters(!showFilters)}
           >
             <Funnel className="w-4" /> เงื่อนไข
-            {/* <HiChevronDown size={18} className="text-white" /> */}
+            <HiChevronDown size={18} className="text-white" />
           </button>
 
           {/* ปุ่มส่งข้อมูลออก */}
           <button
-            className="px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
+            className="ml-[100px] px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
             onClick={exportToExcel}
           >
             ส่งข้อมูลออก
           </button>
         </div>
         {showFilters && (
-          <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 mb-6">
-            <h3 className="text-xl font-semibold text-[#837958] mb-4 flex items-center gap-2">
-              กรองข้อมูลงาน
-            </h3>
-
-            {/* วันที่และปุ่มค้นหา */}
-            <div className="flex flex-wrap gap-4 items-end mb-6">
+          <div className="bg-white mb-6">
+            <div className="flex flex-wrap gap-2 items-end mb-4">
               {/* Start Date */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-600 mb-1">
-                  วันที่เริ่มต้น
-                </label>
-                {/* <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  placeholderText="วันที่เริ่มต้น"
-                  className="w-[160px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-[#837958] focus:border-[#837958]"
-                /> */}
+              <div className="relative w-[80px]">
                 <DatePicker
                   selected={startDate}
-                  onChange={(date) => setStartDate(date)}
+                  onChange={(date) => {
+                    setStartDate(date);
+                    handleGetFilteredJobs();
+                  }}
                   dateFormat="dd/MM/yyyy"
-                  placeholderText="วันที่เริ่มต้น" // ✅ ใช้ได้จริง
                   locale="th"
-                  className="w-[160px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-[#837958] focus:border-[#837958]"
+                  placeholderText="วันที่เริ่ม"
+                  popperPlacement="bottom-end"
+                  className="w-full px-3 py-[6px] rounded-full border text-xs text-[#837958] border-[#e7e3d7] bg-[#FEFEFE] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#837958] placeholder-[#ccc5b8]"
+                  calendarClassName="rounded-lg"
+                />
+                <HiChevronDown
+                  size={14}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#ccc5b8] pointer-events-none"
                 />
               </div>
 
               {/* End Date */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-600 mb-1">
-                  วันที่สิ้นสุด
-                </label>
-                {/* <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  placeholderText="วันที่สิ้นสุด"
-                  className="w-[160px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-[#837958] focus:border-[#837958]"
-                /> */}
+              <div className="relative w-[90px]">
                 <DatePicker
                   selected={endDate}
                   onChange={(date) => setEndDate(date)}
                   dateFormat="dd/MM/yyyy"
-                  placeholderText="วันที่สิ้นสุด" // ✅ ใช้ได้จริง
                   locale="th"
-                  className="w-[160px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-[#837958] focus:border-[#837958]"
+                  placeholderText="วันที่สิ้นสุด"
+                  className="w-full px-3 py-[6px] rounded-full border text-xs text-[#837958] border-[#e7e3d7] bg-[#FEFEFE] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#837958] placeholder-[#ccc5b8]"
+                  calendarClassName="rounded-lg"
+                />
+                <HiChevronDown
+                  size={14}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#ccc5b8] pointer-events-none"
                 />
               </div>
 
-              {/* ปุ่มค้นหา */}
-              <div className="flex flex-col">
-                <label className="text-sm invisible mb-1">ค้นหา</label>
-                <button
-                  onClick={handleGetFilteredJobs}
-                  className="flex px-4 py-[6px] bg-[#837958] text-white text-sm rounded-full hover:bg-[#6b6149] transition duration-200 shadow-sm"
+              {/* กลุ่มงาน */}
+              <div className="relative w-[80px]">
+                <select
+                  value={selectedChoice}
+                  onChange={(e) => {
+                    setSelectedChoice(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="appearance-none w-full px-3 py-[6px] rounded-full border text-xs text-[#837958] border-[#e7e3d7] bg-[#FEFEFE] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#837958]"
                 >
-                  <BiSearchAlt2 size={18} className="text-white mr-1" />
-                  ค้นหา
-                </button>
-              </div>
-            </div>
-
-            {/* กลุ่มงาน */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">
-                กลุ่มงาน
-              </label>
-              {/* {console.log("choices: ", choices)} */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6">
-                {choices.map((choice) => (
-                  <div key={choice.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`choice-${choice.id}`}
-                      checked={selectedChoices.includes(choice.choiceName)}
-                      onChange={() => handleChoiceChange(choice.choiceName)}
-                      className="h-4 w-4 text-[#837958] focus:ring-[#837958] border-gray-300 rounded"
-                    />
-                    <label
-                      htmlFor={`choice-${choice.id}`}
-                      className="ml-2 text-sm text-gray-700"
-                    >
+                  <option value="">กลุ่มงาน</option>
+                  {choices.map((choice) => (
+                    <option key={choice.id} value={choice.choiceName}>
                       {choice.choiceName}
-                    </label>
-                  </div>
-                ))}
+                    </option>
+                  ))}
+                </select>
+                <HiChevronDown
+                  size={14}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#ccc5b8] pointer-events-none"
+                />
               </div>
             </div>
           </div>
         )}
+
         <div className="overflow-x-auto overflow-y-auto max-h-[80vh] relative">
-        <table className="min-w-full table-fixed leading-normal border-t-[1px] border-r-[1px] border-l-[1px] border-[#837958]">
-          <thead className="sticky top-0 z-10 border-[#837958] text-center font-semibold text-black bg-[#ddceb8] h-[44px] text-[14px]"> {/* bg-[#BC9D72]/50 */}
-            <tr>
-              <th className="relative"
-                style={{ width: `24px` }}
-              />
-              <th className="w-[60px]">ลำดับ</th>
-              <th className="text-center w-[60px]">
-                <TiStarFullOutline className="text-2xl mx-auto" />
-              </th>
-              <th className="w-[64px] truncate">เลขงาน</th>
-              <th className="w-[64px] truncate">อาคาร</th>
-              <th className="w-[64px] truncate">บริษัท</th>
-              <th className="w-[64px] truncate">กลุ่มงาน</th>
-              {/* <th
+          <table className="min-w-full table-fixed leading-normal border-t-[1px] border-r-[1px] border-l-[1px] border-[#837958]">
+            <thead className="sticky top-0 z-10 border-[#837958] text-center font-semibold text-black bg-[#ddceb8] h-[44px] text-[14px]">
+              {" "}
+              {/* bg-[#BC9D72]/50 */}
+              <tr>
+                <th className="relative" style={{ width: `24px` }} />
+                <th className="w-[60px]">ลำดับ</th>
+                <th className="text-center w-[60px]">
+                  <TiStarFullOutline className="text-2xl mx-auto" />
+                </th>
+                <th className="w-[64px] truncate">เลขงาน</th>
+                <th className="w-[64px] truncate">อาคาร</th>
+                <th className="w-[64px] truncate">บริษัท</th>
+                <th className="w-[64px] truncate">กลุ่มงาน</th>
+                {/* <th
                 onClick={() => requestSort("createDate")}
                 className="cursor-pointer hover:underline w-[96px]"
               >
@@ -675,13 +630,14 @@ const Jobs = () => {
                 )}
               </th> */}
 
-              <th onClick={() => requestSort("createDate")}
-                className="cursor-pointer hover:underline w-[96px]"
-              >
-                วันที่แจ้ง {getSortIndicator("createDate")}
-              </th>
+                <th
+                  onClick={() => requestSort("createDate")}
+                  className="cursor-pointer hover:underline w-[96px]"
+                >
+                  วันที่แจ้ง {getSortIndicator("createDate")}
+                </th>
 
-              {/* <th
+                {/* <th
                 onClick={() => requestSort("acceptDate")}
                 className="cursor-pointer hover:underline w-[96px]"
               >
@@ -691,13 +647,14 @@ const Jobs = () => {
                 )}
               </th> */}
 
-              <th onClick={() => requestSort("acceptDate")}
-                className="cursor-pointer hover:underline w-[96px]"
-              >
-                วันที่รับงาน {getSortIndicator("acceptDate")}
-              </th>
+                <th
+                  onClick={() => requestSort("acceptDate")}
+                  className="cursor-pointer hover:underline w-[96px]"
+                >
+                  วันที่รับงาน {getSortIndicator("acceptDate")}
+                </th>
 
-              {/* <th
+                {/* <th
                 onClick={() => requestSort("completeDate")}
                 className="cursor-pointer hover:underline w-[96px]"
               >
@@ -707,99 +664,104 @@ const Jobs = () => {
                 )}
               </th> */}
 
-              <th onClick={() => requestSort("completeDate")}
-                className="cursor-pointer hover:underline w-[96px]"
-              >
-                วันที่เสร็จสิ้น {getSortIndicator("completeDate")}
-              </th>
-              <th className="w-[96px]">เจ้าหน้าที่</th>
-              <th className="w-[64px]">สถานะ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* {console.log("jobs: " jobs)} */}
-            {jobs.length > 0 && getPaginatedJobs().length > 0 ? (
-              // console.log("getPaginatedJobs: ", getPaginatedJobs()),
-              getPaginatedJobs().map((job, index) => (
-                <tr
-                  key={job.id}
-                  className="text-center text-[12px] border-b-[1px] border-[#837958] cursor-pointer"
-                  onClick={() => openJobModal(job)}
+                <th
+                  onClick={() => requestSort("completeDate")}
+                  className="cursor-pointer hover:underline w-[96px]"
                 >
-                  <td className="px-4 py-2 text-center align-text-top ">
-                    <span
-                      className={`inline-block w-4 h-4 rounded-full mx-auto ${job.status === "pending"
-                        ? "bg-red-500"
-                        : job.status === "in_progress"
-                          ? "bg-yellow-500"
-                          : job.status === "completed"
+                  วันที่เสร็จสิ้น {getSortIndicator("completeDate")}
+                </th>
+                <th className="w-[96px]">เจ้าหน้าที่</th>
+                <th className="w-[64px]">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* {console.log("jobs: " jobs)} */}
+              {jobs.length > 0 && getPaginatedJobs().length > 0 ? (
+                // console.log("getPaginatedJobs: ", getPaginatedJobs()),
+                getPaginatedJobs().map((job, index) => (
+                  <tr
+                    key={job.id}
+                    className="text-center text-[12px] border-b-[1px] border-[#837958] cursor-pointer"
+                    onClick={() => openJobModal(job)}
+                  >
+                    <td className="px-4 py-2 text-center align-text-top ">
+                      <span
+                        className={`inline-block w-4 h-4 rounded-full mx-auto ${
+                          job.status === "pending"
+                            ? "bg-red-500"
+                            : job.status === "in_progress"
+                            ? "bg-yellow-500"
+                            : job.status === "completed"
                             ? "bg-green-500"
                             : "bg-gray-400"
                         }`}
-                    ></span>
-                  </td>
-                  <td className="align-text-top py-2">
-                    {(currentPage - 1) * itemsPerPage + index + 1}
-                  </td>
-                  <td className="px-8 py-2 align-text-top">
-                    {job?.workStar || "-"}
-                  </td>
-                  <td className="px-2 py-2 min-w-[64px] align-text-top">
-                    {job?.jobNo || "-"}
-                  </td>
-                  <td className="px-2 py-2 min-w-[140px] align-text-top">
-                    {job.building?.buildingName || "-"}
-                  </td>
-                  <td className="px-2 py-2 min-w-[88px] align-text-top">
-                    {job.company?.companyName || "-"}
-                  </td>
-                  <td className="px-4 py-2 min-w-[220px] align-text-top">
-                    {job?.choiceDesc || "-"}
-                  </td>
-                  <td className=" px-4 py-2 min-w-[168px] align-text-top">
-                    {formatDateTimeThaiShort(job?.createDate) || "-"}
-                  </td>
-                  <td className=" px-4 py-2 min-w-[168px] align-text-top">
-                    {formatDateTimeThaiShort(job?.acceptDate) || "-"}
-                  </td>
-                  <td className=" px-4 py-2 min-w-[168px] align-text-top">
-                    {formatDateTimeThaiShort(job?.completeDate) || "-"}
-                  </td>
-                  <td className=" px-4 py-2 min-w-[160px] align-text-top">
-                    {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}
-                  </td>
-                  <td
-                    className={` px-4 py-2 min-w-[140px] align-text-top ${job.status === "pending"
-                      ? "text-red-500"
-                      : job.status === "in_progress"
-                        ? "text-yellow-500"
-                        : job.status === "completed"
+                      ></span>
+                    </td>
+                    <td className="align-text-top py-2">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-8 py-2 align-text-top">
+                      {job?.workStar || "-"}
+                    </td>
+                    <td className="px-2 py-2 min-w-[64px] align-text-top">
+                      {job?.jobNo || "-"}
+                    </td>
+                    <td className="px-2 py-2 min-w-[140px] align-text-top">
+                      {job.building?.buildingName || "-"}
+                    </td>
+                    <td className="px-2 py-2 min-w-[88px] align-text-top">
+                      {job.company?.companyName || "-"}
+                    </td>
+                    <td className="px-4 py-2 min-w-[220px] align-text-top">
+                      {job?.choiceDesc || "-"}
+                    </td>
+                    <td className=" px-4 py-2 min-w-[168px] align-text-top">
+                      {formatDateTimeThaiShort(job?.createDate) || "-"}
+                    </td>
+                    <td className=" px-4 py-2 min-w-[168px] align-text-top">
+                      {formatDateTimeThaiShort(job?.acceptDate) || "-"}
+                    </td>
+                    <td className=" px-4 py-2 min-w-[168px] align-text-top">
+                      {formatDateTimeThaiShort(job?.completeDate) || "-"}
+                    </td>
+                    <td className=" px-4 py-2 min-w-[160px] align-text-top">
+                      {job?.acceptedBy?.name?.trim()
+                        ? job.acceptedBy.name
+                        : "-"}
+                    </td>
+                    <td
+                      className={` px-4 py-2 min-w-[140px] align-text-top ${
+                        job.status === "pending"
+                          ? "text-red-500"
+                          : job.status === "in_progress"
+                          ? "text-yellow-500"
+                          : job.status === "completed"
                           ? "text-green-500"
                           : ""
                       }`}
-                  >
-                    {job.status === "pending"
-                      ? "รอดำเนินการ"
-                      : job.status === "in_progress"
+                    >
+                      {job.status === "pending"
+                        ? "รอดำเนินการ"
+                        : job.status === "in_progress"
                         ? "อยู่ระหว่างดำเนินการ"
                         : job.status === "completed"
-                          ? "เสร็จสิ้น"
-                          : job.status}
+                        ? "เสร็จสิ้น"
+                        : job.status}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="12"
+                    className="px-4 py-4 text-center text-gray-500 border-b-[1px] border-[#837958]"
+                  >
+                    ไม่พบข้อมูลลูกค้า
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan="12"
-                  className="px-4 py-4 text-center text-gray-500 border-b-[1px] border-[#837958]"
-                >
-                  ไม่พบข้อมูลลูกค้า
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
         </div>
         <Pagination
           currentPage={currentPage}
