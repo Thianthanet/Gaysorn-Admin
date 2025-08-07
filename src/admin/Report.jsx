@@ -42,7 +42,75 @@ const Report = () => {
         { params }
       );
       console.log("Customer", response.data.data);
-      setCustomer(response.data.data);
+
+      let data = response.data.data;
+
+      if (timePeriod === "weekly") {
+        data = data.map((item) => {
+          const weeks = {
+            week_1: 0,
+            week_2: 0,
+            week_3: 0,
+            week_4: 0,
+            week_5: 0,
+          };
+
+          for (let day = 1; day <= 31; day++) {
+            const dayKey = `day${day}`;
+            const value = item[dayKey] ?? 0;
+
+            if (day >= 1 && day <= 7) weeks.week_1 += value;
+            else if (day >= 8 && day <= 14) weeks.week_2 += value;
+            else if (day >= 15 && day <= 21) weeks.week_3 += value;
+            else if (day >= 22 && day <= 28) weeks.week_4 += value;
+            else if (day >= 29) weeks.week_5 += value;
+          }
+
+          const transformedItem = {
+            ...item,
+            ...weeks,
+          };
+
+          console.log("transformed item:", transformedItem);
+
+          return transformedItem;
+        });
+      }
+
+      if (timePeriod === "yearly") {
+        const monthMap = {
+          Jan: 1,
+          Feb: 2,
+          Mar: 3,
+          Apr: 4,
+          May: 5,
+          Jun: 6,
+          Jul: 7,
+          Aug: 8,
+          Sep: 9,
+          Oct: 10,
+          Nov: 11,
+          Dec: 12,
+        };
+
+        data = data.map((item) => {
+          const timeData = {};
+
+          Object.entries(monthMap).forEach(([monthLabel, monthIndex]) => {
+            const value = item[monthLabel];
+            timeData[`month_${monthIndex}`] = value ?? 0; // ป้องกัน undefined
+          });
+
+          return {
+            ...item,
+            ...timeData,
+          };
+        });
+
+        console.log("Transformed customer data for yearly:", data);
+      }
+
+      setCustomer(data);
     } catch (error) {
       console.error("Error fetching company report:", error);
     } finally {
@@ -134,7 +202,6 @@ const Report = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    // ไม่ต้องเรียก fetch อีก เพราะ useEffect จะทำงานเองเมื่อ activeTab เปลี่ยน
   };
 
   const handleTimePeriodChange = (period) => {
@@ -521,10 +588,13 @@ const Report = () => {
                     งานที่รับ
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
-                    จำนวนจบงาน (ด้วยตนเอง)
+                    งานที่ดำเนินการเอง
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
-                    จำนวนจบงาน (ด้วยผู้อื่น)
+                    งานที่ดำเนินการแทน
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
+                    เสร็จสิ้น{" "}
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
                     เปอร์เซ็นต์จบงาน
@@ -533,52 +603,75 @@ const Report = () => {
               </thead>
 
               <tbody>
-                {technician.map((item, index) => (
-                  <tr
-                    key={index}
-                    className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() =>
-                      handleNavigateToTechnicianReport(item.techUserId)
-                    }
-                  >
-                    <td className="py-2 px-4 border-b text-center align-middle sticky left-0 bg-white z-10">
-                      {index + 1}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center align-middle sticky left-0 bg-white z-10">
-                      {item?.averageStar != null
-                        ? item.averageStar.toFixed(1)
-                        : "-"}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center align-middle sticky left-12 bg-white z-10">
-                      {item.technicianName}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center align-middle">
-                      {Array.isArray(item.buildings)
-                        ? item.buildings.join(", ")
-                        : item.buildings}
-                    </td>
-                    {timeColumns.map((col) => (
-                      <td
-                        key={col.key}
-                        className="py-2 px-2 border-b text-center align-middle"
-                      >
-                        {item[col.key] || "-"}
+                {technician.map((item, index) => {
+                  // const a = 12; //งานที่รับ
+                  // const c = 1; // งานที่ทำให้คนอื่น
+                  // const d = 3; //งานที่คนอื่นเอาไปทำ
+                  // const x = 9; //งานที่ทั้งหมดที่ทำ
+                  // const b = x - c || 0;
+                  // console.log("B", b);
+
+                  // const percen1 = ((b + c) / (a + c - d)) * 100 || 0;
+                  // console.log("percen1:", percen1);
+                  const completeMe =
+                    item.completedJobs - item.tekenFromOtherCount || 0;
+                  const percen =
+                    ((completeMe + item.tekenFromOtherCount) /
+                      (item.acceptedJobs +
+                        item.tekenFromOtherCount -
+                        item.takenByOtherCount)) *
+                      100 || 0;
+                  console.log("completeMe:", completeMe);
+                  return (
+                    <tr
+                      key={index}
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() =>
+                        handleNavigateToTechnicianReport(item.techUserId)
+                      }
+                    >
+                      <td className="py-2 px-4 border-b text-center align-middle sticky left-0 bg-white z-10">
+                        {index + 1}
                       </td>
-                    ))}
-                    <td className="py-2 px-4 border-b text-center align-middle">
-                      {item.acceptedJobs || 0}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center align-middle">
-                      {item.acceptedJobs || 0}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center align-middle">
-                      {item.completedJobs || 0}
-                    </td>
-                    <td className="py-2 px-4 border-b text-center align-middle">
-                      {item.successRate || "0"}%
-                    </td>
-                  </tr>
-                ))}
+                      <td className="py-2 px-4 border-b text-center align-middle sticky left-0 bg-white z-10">
+                        {item?.averageStar != null
+                          ? item.averageStar.toFixed(1)
+                          : "-"}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle sticky left-12 bg-white z-10">
+                        {item.technicianName}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {Array.isArray(item.buildings)
+                          ? item.buildings.join(", ")
+                          : item.buildings}
+                      </td>
+                      {timeColumns.map((col) => (
+                        <td
+                          key={col.key}
+                          className="py-2 px-2 border-b text-center align-middle"
+                        >
+                          {item[col.key] || "-"}
+                        </td>
+                      ))}
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {item.acceptedJobs || 0}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {completeMe}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {item.tekenFromOtherCount || 0}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {completeMe + (item.tekenFromOtherCount || 0) || 0}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {item.successRate || "0"}% 
+                      </td>
+                    </tr>
+                  );
+                })}
                 {technician.length === 0 && !loading && (
                   <tr>
                     <td
