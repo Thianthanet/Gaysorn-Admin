@@ -13,21 +13,39 @@ const UserPopup = ({
   handleTechnicianChange,
   handleAdminChange, // <--- รับ prop นี้เข้ามา
   buildings,
-  companies, // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกบริษัทจาก dropdown
-  units,     // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกยูนิตจาก dropdown
+  companies, // Pass companies for customer form
+  units,
+  // setCompanyId, // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกบริษัทจาก dropdown
+  // setUnitId,     // เพื่อใช้ในอนาคตหากต้องการให้ลูกค้าเลือกยูนิตจาก dropdown
+  setBuildingId,
   selectedBuildings,
   handleBuildingToggle,
   errors,
+  fetchCompanies,
+  fetchBuildings,
+  fetchUnits,
   // isEditModeTechnicians ถูกลบออก เพราะเราจะคำนวณจาก technicianData.id
   // setAdminData ถูกลบออก เพราะเราจะใช้ handleAdminChange แทน
 }) => {
   if (!show) return null;
 
+  // const customerData2 = customerData;
+
   // ตรวจสอบโหมดแก้ไขสำหรับช่าง (Technician Edit Mode)
-  const isTechnicianEditMode = !!technicianData.id;
+  const isTechnicianEditMode = !!technicianData.id && !!technicianData.userId;
   // ตรวจสอบโหมดแก้ไขสำหรับแอดมิน (Admin Edit Mode)
   const isAdminEditMode = !!adminData.id;
 
+  // console.log("technicianData: ", technicianData)
+  console.log("customerData: ", customerData)
+  // console.log("customerData2: ", customerData2)
+  
+  // console.log("customerData.buildingId: ", customerData.buildingId)
+  // console.log("customerData.companyId: ", customerData.companyId)
+  // console.log("customerData.unitId: ", customerData.unitId)
+  // console.log("buildings: ", buildings)
+  // console.log("companies: ", companies)
+  // console.log("units in userPopup: ", units)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 p-4">
@@ -46,7 +64,10 @@ const UserPopup = ({
               rounded-l-xl rounded-r-xl`} //ใช้ rounded-l-xl สำหรับปุ่มแรก
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab("customers");
+              setActiveTab('customers');
+              // setCompanyId(customerData.companyId)
+              // setUnitId(customerData.unitId)
+              // setBuildingId(customerData.buildingId)
             }}
           >
             ลูกค้า
@@ -57,7 +78,7 @@ const UserPopup = ({
               rounded-l-xl rounded-r-xl`} // ใช้ rounded-none สำหรับปุ่มกลาง
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab("technicians");
+              setActiveTab('technicians');
             }}
           >
             เจ้าหน้าที่
@@ -68,7 +89,7 @@ const UserPopup = ({
               rounded-l-xl rounded-r-xl`} //ใช้ rounded-r-xl สำหรับปุ่มสุดท้าย
             onClick={(e) => {
               e.preventDefault();
-              setActiveTab("admin");
+              setActiveTab('admin');
             }}
           >
             แอดมิน
@@ -78,7 +99,7 @@ const UserPopup = ({
         <div className="flex justify-center">
           <div className="relative min-h-[400px]">
             <form onSubmit={handleSubmit}>
-              {activeTab === "customers" && (
+              {activeTab === 'customers' && (
                 <>
                   <InputField
                     label="ชื่อ-สกุล"
@@ -119,7 +140,7 @@ const UserPopup = ({
                       name="buildingId"
                       value={customerData.buildingId}
                       onChange={handleCustomerChange}
-                      className={`w-[320px] text-[12px] text-[#BC9D72]/50 border ${errors.buildingName
+                      className={`w-[320px] text-[12px] text-[#837958] border ${errors.buildingName
                           ? "border-red-500"
                           : "border-[#837958]"
                         } rounded-lg px-2 py-1.5 focus:outline-none`}
@@ -168,6 +189,8 @@ const UserPopup = ({
                     onChange={handleTechnicianChange}
                   />
 
+                  {/* {console.log("technicianData: ", )} */}
+
                   {/* อาคารสำหรับช่าง จะแสดงเฉพาะเมื่ออยู่ในโหมดแก้ไข (อัปเดตข้อมูลช่าง) */}
                   {isTechnicianEditMode && (
                     <div className="mt-4 mb-4"> {/* เพิ่ม margin บน/ล่างเพื่อให้มีช่องว่าง */}
@@ -208,7 +231,7 @@ const UserPopup = ({
                     onChange={handleAdminChange} // <--- ใช้ handleAdminChange
                     required={!isAdminEditMode} // <--- รหัสผ่านจำเป็นเฉพาะตอนสร้างใหม่
                     error={errors.password}
-                    note={isAdminEditMode ? "(ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน)" : ""} // เพิ่มข้อความสำหรับโหมดแก้ไข
+                    // note={isAdminEditMode ? "(ปล่อยว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน)" : ""} // เพิ่มข้อความสำหรับโหมดแก้ไข
                   />
                 </>
               )}
@@ -218,7 +241,6 @@ const UserPopup = ({
                   type="submit"
                   className={`w-full mb-2 mt-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition
                     ${activeTab === "technicians" ? (technicianData.id ? "mt-[134px]" : "mt-[262px]") : activeTab === "admin" ? "mt-[262px]" : ""}`}
-                  // ลบการกำหนด mt- ที่ซับซ้อนออก ให้ใช้ margin-top ค่ากลางๆ แล้วให้เนื้อหาดันปุ่มลงมาเอง
                 >
                   {activeTab === "customers" && (customerData.id ? "บันทึกข้อมูลลูกค้า" : "เพิ่มข้อมูลลูกค้า")}
                   {activeTab === "technicians" && (technicianData.id ? "บันทึกข้อมูลเจ้าหน้าที่" : "เพิ่มข้อมูลเจ้าหน้าที่")}

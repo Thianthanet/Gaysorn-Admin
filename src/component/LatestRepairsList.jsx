@@ -4,7 +4,13 @@ import moment from 'moment'
 import 'moment/locale/th'
 moment.locale('th')
 
-const LatestRepairsList = ({ repairs, STATUS_LABELS, isMobile }) => {
+const LatestRepairsList = ({
+    repairs,
+    STATUS_LABELS,
+    isMobile,
+    startDate,
+    endDate,
+}) => {
     const navigate = useNavigate()
 
     const formatThaiDate = (date) => {
@@ -31,10 +37,15 @@ const LatestRepairsList = ({ repairs, STATUS_LABELS, isMobile }) => {
     //     window.addEventListener("resize", handleResize);
     //     return () => window.removeEventListener("resize", handleResize);
     // }, [isMobile]);
+    
+    const repairsLasterFilter = repairs.map((r) => r.jobNo)
+
+    // console.log("repairs: ", repairs);
+    // console.log("repairsFilter: ", repairsFilter);
 
     return (
-        <button
-            onClick={() => navigate('/job')}
+        <div
+            // onClick={() => navigate(`/job?repairsLasterFilter=${repairsLasterFilter}`)}
             className="bg-[#F4F2ED] rounded-2xl border-[1px] border-[#BC9D72]/90 shadow pr-6 pl-6 pt-4">
             <div className="flex flex-col justify-start h-full pb-4">
                 <h2 className={`flex items-start font-semibold mb-2 text-[#837958] ${isMobile ? "text-[18px]" : "text-[26px]"}`}>
@@ -44,8 +55,15 @@ const LatestRepairsList = ({ repairs, STATUS_LABELS, isMobile }) => {
                 <ul className="space-y-2">
                     {repairs.slice(0, 10).map((item) => {
                         const companyName = item.companyName?.trim() || "-";
+                        console.log("item: ", item)
+                        console.log("item.jobNo: ", item.jobNo)
+                        console.log("item.buildingName: ", item.building?.buildingName)
+                        console.log("item.companyName: ", item.companyName)
                         return (
-                            <li key={item.id} className={`grid grid-cols-2 items-start ${isMobile ? "gap-2" : "gap-[52px]"} text-[#837958]`}>
+                            <button 
+                                key={item.id} 
+                                onClick={() => navigate(`/job?repairsLasterFilter=${item.jobNo}`)}
+                                className={`grid grid-cols-2 items-start ${isMobile ? "gap-2" : "gap-[52px]"} text-[#837958]`}>
                                 <div className="flex flex-col items-start">
                                     <span className={`font-medium text-[#BC9D72] ${isMobile ? "text-[12px]" : "text-[18px]"}`}>
                                         {companyName}
@@ -57,12 +75,12 @@ const LatestRepairsList = ({ repairs, STATUS_LABELS, isMobile }) => {
                                 <span className={`font-medium flex items-start text-[#BC9D72] ${isMobile ? "text-[9px]" : "text-[18px]"}`}>
                                     {STATUS_LABELS[item.status] ?? item.status}
                                 </span>
-                            </li>
+                            </button>
                         );
                     })}
                 </ul>
             </div>
-        </button>
+        </div>
     );
 };
 
