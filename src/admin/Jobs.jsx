@@ -12,6 +12,13 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import JobModal from "../component/JobModal";
 
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale } from "react-datepicker";
+import th from "date-fns/locale/th";
+
+registerLocale("th", th);
+
 const Jobs = () => {
   const [jobs, setJobs] = useState([]);
   const [sortConfig, setSortConfig] = useState({
@@ -29,7 +36,8 @@ const Jobs = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [choices, setChoices] = useState([]);
-  const [selectedChoices, setSelectedChoices] = useState([]);
+  //const [selectedChoices, setSelectedChoices] = useState([]);
+  const [selectedChoice, setSelectedChoice] = useState("");
 
   const [selectedJob, setSelectedJob] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -120,8 +128,12 @@ const Jobs = () => {
       // เจ้าหน้าที่: job.acceptedBy?.name?.trim() || "-",
       เจ้าหน้าที่:
         [
-          job.acceptedBy?.name?.trim() ? `${job.acceptedBy.name} (รับงาน)` : null,
-          job.completedBy?.name?.trim() ? `${job.completedBy.name} (ดำเนินการ)` : null,
+          job.acceptedBy?.name?.trim()
+            ? `${job.acceptedBy.name} (รับงาน)`
+            : null,
+          job.completedBy?.name?.trim()
+            ? `${job.completedBy.name} (ดำเนินการ)`
+            : null,
         ]
           .filter(Boolean)
           .join("\n") || "-",
@@ -129,10 +141,10 @@ const Jobs = () => {
         job.status === "pending"
           ? "รอดำเนินการ"
           : job.status === "in_progress"
-            ? "อยู่ระหว่างดำเนินการ"
-            : job.status === "completed"
-              ? "เสร็จสิ้น"
-              : job.status || "-",
+          ? "อยู่ระหว่างดำเนินการ"
+          : job.status === "completed"
+          ? "เสร็จสิ้น"
+          : job.status || "-",
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
 
@@ -172,10 +184,59 @@ const Jobs = () => {
     เสร็จสิ้น: "completed",
   };
 
+  // const filterJobsBySearch = (jobs) => {
+  //   let filteredJobs = jobs;
+
+  //   // กรองด้วย searchTerm เดิม
+  //   if (searchTerm.trim()) {
+  //     const lowerSearch = searchTerm.toLowerCase();
+  //     const translatedStatus = statusMap[searchTerm.trim()] || lowerSearch;
+
+  //     filteredJobs = filteredJobs.filter((job) => {
+  //       const jobNo = job?.jobNo?.toLowerCase() || "";
+  //       const building = job?.building?.buildingName?.toLowerCase() || "";
+  //       const company = job?.company?.companyName?.toLowerCase() || "";
+  //       const group = job?.choiceDesc?.toLowerCase() || "";
+  //       const status = job?.status?.toLowerCase() || "";
+  //       const name = job?.acceptedBy?.name?.toLowerCase() || "";
+
+  //       return (
+  //         jobNo.includes(lowerSearch) ||
+  //         building.includes(lowerSearch) ||
+  //         company.includes(lowerSearch) ||
+  //         group.includes(lowerSearch) ||
+  //         status.includes(translatedStatus) ||
+  //         name.includes(lowerSearch)
+  //       );
+  //     });
+  //   }
+
+  //   // กรองด้วย selectedBuilding ถ้ามีการเลือก
+  //   if (selectedBuilding && selectedBuilding !== "all") {
+  //     filteredJobs = filteredJobs.filter(
+  //       (job) => job.building?.buildingName === selectedBuilding
+  //     );
+  //   }
+
+  //   if (selectedStatus && selectedStatus !== "all") {
+  //     filteredJobs = filteredJobs.filter(
+  //       (job) => job.status === selectedStatus
+  //     );
+  //   }
+
+  //   // กรองด้วย selectedChoices ถ้ามีการเลือก
+  //   if (selectedChoices.length > 0) {
+  //     filteredJobs = filteredJobs.filter((job) =>
+  //       selectedChoices.includes(job.choiceDesc)
+  //     );
+  //   }
+
+  //   return filteredJobs;
+  // };
+
   const filterJobsBySearch = (jobs) => {
     let filteredJobs = jobs;
 
-    // กรองด้วย searchTerm เดิม
     if (searchTerm.trim()) {
       const lowerSearch = searchTerm.toLowerCase();
       const translatedStatus = statusMap[searchTerm.trim()] || lowerSearch;
@@ -199,7 +260,6 @@ const Jobs = () => {
       });
     }
 
-    // กรองด้วย selectedBuilding ถ้ามีการเลือก
     if (selectedBuilding && selectedBuilding !== "all") {
       filteredJobs = filteredJobs.filter(
         (job) => job.building?.buildingName === selectedBuilding
@@ -212,10 +272,9 @@ const Jobs = () => {
       );
     }
 
-    // กรองด้วย selectedChoices ถ้ามีการเลือก
-    if (selectedChoices.length > 0) {
-      filteredJobs = filteredJobs.filter((job) =>
-        selectedChoices.includes(job.choiceDesc)
+    if (selectedChoice) {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.choiceDesc === selectedChoice
       );
     }
 
@@ -230,7 +289,8 @@ const Jobs = () => {
       if (endDate) params.append("endDate", endDate);
 
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL
+        `${
+          import.meta.env.VITE_API_BASE_URL
         }/api/getAllRepair?${params.toString()}`
       );
 
@@ -349,7 +409,7 @@ const Jobs = () => {
       <div>
         <div className="flex items-center gap-2 flex-wrap mb-6">
           {/* ช่องค้นหา */}
-          <div className="flex items-center flex-1 min-w-[250px] border-b-[1px] border-[#837958]">
+          <div className="flex items-center max-w-[350px] w-full border-b-[1px] border-[#837958]">
             <BiSearchAlt2 size={20} className="text-[#837958] ml-2" />
             <input
               type="text"
@@ -456,85 +516,79 @@ const Jobs = () => {
 
           {/* ปุ่มส่งข้อมูลออก */}
           <button
-            className="px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
+            className="ml-[100px] px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
             onClick={exportToExcel}
           >
             ส่งข้อมูลออก
           </button>
         </div>
         {showFilters && (
-          <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 mb-6">
-            <h3 className="text-xl font-semibold text-[#837958] mb-4 flex items-center gap-2">
-              🔍 กรองข้อมูลงาน
-            </h3>
-
-            {/* วันที่และปุ่มค้นหา */}
-            <div className="flex flex-wrap gap-4 items-end mb-6">
+          <div className="bg-white mb-6">
+            <div className="flex flex-wrap gap-2 items-end mb-4">
               {/* Start Date */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-600 mb-1">
-                  📅 วันที่เริ่มต้น
-                </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-[160px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-[#837958] focus:border-[#837958]"
+              <div className="relative w-[80px]">
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date) => {
+                    setStartDate(date);
+                    handleGetFilteredJobs();
+                  }}
+                  dateFormat="dd/MM/yyyy"
+                  locale="th"
+                  placeholderText="วันที่เริ่ม"
+                  popperPlacement="bottom-end"
+                  className="w-full px-3 py-[6px] rounded-full border text-xs text-[#837958] border-[#e7e3d7] bg-[#FEFEFE] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#837958] placeholder-[#ccc5b8]"
+                  calendarClassName="rounded-lg"
+                />
+                <HiChevronDown
+                  size={14}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#ccc5b8] pointer-events-none"
                 />
               </div>
 
               {/* End Date */}
-              <div className="flex flex-col">
-                <label className="text-sm font-medium text-gray-600 mb-1">
-                  📅 วันที่สิ้นสุด
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-[160px] px-3 py-1.5 border border-gray-300 rounded-lg text-sm shadow-sm focus:ring-[#837958] focus:border-[#837958]"
+              <div className="relative w-[90px]">
+                <DatePicker
+                  selected={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  dateFormat="dd/MM/yyyy"
+                  locale="th"
+                  placeholderText="วันที่สิ้นสุด"
+                  className="w-full px-3 py-[6px] rounded-full border text-xs text-[#837958] border-[#e7e3d7] bg-[#FEFEFE] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#837958] placeholder-[#ccc5b8]"
+                  calendarClassName="rounded-lg"
+                />
+                <HiChevronDown
+                  size={14}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#ccc5b8] pointer-events-none"
                 />
               </div>
 
-              {/* ปุ่มค้นหา */}
-              <div className="flex flex-col">
-                <label className="text-sm invisible mb-1">ค้นหา</label>
-                <button
-                  onClick={handleGetFilteredJobs}
-                  className="px-4 py-2 bg-[#837958] text-white text-sm rounded-lg hover:bg-[#6b6149] transition duration-200 shadow-sm"
+              {/* กลุ่มงาน */}
+              <div className="relative w-[80px]">
+                <select
+                  value={selectedChoice}
+                  onChange={(e) => {
+                    setSelectedChoice(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="appearance-none w-full px-3 py-[6px] rounded-full border text-xs text-[#837958] border-[#e7e3d7] bg-[#FEFEFE] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#837958]"
                 >
-                  ค้นหา
-                </button>
-              </div>
-            </div>
-
-            {/* กลุ่มงาน */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">
-                🛠️ กลุ่มงาน
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-6">
-                {choices.map((choice) => (
-                  <div key={choice.id} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id={`choice-${choice.id}`}
-                      checked={selectedChoices.includes(choice.choiceName)}
-                      onChange={() => handleChoiceChange(choice.choiceName)}
-                      className="h-4 w-4 text-[#837958] focus:ring-[#837958] border-gray-300 rounded"
-                    />
-                    <label
-                      htmlFor={`choice-${choice.id}`}
-                      className="ml-2 text-sm text-gray-700"
-                    >
+                  <option value="">กลุ่มงาน</option>
+                  {choices.map((choice) => (
+                    <option key={choice.id} value={choice.choiceName}>
                       {choice.choiceName}
-                    </label>
-                  </div>
-                ))}
+                    </option>
+                  ))}
+                </select>
+                <HiChevronDown
+                  size={14}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[#ccc5b8] pointer-events-none"
+                />
               </div>
             </div>
           </div>
         )}
+
         <table className="min-w-full border border-[#837958]/50">
           <thead className="">
             <tr className="bg-[#BC9D72]/50 h-[50px] text-[14px]">
@@ -587,14 +641,15 @@ const Jobs = () => {
               >
                 <td className=" px-4 py-2 text-center align-text-top">
                   <span
-                    className={`inline-block w-4 h-4 rounded-full mx-auto ${job.status === "pending"
-                      ? "bg-red-500"
-                      : job.status === "in_progress"
+                    className={`inline-block w-4 h-4 rounded-full mx-auto ${
+                      job.status === "pending"
+                        ? "bg-red-500"
+                        : job.status === "in_progress"
                         ? "bg-yellow-500"
                         : job.status === "completed"
-                          ? "bg-green-500"
-                          : "bg-gray-400"
-                      }`}
+                        ? "bg-green-500"
+                        : "bg-gray-400"
+                    }`}
                   ></span>
                 </td>
                 <td className="align-text-top">
@@ -625,26 +680,28 @@ const Jobs = () => {
                   {formatDateTimeThaiShort(job?.completeDate) || "-"}
                 </td>
                 <td className=" px-4 py-2 min-w-[150px] align-text-top">
-                  {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"} <br />
+                  {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}{" "}
+                  <br />
                   {job?.completedBy?.name?.trim() ? job.completedBy.name : "-"}
                 </td>
                 <td
-                  className={` px-4 py-2 min-w-[160px] align-text-top ${job.status === "pending"
-                    ? "text-red-500"
-                    : job.status === "in_progress"
+                  className={` px-4 py-2 min-w-[160px] align-text-top ${
+                    job.status === "pending"
+                      ? "text-red-500"
+                      : job.status === "in_progress"
                       ? "text-yellow-500"
                       : job.status === "completed"
-                        ? "text-green-500"
-                        : ""
-                    }`}
+                      ? "text-green-500"
+                      : ""
+                  }`}
                 >
                   {job.status === "pending"
                     ? "รอดำเนินการ"
                     : job.status === "in_progress"
-                      ? "อยู่ระหว่างดำเนินการ"
-                      : job.status === "completed"
-                        ? "เสร็จสิ้น"
-                        : job.status}
+                    ? "อยู่ระหว่างดำเนินการ"
+                    : job.status === "completed"
+                    ? "เสร็จสิ้น"
+                    : job.status}
                 </td>
               </tr>
             ))}
