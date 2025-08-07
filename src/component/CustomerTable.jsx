@@ -8,8 +8,8 @@ const CustomerTable = ({
   confirmDelete,
 }) => {
   return (
-    <div className="bg-white shadow-md overflow-hidden">
-      <table className="min-w-full leading-normal">
+    <div className="overflow-x-auto overflow-y-auto max-h-[80vh] relative text-[14px] text-center">
+      <table className="min-w-full table-fixed leading-normal border-t-[1px] border-r-[1px] border-l-[1px] border-[#837958]">
         <thead>
           <tr>
             <TableHead className="w-1 border-l-[1px]">ลำดับ</TableHead>
@@ -17,8 +17,8 @@ const CustomerTable = ({
             <TableHead className="w-48">บริษัท/ร้านค้า</TableHead>
             <TableHead className="w-1">ยูนิต</TableHead>
             <TableHead className="w-52">ลูกค้า</TableHead>
-            <TableHead className="w-32">เบอร์โทรศัพท์</TableHead>
-            <TableHead className="w-32">สถานะ Line</TableHead>
+            <TableHead className="w-36">เบอร์โทรศัพท์</TableHead>
+            <TableHead className="w-36">สถานะ Line</TableHead>
             <TableHead className="w-28 border-r-[1px]">จัดการ</TableHead>
           </tr>
         </thead>
@@ -35,16 +35,20 @@ const CustomerTable = ({
                 </TableCell>
                 <TableCell>{customer.unit?.unitName || "-"}</TableCell>
                 <TableCell>{customer.name || "-"}</TableCell>
-                <TableCell>{customer.phone || "-"}</TableCell>
-                <TableCell className="pl-12">
+                <TableCell>
+                  {customer.phone?.startsWith("NO_PHONE_")
+                    ? "-"
+                    : (customer.phone || "-")}
+                </TableCell>
+                <TableCell className="text-center leading-none">
                   {customer.userId ? (
                     <FaLine
-                      className="text-green-500 text-xl"
+                      className="text-green-500 text-xl inline-block"
                       title="เชื่อมต่อ Line แล้ว"
                     />
                   ) : (
                     <FaLine
-                      className="text-red-500 text-xl"
+                      className="text-red-500 text-xl inline-block"
                       title="ยังไม่ได้เชื่อมต่อ Line"
                     />
                   )}
@@ -73,7 +77,7 @@ const CustomerTable = ({
             <tr>
               <td
                 colSpan="9"
-                className="px-5 py-4 text-center text-gray-500"
+                className="px-4 py-4 text-center text-gray-500 border-b-[1px] border-[#837958]"
               >
                 ไม่พบข้อมูลลูกค้า
               </td>
@@ -87,7 +91,7 @@ const CustomerTable = ({
 
 const TableHead = ({ children, className = "" }) => (
   <th
-    className={`px-4 py-3 border-t-[1px] border-[#837958] bg-[#BC9D72]/50 text-center text-sm font-semibold text-black uppercase tracking-wider ${className}`}
+    className={`sticky top-0 z-10 px-4 py-3 border-t-[1px] border-[#837958] bg-[#ddceb8] font-semibold text-black h-[44px] text-center uppercase tracking-wider ${className}`}
   >
     {children}
   </th>
@@ -95,7 +99,7 @@ const TableHead = ({ children, className = "" }) => (
 
 const TableCell = ({ children, className = "" }) => (
   <td
-    className={`px-4 py-2 border-b-[1px] border-[#837958] bg-white text-sm text-center ${className}`}
+    className={`px-4 py-2 border-b-[1px] border-[#837958] bg-white ${className}`}
   >
     {children}
   </td>

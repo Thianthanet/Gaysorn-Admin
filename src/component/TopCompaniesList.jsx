@@ -6,7 +6,7 @@ const TopCompaniesList = ({ companies, isMobile }) => {
 
     return (
         <button
-            onClick={() => navigate('/job')}
+            onClick={() => navigate('/report')}
             className="bg-[#F4F2ED] rounded-2xl border border-[#BC9D72]/90 shadow pt-4 pb-4 pr-6 pl-6 w-full text-left hover:shadow-lg transition"
         >
             <div className="flex flex-col justify-start h-full">
