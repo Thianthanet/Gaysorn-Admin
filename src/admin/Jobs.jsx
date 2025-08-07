@@ -278,6 +278,49 @@ const Jobs = () => {
       );
     }
 
+    const adjustedStartDate = startDate
+      ? new Date(
+          startDate.getFullYear(),
+          startDate.getMonth(),
+          startDate.getDate(),
+          0,
+          0,
+          0,
+          0
+        )
+      : null;
+
+    const adjustedEndDate = endDate
+      ? new Date(
+          endDate.getFullYear(),
+          endDate.getMonth(),
+          endDate.getDate(),
+          23,
+          59,
+          59,
+          999
+        )
+      : null;
+
+    // ✅ FIXED: ใช้ filteredJobs ต่อจากที่กรองไว้แล้ว ไม่ใช่ jobs ดิบ
+    filteredJobs = filteredJobs.filter((job) => {
+      const jobDate = new Date(job.createDate);
+
+      if (adjustedStartDate && adjustedEndDate) {
+        return jobDate >= adjustedStartDate && jobDate <= adjustedEndDate;
+      } else if (adjustedStartDate && !adjustedEndDate) {
+        // ✅ ถ้าเลือก startDate อย่างเดียว: แสดงเฉพาะวันนั้น
+        const endOfStartDate = new Date(adjustedStartDate);
+        endOfStartDate.setHours(23, 59, 59, 999);
+        return jobDate >= adjustedStartDate && jobDate <= endOfStartDate;
+      } else if (!adjustedStartDate && adjustedEndDate) {
+        // ✅ ถ้าเลือก endDate อย่างเดียว: แสดงตั้งแต่วันนั้นขึ้นไป
+        return jobDate >= adjustedEndDate;
+      }
+
+      return true; // ถ้าไม่เลือกวันใดเลย
+    });
+
     return filteredJobs;
   };
 
@@ -550,7 +593,10 @@ const Jobs = () => {
               <div className="relative w-[90px]">
                 <DatePicker
                   selected={endDate}
-                  onChange={(date) => setEndDate(date)}
+                  onChange={(date) => {
+                    setEndDate(date);
+                    handleGetFilteredJobs();
+                  }}
                   dateFormat="dd/MM/yyyy"
                   locale="th"
                   placeholderText="วันที่สิ้นสุด"
@@ -574,11 +620,17 @@ const Jobs = () => {
                   className="appearance-none w-full px-3 py-[6px] rounded-full border text-xs text-[#837958] border-[#e7e3d7] bg-[#FEFEFE] shadow-sm focus:outline-none focus:ring-1 focus:ring-[#837958]"
                 >
                   <option value="">กลุ่มงาน</option>
-                  {choices.map((choice) => (
-                    <option key={choice.id} value={choice.choiceName}>
-                      {choice.choiceName}
-                    </option>
-                  ))}
+                  {[...choices]
+                    .sort((a, b) => {
+                      if (a.choiceName === "อื่น ๆ") return 1;
+                      if (b.choiceName === "อื่น ๆ") return -1;
+                      return a.choiceName.localeCompare(b.choiceName, "th");
+                    })
+                    .map((choice) => (
+                      <option key={choice.id} value={choice.choiceName}>
+                        {choice.choiceName}
+                      </option>
+                    ))}
                 </select>
                 <HiChevronDown
                   size={14}
@@ -588,125 +640,128 @@ const Jobs = () => {
             </div>
           </div>
         )}
-
-        <table className="min-w-full border border-[#837958]/50">
-          <thead className="">
-            <tr className="bg-[#BC9D72]/50 h-[50px] text-[14px]">
-              <th className="min-w-[10px]"></th>
-              <th>ลำดับ</th>
-              <th className="text-center">
-                <TiStarFullOutline className="text-2xl mx-auto" />
-              </th>
-              <th>เลขงาน</th>
-              <th>อาคาร</th>
-              <th>บริษัท</th>
-              <th>กลุ่มงาน</th>
-              <th
-                onClick={() => requestSort("createDate")}
-                className="cursor-pointer hover:underline"
-              >
-                วันที่แจ้ง {getSortIndicator("createDate")}
-                {getSortPriority("createDate") && (
-                  <sup>{getSortPriority("createDate")}</sup>
-                )}
-              </th>
-              <th
-                onClick={() => requestSort("acceptDate")}
-                className="cursor-pointer hover:underline"
-              >
-                วันที่รับงาน {getSortIndicator("acceptDate")}
-                {getSortPriority("acceptDate") && (
-                  <sup>{getSortPriority("acceptDate")}</sup>
-                )}
-              </th>
-              <th
-                onClick={() => requestSort("completeDate")}
-                className="cursor-pointer hover:underline"
-              >
-                วันที่เสร็จสิ้น {getSortIndicator("completeDate")}
-                {getSortPriority("completeDate") && (
-                  <sup>{getSortPriority("completeDate")}</sup>
-                )}
-              </th>
-              <th>เจ้าหน้าที่</th>
-              <th>สถานะ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {getPaginatedJobs().map((job, index) => (
-              <tr
-                key={job.id}
-                className="text-center border-b text-[12px]"
-                onClick={() => openJobModal(job)}
-              >
-                <td className=" px-4 py-2 text-center align-text-top">
-                  <span
-                    className={`inline-block w-4 h-4 rounded-full mx-auto ${
-                      job.status === "pending"
-                        ? "bg-red-500"
-                        : job.status === "in_progress"
-                        ? "bg-yellow-500"
-                        : job.status === "completed"
-                        ? "bg-green-500"
-                        : "bg-gray-400"
-                    }`}
-                  ></span>
-                </td>
-                <td className="align-text-top">
-                  {(currentPage - 1) * itemsPerPage + index + 1}
-                </td>
-                <td className=" px-4 py-2 align-text-top">
-                  {job?.workStar || "-"}
-                </td>
-                <td className=" px-4 py-2 align-text-top">
-                  {job?.jobNo || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[160px] align-text-top">
-                  {job.building?.buildingName || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[160px] align-text-top">
-                  {job.company?.companyName || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[160px] align-text-top">
-                  {job?.choiceDesc || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[200px] align-text-top">
-                  {formatDateTimeThaiShort(job?.createDate) || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[200px] align-text-top">
-                  {formatDateTimeThaiShort(job?.acceptDate) || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[200px] align-text-top">
-                  {formatDateTimeThaiShort(job?.completeDate) || "-"}
-                </td>
-                <td className=" px-4 py-2 min-w-[150px] align-text-top">
-                  {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}{" "}
-                  <br />
-                  {job?.completedBy?.name?.trim() ? job.completedBy.name : "-"}
-                </td>
-                <td
-                  className={` px-4 py-2 min-w-[160px] align-text-top ${
-                    job.status === "pending"
-                      ? "text-red-500"
-                      : job.status === "in_progress"
-                      ? "text-yellow-500"
-                      : job.status === "completed"
-                      ? "text-green-500"
-                      : ""
-                  }`}
+        <div className="overflow-x-auto w-full">
+          <table className="min-w-full border border-[#837958]/50">
+            <thead className="">
+              <tr className="bg-[#BC9D72]/50 h-[50px] text-[14px]">
+                <th className="min-w-[10px]"></th>
+                <th>ลำดับ</th>
+                <th className="text-center">
+                  <TiStarFullOutline className="text-2xl mx-auto" />
+                </th>
+                <th>เลขงาน</th>
+                <th>อาคาร</th>
+                <th>บริษัท</th>
+                <th>กลุ่มงาน</th>
+                <th
+                  onClick={() => requestSort("createDate")}
+                  className="cursor-pointer hover:underline"
                 >
-                  {job.status === "pending"
-                    ? "รอดำเนินการ"
-                    : job.status === "in_progress"
-                    ? "อยู่ระหว่างดำเนินการ"
-                    : job.status === "completed"
-                    ? "เสร็จสิ้น"
-                    : job.status}
-                </td>
+                  วันที่แจ้ง {getSortIndicator("createDate")}
+                  {getSortPriority("createDate") && (
+                    <sup>{getSortPriority("createDate")}</sup>
+                  )}
+                </th>
+                <th
+                  onClick={() => requestSort("acceptDate")}
+                  className="cursor-pointer hover:underline"
+                >
+                  วันที่รับงาน {getSortIndicator("acceptDate")}
+                  {getSortPriority("acceptDate") && (
+                    <sup>{getSortPriority("acceptDate")}</sup>
+                  )}
+                </th>
+                <th
+                  onClick={() => requestSort("completeDate")}
+                  className="cursor-pointer hover:underline"
+                >
+                  วันที่เสร็จสิ้น {getSortIndicator("completeDate")}
+                  {getSortPriority("completeDate") && (
+                    <sup>{getSortPriority("completeDate")}</sup>
+                  )}
+                </th>
+                <th>เจ้าหน้าที่</th>
+                <th>สถานะ</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {getPaginatedJobs().map((job, index) => (
+                <tr
+                  key={job.id}
+                  className="text-center border-b text-[12px]"
+                  onClick={() => openJobModal(job)}
+                >
+                  <td className=" px-4 py-2 text-center align-text-top">
+                    <span
+                      className={`inline-block w-4 h-4 rounded-full mx-auto ${
+                        job.status === "pending"
+                          ? "bg-red-500"
+                          : job.status === "in_progress"
+                          ? "bg-yellow-500"
+                          : job.status === "completed"
+                          ? "bg-green-500"
+                          : "bg-gray-400"
+                      }`}
+                    ></span>
+                  </td>
+                  <td className="align-text-top">
+                    {(currentPage - 1) * itemsPerPage + index + 1}
+                  </td>
+                  <td className=" px-4 py-2 align-text-top">
+                    {job?.workStar || "-"}
+                  </td>
+                  <td className=" px-4 py-2 align-text-top">
+                    {job?.jobNo || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[160px] align-text-top">
+                    {job.building?.buildingName || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[160px] align-text-top">
+                    {job.company?.companyName || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[160px] align-text-top">
+                    {job?.choiceDesc || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[200px] align-text-top">
+                    {formatDateTimeThaiShort(job?.createDate) || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[200px] align-text-top">
+                    {formatDateTimeThaiShort(job?.acceptDate) || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[200px] align-text-top">
+                    {formatDateTimeThaiShort(job?.completeDate) || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[150px] align-text-top">
+                    {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}{" "}
+                    <br />
+                    {job?.completedBy?.name?.trim()
+                      ? job.completedBy.name
+                      : "-"}
+                  </td>
+                  <td
+                    className={` px-4 py-2 min-w-[160px] align-text-top ${
+                      job.status === "pending"
+                        ? "text-red-500"
+                        : job.status === "in_progress"
+                        ? "text-yellow-500"
+                        : job.status === "completed"
+                        ? "text-green-500"
+                        : ""
+                    }`}
+                  >
+                    {job.status === "pending"
+                      ? "รอดำเนินการ"
+                      : job.status === "in_progress"
+                      ? "อยู่ระหว่างดำเนินการ"
+                      : job.status === "completed"
+                      ? "เสร็จสิ้น"
+                      : job.status}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
