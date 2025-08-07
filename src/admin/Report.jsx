@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import AdminLayout from "./AdminLayout";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 
 //component
 import JobFiltersBar from "../component/JobFiltersBar";
@@ -15,6 +18,33 @@ const Report = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const getStartAndEndDate = () => {
+    let start, end;
+
+    if (timePeriod === "daily") {
+      start = new Date(selectedYear, selectedMonth - 1, 1);
+      end = new Date(selectedYear, selectedMonth, 0); // วันสุดท้ายของเดือน
+    } else if (timePeriod === "weekly") {
+      start = new Date(selectedYear, selectedMonth - 1, 1);
+      end = new Date(selectedYear, selectedMonth, 0);
+    } else if (timePeriod === "yearly") {
+      start = new Date(selectedYear, 0, 1);
+      end = new Date(selectedYear, 11, 31);
+    }
+
+    return {
+      startDate: formatDateToYYYYMMDD(start),
+      endDate: formatDateToYYYYMMDD(end),
+    };
+  };
+
+  const formatDateToYYYYMMDD = (date) => {
+    const d = new Date(date);
+    const month = `${d.getMonth() + 1}`.padStart(2, "0");
+    const day = `${d.getDate()}`.padStart(2, "0");
+    return `${d.getFullYear()}-${month}-${day}`;
+  };
 
   useEffect(() => {
     fetchReportData();
@@ -31,10 +61,10 @@ const Report = () => {
   const handleGetCompanyReport = async () => {
     setLoading(true);
     try {
+      const { startDate, endDate } = getStartAndEndDate();
       const params = {
-        period: timePeriod,
-        year: selectedYear,
-        ...(timePeriod === "daily" && { month: selectedMonth }),
+        startDate,
+        endDate,
       };
 
       const response = await axios.get(
@@ -121,31 +151,53 @@ const Report = () => {
   const handleGetTechnicianReport = async () => {
     setLoading(true);
     try {
-      const params = {
-        period: timePeriod,
-        year: selectedYear,
-        ...(timePeriod === "daily" && { month: selectedMonth }),
-      };
+      const { startDate, endDate } = getStartAndEndDate();
 
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/api/getTechnicianReport`,
-        { params }
+        {
+          params: {
+            startDate,
+            endDate,
+          },
+        }
       );
-      console.log(response.data.data);
 
-      const transformTechnicianData = (data, period) => {
+      const transformTechnicianData = (data) => {
         return data.map((item) => {
           let timeData = {};
-          if (period === "daily") {
+          const weekRanges = getWeeklyRanges(selectedYear, selectedMonth);
+          const weekMap = {};
+          weekRanges.forEach((range, index) => {
+            const weekKey = `week_${index + 1}`;
+            weekMap[weekKey] = 0;
+
+            // รวมค่าจากวันทั้งหมดในช่วงนั้น
+            Object.entries(item.weekly || {}).forEach(([day, value]) => {
+              const dayDate = dayjs(day);
+              if (
+                range &&
+                range.start &&
+                range.end &&
+                dayDate.isBetween(range.start, range.end, "day", "[]")
+              ) {
+                weekMap[weekKey] += value;
+              }
+            });
+          });
+
+          Object.assign(timeData, weekMap);
+
+          if (timePeriod === "daily") {
             Object.entries(item.daily || {}).forEach(([key, value]) => {
               const dayNum = key.replace("day", "");
               timeData[`day_${dayNum}`] = value;
             });
-          } else if (period === "weekly") {
+          } else if (timePeriod === "weekly") {
             Object.entries(item.weekly || {}).forEach(([day, value], index) => {
               timeData[`week_${index + 1}`] = value;
             });
-          } else if (period === "yearly") {
+          } else if (timePeriod === "yearly") {
             const monthMap = {
               Jan: 1,
               Feb: 2,
@@ -172,11 +224,8 @@ const Report = () => {
           };
         });
       };
-      setTechnician(transformTechnicianData(response.data.data, timePeriod));
-      console.log(
-        "แปลงแล้ว technician:",
-        transformTechnicianData(response.data.data, timePeriod)
-      );
+
+      setTechnician(transformTechnicianData(response.data.data));
     } catch (error) {
       console.error("Error fetching technician report:", error);
     } finally {
@@ -330,25 +379,7 @@ const Report = () => {
       }
       return columns;
     } else if (timePeriod === "weekly") {
-      return [
-        { key: "week_1", label: "สัปดาห์ 1", fullLabel: "สัปดาห์ที่ 1 (1-7)" },
-        { key: "week_2", label: "สัปดาห์ 2", fullLabel: "สัปดาห์ที่ 2 (8-14)" },
-        {
-          key: "week_3",
-          label: "สัปดาห์ 3",
-          fullLabel: "สัปดาห์ที่ 3 (15-21)",
-        },
-        {
-          key: "week_4",
-          label: "สัปดาห์ 4",
-          fullLabel: "สัปดาห์ที่ 4 (22-28)",
-        },
-        {
-          key: "week_5",
-          label: "สัปดาห์ 5",
-          fullLabel: "สัปดาห์ที่ 5 (29-31)",
-        },
-      ];
+      return getWeeklyRanges(selectedYear, selectedMonth);
     } else if (timePeriod === "yearly") {
       return months.map((month) => ({
         key: `month_${month.value}`,
@@ -667,7 +698,7 @@ const Report = () => {
                         {completeMe + (item.tekenFromOtherCount || 0) || 0}
                       </td>
                       <td className="py-2 px-4 border-b text-center align-middle">
-                        {item.successRate || "0"}% 
+                        {item.successRate || "0"}%
                       </td>
                     </tr>
                   );
