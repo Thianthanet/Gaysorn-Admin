@@ -9,6 +9,9 @@ import localeData from "dayjs/plugin/localeData";
 import "dayjs/locale/th";
 import ReportCustomer from "./ReportCustomer";
 import ReportTechnician from "./ReportTechnician";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { BiSearchAlt2 } from "react-icons/bi";
 
 dayjs.extend(isBetween);
 dayjs.extend(isoWeek);
@@ -20,12 +23,19 @@ const Report = () => {
   const [technician, setTechnician] = useState([]);
   const [allCustomers, setAllCustomers] = useState([]); // เก็บข้อมูลลูกค้าทั้งหมด
   const [allTechnicians, setAllTechnicians] = useState([]); // เก็บข้อมูลพนักงานทั้งหมด
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedChoice, setSelectedChoice] = useState("");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+
   const [activeTab, setActiveTab] = useState("customer");
   const [timePeriod, setTimePeriod] = useState("weekly");
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [loading, setLoading] = useState(false);
+  const [jobs, setJobs] = useState([]);
+
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,6 +47,11 @@ const Report = () => {
 
   const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
   const [isTechnicianModalOpen, setIsTechnicianModalOpen] = useState(false);
+
+  const [sortConfig, setSortConfig] = useState({
+    keys: ["createDate"], // Array to support multiple sort keys
+    directions: ["desc"], // Corresponding directions for each key
+  });
 
   const handleOpenModalCustomer = (companyId) => {
     setSelectedCompanyId(companyId);
@@ -58,6 +73,196 @@ const Report = () => {
     setSelectedTechnicianId(null);
   };
 
+  const exportToExcel = () => {
+    const isCustomerTab = activeTab === "customer";
+    const columns = timeColumns;
+
+    const dataToExport = (
+      isCustomerTab ? filteredCustomers : filteredTechnicians
+    ).map((item, index) => {
+      const base = {
+        ลำดับ: index + 1,
+      };
+
+      if (isCustomerTab) {
+        base["ชื่อบริษัท"] = item.companyName;
+        base["อาคาร"] = item.buildingName;
+
+        columns.forEach((col) => {
+          base[col.label] = item[col.key] || 0;
+        });
+
+        base["รวม"] = item.total || 0;
+        base["เสร็จสิ้น"] = item.completed || 0;
+        base["เปอร์เซ็นต์สำเร็จ"] = item.completedPercent
+          ? `${item.completedPercent}%`
+          : "0%";
+      } else {
+        base["ดาว"] =
+          item.averageStar != null ? item.averageStar.toFixed(1) : "-";
+        base["ชื่อพนักงาน"] = item.technicianName;
+        base["สังกัด"] = Array.isArray(item.buildings)
+          ? item.buildings.join(", ")
+          : item.buildings;
+
+        columns.forEach((col) => {
+          base[col.label] = item[col.key] || 0;
+        });
+
+        const completeMe = item.completedJobs - (item.tekenFromOtherCount || 0);
+        const completedTotal = completeMe + (item.tekenFromOtherCount || 0);
+
+        base["งานที่รับ"] = item.acceptedJobs || 0;
+        base["งานที่ดำเนินการเอง"] = completeMe;
+        base["งานที่ดำเนินการแทน"] = item.tekenFromOtherCount || 0;
+        base["เสร็จสิ้น"] = completedTotal;
+        base["เปอร์เซ็นต์จบงาน"] = item.successRate
+          ? `${item.successRate}%`
+          : "0%";
+      }
+
+      return base;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      isCustomerTab ? "ลูกค้า" : "เจ้าหน้าที่"
+    );
+
+    const fileName = `report_${
+      isCustomerTab ? "customer" : "technician"
+    }_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, fileName);
+  };
+
+  const filterJobsBySearch = (jobs) => {
+    let filteredJobs = jobs;
+
+    if (searchTerm.trim()) {
+      const lowerSearch = searchTerm.toLowerCase();
+      const translatedStatus = statusMap[searchTerm.trim()] || lowerSearch;
+
+      filteredJobs = filteredJobs.filter((job) => {
+        const jobNo = job?.jobNo?.toLowerCase() || "";
+        const building = job?.building?.buildingName?.toLowerCase() || "";
+        const company = job?.company?.companyName?.toLowerCase() || "";
+        const group = job?.choiceDesc?.toLowerCase() || "";
+        const status = job?.status?.toLowerCase() || "";
+        const name = job?.acceptedBy?.name?.toLowerCase() || "";
+
+        return (
+          jobNo.includes(lowerSearch) ||
+          building.includes(lowerSearch) ||
+          company.includes(lowerSearch) ||
+          group.includes(lowerSearch) ||
+          status.includes(translatedStatus) ||
+          name.includes(lowerSearch)
+        );
+      });
+    }
+
+    if (selectedBuilding && selectedBuilding !== "all") {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.building?.buildingName === selectedBuilding
+      );
+    }
+
+    if (selectedStatus && selectedStatus !== "all") {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.status === selectedStatus
+      );
+    }
+
+    if (selectedChoice) {
+      filteredJobs = filteredJobs.filter(
+        (job) => job.choiceDesc === selectedChoice
+      );
+    }
+
+    const adjustedStartDate = startDate
+      ? new Date(
+          startDate.getFullYear(),
+          startDate.getMonth(),
+          startDate.getDate(),
+          0,
+          0,
+          0,
+          0
+        )
+      : null;
+
+    const adjustedEndDate = endDate
+      ? new Date(
+          endDate.getFullYear(),
+          endDate.getMonth(),
+          endDate.getDate(),
+          23,
+          59,
+          59,
+          999
+        )
+      : null;
+
+    // ✅ FIXED: ใช้ filteredJobs ต่อจากที่กรองไว้แล้ว ไม่ใช่ jobs ดิบ
+    filteredJobs = filteredJobs.filter((job) => {
+      const jobDate = new Date(job.createDate);
+
+      if (adjustedStartDate && adjustedEndDate) {
+        return jobDate >= adjustedStartDate && jobDate <= adjustedEndDate;
+      } else if (adjustedStartDate && !adjustedEndDate) {
+        // ✅ ถ้าเลือก startDate อย่างเดียว: แสดงเฉพาะวันนั้น
+        const endOfStartDate = new Date(adjustedStartDate);
+        endOfStartDate.setHours(23, 59, 59, 999);
+        return jobDate >= adjustedStartDate && jobDate <= endOfStartDate;
+      } else if (!adjustedStartDate && adjustedEndDate) {
+        // ✅ ถ้าเลือก endDate อย่างเดียว: แสดงตั้งแต่วันนั้นขึ้นไป
+        return jobDate >= adjustedEndDate;
+      }
+
+      return true; // ถ้าไม่เลือกวันใดเลย
+    });
+
+    return filteredJobs;
+  };
+
+  const getSortedJobs = () => {
+    if (!sortConfig.keys.length) return jobs;
+
+    return [...jobs].sort((a, b) => {
+      for (let i = 0; i < sortConfig.keys.length; i++) {
+        const key = sortConfig.keys[i];
+        const direction = sortConfig.directions[i];
+
+        const aValue = a[key];
+        const bValue = b[key];
+
+        // Handle date comparisons
+        if (key.includes("Date")) {
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
+
+          if (aDate < bDate) return direction === "asc" ? -1 : 1;
+          if (aDate > bDate) return direction === "asc" ? 1 : -1;
+        } else {
+          // Handle string/number comparisons
+          if (aValue < bValue) return direction === "asc" ? -1 : 1;
+          if (aValue > bValue) return direction === "asc" ? 1 : -1;
+        }
+      }
+      return 0;
+    });
+  };
+
   // โหลดข้อมูลทั้งหมดครั้งแรก
   useEffect(() => {
     const fetchAllData = async () => {
@@ -65,16 +270,28 @@ const Report = () => {
         // โหลดข้อมูลลูกค้าทั้งหมด
         const customerResponse = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/getCompanyRepairCount`,
-          { params: { startDate: "2000-01-01", endDate: dayjs().add(10, 'year').format("YYYY-MM-DD") } }
+          {
+            params: {
+              startDate: "2000-01-01",
+              endDate: dayjs().add(10, "year").format("YYYY-MM-DD"),
+            },
+          }
         );
         setAllCustomers(customerResponse.data.data);
+        setJobs(customerResponse.data.data);
 
         // โหลดข้อมูลพนักงานทั้งหมด
         const technicianResponse = await axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/api/getTechnicianReport`,
-          { params: { startDate: "2000-01-01", endDate: dayjs().add(10, 'year').format("YYYY-MM-DD") } }
+          {
+            params: {
+              startDate: "2000-01-01",
+              endDate: dayjs().add(10, "year").format("YYYY-MM-DD"),
+            },
+          }
         );
         setAllTechnicians(technicianResponse.data.data);
+        setJobs(technicianResponse.data.data);
 
         // โหลดข้อมูลปัจจุบัน
         fetchReportData();
@@ -87,19 +304,21 @@ const Report = () => {
   }, []);
 
   useEffect(() => {
-    handleGetBuilding()
-  }, [])
+    handleGetBuilding();
+  }, []);
 
   const handleGetBuilding = async () => {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`,)
+        `${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`
+      );
       console.log(res.data.data);
       setBuildings(res.data.data);
+      setJobs(res.data.data);
     } catch (error) {
       console.error("Error fetching buildings:", error);
     }
-  }
+  };
 
   // Helper functions for date calculations
   const getWeekRange = (date) => {
@@ -109,7 +328,10 @@ const Report = () => {
   };
 
   const getMonthRange = (year, month) => {
-    const start = dayjs().year(year).month(month - 1).startOf("month");
+    const start = dayjs()
+      .year(year)
+      .month(month - 1)
+      .startOf("month");
     const end = start.endOf("month");
     return { start, end };
   };
@@ -154,8 +376,11 @@ const Report = () => {
       );
 
       // ผสานข้อมูลส่วนตัวจาก allCustomers กับข้อมูลช่วงเวลาจาก API
-      const mergedData = allCustomers.map(customer => {
-        const timeData = response.data.data.find(item => item.companyId === customer.companyId) || {};
+      const mergedData = allCustomers.map((customer) => {
+        const timeData =
+          response.data.data.find(
+            (item) => item.companyId === customer.companyId
+          ) || {};
 
         let processedData = { ...customer };
 
@@ -186,9 +411,18 @@ const Report = () => {
           }
         } else if (timePeriod === "yearly") {
           const monthMap = {
-            Jan: "month_1", Feb: "month_2", Mar: "month_3", Apr: "month_4",
-            May: "month_5", Jun: "month_6", Jul: "month_7", Aug: "month_8",
-            Sep: "month_9", Oct: "month_10", Nov: "month_11", Dec: "month_12"
+            Jan: "month_1",
+            Feb: "month_2",
+            Mar: "month_3",
+            Apr: "month_4",
+            May: "month_5",
+            Jun: "month_6",
+            Jul: "month_7",
+            Aug: "month_8",
+            Sep: "month_9",
+            Oct: "month_10",
+            Nov: "month_11",
+            Dec: "month_12",
           };
 
           Object.entries(monthMap).forEach(([monthKey, monthField]) => {
@@ -224,8 +458,11 @@ const Report = () => {
       console.log(response.data.data);
 
       // ผสานข้อมูลส่วนตัวจาก allTechnicians กับข้อมูลช่วงเวลาจาก API
-      const mergedData = allTechnicians.map(tech => {
-        const timeData = response.data.data.find(item => item.techUserId === tech.techUserId) || {};
+      const mergedData = allTechnicians.map((tech) => {
+        const timeData =
+          response.data.data.find(
+            (item) => item.techUserId === tech.techUserId
+          ) || {};
 
         let processedData = { ...tech };
 
@@ -256,9 +493,18 @@ const Report = () => {
           }
         } else if (timePeriod === "yearly") {
           const monthMap = {
-            Jan: "month_1", Feb: "month_2", Mar: "month_3", Apr: "month_4",
-            May: "month_5", Jun: "month_6", Jul: "month_7", Aug: "month_8",
-            Sep: "month_9", Oct: "month_10", Nov: "month_11", Dec: "month_12"
+            Jan: "month_1",
+            Feb: "month_2",
+            Mar: "month_3",
+            Apr: "month_4",
+            May: "month_5",
+            Jun: "month_6",
+            Jul: "month_7",
+            Aug: "month_8",
+            Sep: "month_9",
+            Oct: "month_10",
+            Nov: "month_11",
+            Dec: "month_12",
           };
 
           Object.entries(monthMap).forEach(([monthKey, monthField]) => {
@@ -289,8 +535,18 @@ const Report = () => {
   const generateCustomerColumns = () => {
     const thaiDayNames = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
     const thaiMonthNames = [
-      "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
-      "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+      "ม.ค.",
+      "ก.พ.",
+      "มี.ค.",
+      "เม.ย.",
+      "พ.ค.",
+      "มิ.ย.",
+      "ก.ค.",
+      "ส.ค.",
+      "ก.ย.",
+      "ต.ค.",
+      "พ.ย.",
+      "ธ.ค.",
     ];
 
     if (timePeriod === "weekly") {
@@ -302,8 +558,10 @@ const Report = () => {
         columns.push({
           key: `day_${i + 1}`,
           label: `${thaiDayNames[currentDay.day()]} ${currentDay.date()}`,
-          fullLabel: `วันที่ ${currentDay.date()} ${thaiMonthNames[currentDay.month()]} (${thaiDayNames[currentDay.day()]})`,
-          date: currentDay
+          fullLabel: `วันที่ ${currentDay.date()} ${
+            thaiMonthNames[currentDay.month()]
+          } (${thaiDayNames[currentDay.day()]})`,
+          date: currentDay,
         });
       }
 
@@ -313,16 +571,28 @@ const Report = () => {
       return [
         { key: "week_1", label: "สัปดาห์ 1", fullLabel: "สัปดาห์ที่ 1 (1-7)" },
         { key: "week_2", label: "สัปดาห์ 2", fullLabel: "สัปดาห์ที่ 2 (8-14)" },
-        { key: "week_3", label: "สัปดาห์ 3", fullLabel: "สัปดาห์ที่ 3 (15-21)" },
-        { key: "week_4", label: "สัปดาห์ 4", fullLabel: "สัปดาห์ที่ 4 (22-28)" },
-        { key: "week_5", label: "สัปดาห์ 5", fullLabel: "สัปดาห์ที่ 5 (29-31)" },
+        {
+          key: "week_3",
+          label: "สัปดาห์ 3",
+          fullLabel: "สัปดาห์ที่ 3 (15-21)",
+        },
+        {
+          key: "week_4",
+          label: "สัปดาห์ 4",
+          fullLabel: "สัปดาห์ที่ 4 (22-28)",
+        },
+        {
+          key: "week_5",
+          label: "สัปดาห์ 5",
+          fullLabel: "สัปดาห์ที่ 5 (29-31)",
+        },
       ];
     } else if (timePeriod === "yearly") {
       return thaiMonthNames.map((month, index) => ({
         key: `month_${index + 1}`,
         label: month,
         fullLabel: `เดือน${month}`,
-        monthIndex: index + 1
+        monthIndex: index + 1,
       }));
     }
 
@@ -366,7 +636,11 @@ const Report = () => {
     if (timePeriod === "weekly") {
       // Keep the same week number in the new month
       const weekNum = dayjs(selectedDate).isoWeek();
-      const newDate = dayjs().year(selectedYear).month(month - 1).isoWeek(weekNum).startOf("isoWeek");
+      const newDate = dayjs()
+        .year(selectedYear)
+        .month(month - 1)
+        .isoWeek(weekNum)
+        .startOf("isoWeek");
       setSelectedDate(newDate);
     }
   };
@@ -384,7 +658,15 @@ const Report = () => {
     if (allCustomers.length > 0 || allTechnicians.length > 0) {
       fetchReportData();
     }
-  }, [activeTab, timePeriod, selectedYear, selectedMonth, selectedDate, allCustomers, allTechnicians]);
+  }, [
+    activeTab,
+    timePeriod,
+    selectedYear,
+    selectedMonth,
+    selectedDate,
+    allCustomers,
+    allTechnicians,
+  ]);
 
   // Navigation handlers
   const handleNavigateToCustomerReport = (companyId) => {
@@ -415,20 +697,24 @@ const Report = () => {
       { value: 9, label: "กันยายน" },
       { value: 10, label: "ตุลาคม" },
       { value: 11, label: "พฤศจิกายน" },
-      { value: 12, label: "ธันวาคม" }
+      { value: 12, label: "ธันวาคม" },
     ];
   };
 
   // Get current time columns based on active tab
-  const timeColumns = activeTab === "customer"
-    ? generateCustomerColumns()
-    : generateTechnicianColumns();
-
+  const timeColumns =
+    activeTab === "customer"
+      ? generateCustomerColumns()
+      : generateTechnicianColumns();
 
   const filteredCustomers = customer.filter((item) => {
     const matchesSearch =
-      (item.companyName?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
-      (item.buildingName?.toLowerCase() ?? "").includes(searchTerm.toLowerCase());
+      (item.companyName?.toLowerCase() ?? "").includes(
+        searchTerm.toLowerCase()
+      ) ||
+      (item.buildingName?.toLowerCase() ?? "").includes(
+        searchTerm.toLowerCase()
+      );
 
     const matchesBuilding =
       selectedBuilding === "" || item.buildingName === selectedBuilding;
@@ -442,7 +728,9 @@ const Report = () => {
       : [item.buildings ?? ""];
 
     const matchesSearch =
-      (item.technicianName?.toLowerCase() ?? "").includes(searchTerm.toLowerCase()) ||
+      (item.technicianName?.toLowerCase() ?? "").includes(
+        searchTerm.toLowerCase()
+      ) ||
       buildingList.join(", ").toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesBuilding =
@@ -451,34 +739,130 @@ const Report = () => {
     return matchesSearch && matchesBuilding;
   });
 
-
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
 
   return (
     <AdminLayout>
       <div className="p-6">
-        {/* Time Period Controls */}
-        <div className="mb-6 bg-white p-4 rounded-lg border">
-          <div className="flex flex-wrap items-center gap-4">
+        {/* Tab Selection */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* ช่องค้นหา input พร้อมไอคอน */}
+          <div className="flex items-center border-b-[1px] border-[#837958] max-w-[350px] flex-grow">
+            <BiSearchAlt2 size={20} className="text-[#837958] ml-2" />
+            <input
+              type="text"
+              placeholder={
+                activeTab === "customer"
+                  ? "ค้นหา: ชื่อบริษัท / อาคาร"
+                  : "ค้นหา: ชื่อพนักงาน / อาคาร"
+              }
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-2 pr-3 py-1 outline-none"
+            />
+          </div>
 
+          {/* ปุ่มค้นหา */}
+          <button
+            onClick={handleSearch}
+            className="px-3 h-[28px] bg-[#837958] text-white text-[14px] rounded-full flex items-center shadow-[0_2px_4px_rgba(0,0,0,0.1)]"
+          >
+            <BiSearchAlt2 size={18} className="text-white mr-1" />
+            ค้นหา
+          </button>
+
+          {/* select อาคาร */}
+          <select
+            className="
+      px-3 pr-8 h-[28px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] cursor-pointer
+      appearance-none
+      min-w-[90px] max-w-[300px]
+      transition-all duration-300 ease-in-out
+    "
+            style={{
+              border: "2px solid #837958",
+              width: selectedBuilding ? "auto" : "90px",
+            }}
+            value={selectedBuilding}
+            onChange={(e) => setSelectedBuilding(e.target.value)}
+          >
+            <option value="">อาคาร</option>
+            {buildings.map((building) => (
+              <option
+                key={building.id}
+                value={building.buildingName}
+                style={{ backgroundColor: "white", color: "black" }}
+              >
+                {building.buildingName}
+              </option>
+            ))}
+          </select>
+
+          {/* ปุ่มส่งข้อมูลออก */}
+          <button
+            className="px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
+            onClick={exportToExcel}
+          >
+            ส่งข้อมูลออก
+          </button>
+
+          {/* ปุ่มเปลี่ยน Tab */}
+          <button
+            onClick={() => handleTabChange("customer")}
+            className={`px-4 h-[32px] rounded-2xl text-sm shadow-md ${
+              activeTab === "customer"
+                ? "bg-[#BC9D72] text-white"
+                : "bg-[#F5F3EE]"
+            }`}
+          >
+            ลูกค้า
+          </button>
+          <button
+            onClick={() => handleTabChange("technician")}
+            className={`px-4 h-[32px] rounded-2xl text-sm shadow-md ${
+              activeTab === "technician"
+                ? "bg-[#BC9D72] text-white"
+                : "bg-[#F5F3EE]"
+            }`}
+          >
+            เจ้าหน้าที่
+          </button>
+        </div>
+
+        {/* </div> */}
+        {/* Time Period Controls */}
+        <div className="pt-4 pb-4">
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex gap-2">
               <button
                 onClick={() => handleTimePeriodChange("weekly")}
-                className={`px-4 py-2 rounded ${timePeriod === "weekly" ? "bg-blue-500 text-white" : "bg-gray-200"
-                  }`}
+                className={`px-3 py-1.5 rounded-2xl text-xs border border-[#837958]/50 ${
+                  timePeriod === "weekly"
+                    ? "bg-[#837958] text-white"
+                    : "bg-[#FEFEFE] text-[#837958]/50"
+                }`}
               >
                 รายสัปดาห์
               </button>
               <button
                 onClick={() => handleTimePeriodChange("monthly")}
-                className={`px-4 py-2 rounded ${timePeriod === "monthly" ? "bg-blue-500 text-white" : "bg-gray-200"
-                  }`}
+                className={`px-3 py-1 rounded-2xl text-xs border border-[#837958]/50 ${
+                  timePeriod === "monthly"
+                    ? "bg-[#837958] text-white"
+                    : "bg-[#FEFEFE] text-[#837958]/50"
+                }`}
               >
                 รายเดือน
               </button>
               <button
                 onClick={() => handleTimePeriodChange("yearly")}
-                className={`px-4 py-2 rounded ${timePeriod === "yearly" ? "bg-blue-500 text-white" : "bg-gray-200"
-                  }`}
+                className={`px-3 py-1 rounded-2xl text-xs border border-[#837958]/50 ${
+                  timePeriod === "yearly"
+                    ? "bg-[#837958] text-white"
+                    : "bg-[#FEFEFE] text-[#837958]/50"
+                }`}
               >
                 รายปี
               </button>
@@ -489,10 +873,12 @@ const Report = () => {
               <select
                 value={selectedYear}
                 onChange={(e) => handleYearChange(parseInt(e.target.value))}
-                className="px-3 py-2 border rounded"
+                className="px-3 h-[32px] border rounded"
               >
                 {generateYears().map((year) => (
-                  <option key={year} value={year}>{year + 543}</option>
+                  <option key={year} value={year}>
+                    {year + 543}
+                  </option>
                 ))}
               </select>
             </div>
@@ -503,7 +889,7 @@ const Report = () => {
                 <select
                   value={selectedMonth}
                   onChange={(e) => handleMonthChange(parseInt(e.target.value))}
-                  className="px-3 py-2 border rounded"
+                  className="px-3 h-[32px] border rounded"
                 >
                   {generateMonths().map((month) => (
                     <option key={month.value} value={month.value}>
@@ -521,31 +907,11 @@ const Report = () => {
                   type="date"
                   value={selectedDate.format("YYYY-MM-DD")}
                   onChange={(e) => handleDateChange(e.target.value)}
-                  className="px-3 py-2 border rounded"
+                  className="px-3 h-[32px] border rounded"
                 />
               </div>
             )}
           </div>
-        </div>
-
-
-
-        {/* Tab Selection */}
-        <div className="mb-4 flex gap-4">
-          <button
-            onClick={() => handleTabChange("customer")}
-            className={`px-4 py-2 rounded ${activeTab === "customer" ? "bg-[#BC9D72] text-white" : "bg-gray-200"
-              }`}
-          >
-            ลูกค้า
-          </button>
-          <button
-            onClick={() => handleTabChange("technician")}
-            className={`px-4 py-2 rounded ${activeTab === "technician" ? "bg-[#BC9D72] text-white" : "bg-gray-200"
-              }`}
-          >
-            พนักงาน
-          </button>
         </div>
 
         {loading && (
@@ -553,41 +919,6 @@ const Report = () => {
             <div className="text-lg">กำลังโหลดข้อมูล...</div>
           </div>
         )}
-
-        <div className="flex gap-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="w-full">
-              <input
-                type="text"
-                placeholder={
-                  activeTab === "customer"
-                    ? "ค้นหา: ชื่อบริษัท / อาคาร"
-                    : "ค้นหา: ชื่อพนักงาน / อาคาร"
-                }
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border rounded"
-              />
-            </div>
-          </div>
-
-          <div className="mb-4 flex items-center gap-2">
-            <select
-              className="px-3 py-2 border rounded"
-              value={selectedBuilding}
-              onChange={(e) => setSelectedBuilding(e.target.value)}
-            >
-              <option value="">อาคาร</option>
-              {buildings.map((building) => (
-                <option key={building.id} value={building.buildingName}>
-                  {building.buildingName}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-
 
         <div className="overflow-x-auto">
           {/* Customer Table */}
@@ -657,7 +988,9 @@ const Report = () => {
                       {item.completed || 0}
                     </td>
                     <td className="py-2 px-4 border-b text-center align-middle">
-                      {item.completedPercent ? `${item.completedPercent}%` : "0%"}
+                      {item.completedPercent
+                        ? `${item.completedPercent}%`
+                        : "0%"}
                     </td>
                   </tr>
                 ))}
@@ -679,7 +1012,6 @@ const Report = () => {
             </div>
           )}
 
-
           {/* Technician Table */}
           {activeTab === "technician" && (
             <table className="min-w-full bg-white border border-gray-300 rounded-lg">
@@ -689,7 +1021,7 @@ const Report = () => {
                     ลำดับ
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
-                    ดาว
+                    คะแนนเฉลี่ย
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle sticky left-12 bg-[#BC9D72]/50 z-10">
                     ชื่อพนักงาน
@@ -726,13 +1058,14 @@ const Report = () => {
 
               <tbody>
                 {filteredTechnicians.map((item, index) => {
-                  const completeMe = item.completedJobs - (item.tekenFromOtherCount || 0);
+                  const completeMe =
+                    item.completedJobs - (item.tekenFromOtherCount || 0);
                   const percen =
                     ((completeMe + (item.tekenFromOtherCount || 0)) /
                       (item.acceptedJobs +
                         (item.tekenFromOtherCount || 0) -
                         (item.takenByOtherCount || 0))) *
-                    100 || 0;
+                      100 || 0;
                   return (
                     <tr
                       key={index}
@@ -744,7 +1077,9 @@ const Report = () => {
                         {index + 1}
                       </td>
                       <td className="py-2 px-4 border-b text-center align-middle">
-                        {item?.averageStar != null ? item.averageStar.toFixed(1) : "-"}
+                        {item?.averageStar != null
+                          ? item.averageStar.toFixed(1)
+                          : "-"}
                       </td>
                       <td className="py-2 px-4 border-b text-center align-middle sticky left-12 bg-white z-10">
                         {item.technicianName}
@@ -791,12 +1126,10 @@ const Report = () => {
                   onClick={handleCloseModalTechnician}
                   className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow"
                 >
-                  ✕ 
+                  ✕
                 </button>
                 <ReportTechnician userId={selectedTechnicianId} />
-                
               </div>
-              
             </div>
           )}
         </div>

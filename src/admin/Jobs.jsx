@@ -184,55 +184,6 @@ const Jobs = () => {
     เสร็จสิ้น: "completed",
   };
 
-  // const filterJobsBySearch = (jobs) => {
-  //   let filteredJobs = jobs;
-
-  //   // กรองด้วย searchTerm เดิม
-  //   if (searchTerm.trim()) {
-  //     const lowerSearch = searchTerm.toLowerCase();
-  //     const translatedStatus = statusMap[searchTerm.trim()] || lowerSearch;
-
-  //     filteredJobs = filteredJobs.filter((job) => {
-  //       const jobNo = job?.jobNo?.toLowerCase() || "";
-  //       const building = job?.building?.buildingName?.toLowerCase() || "";
-  //       const company = job?.company?.companyName?.toLowerCase() || "";
-  //       const group = job?.choiceDesc?.toLowerCase() || "";
-  //       const status = job?.status?.toLowerCase() || "";
-  //       const name = job?.acceptedBy?.name?.toLowerCase() || "";
-
-  //       return (
-  //         jobNo.includes(lowerSearch) ||
-  //         building.includes(lowerSearch) ||
-  //         company.includes(lowerSearch) ||
-  //         group.includes(lowerSearch) ||
-  //         status.includes(translatedStatus) ||
-  //         name.includes(lowerSearch)
-  //       );
-  //     });
-  //   }
-
-  //   // กรองด้วย selectedBuilding ถ้ามีการเลือก
-  //   if (selectedBuilding && selectedBuilding !== "all") {
-  //     filteredJobs = filteredJobs.filter(
-  //       (job) => job.building?.buildingName === selectedBuilding
-  //     );
-  //   }
-
-  //   if (selectedStatus && selectedStatus !== "all") {
-  //     filteredJobs = filteredJobs.filter(
-  //       (job) => job.status === selectedStatus
-  //     );
-  //   }
-
-  //   // กรองด้วย selectedChoices ถ้ามีการเลือก
-  //   if (selectedChoices.length > 0) {
-  //     filteredJobs = filteredJobs.filter((job) =>
-  //       selectedChoices.includes(job.choiceDesc)
-  //     );
-  //   }
-
-  //   return filteredJobs;
-  // };
 
   const filterJobsBySearch = (jobs) => {
     let filteredJobs = jobs;
