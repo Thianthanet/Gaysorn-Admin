@@ -44,6 +44,7 @@ const Jobs = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filterBuilding, setFilterBuilding] = useState("all");
+  const [selectedChoice, setSelectedChoice] = useState("");
 
   const [searchParams] = useSearchParams();
   const startDateParams = searchParams.get("startDate"); // "2025-07-28"
