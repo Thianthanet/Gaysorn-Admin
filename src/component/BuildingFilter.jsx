@@ -63,7 +63,7 @@ const BuildingFilter = ({ isMobile, setBuildingName }) => {
 
                 {/* Dropdown */}
                 {open && (
-                    <div className={`absolute min-w-full bg-[#F4F2ED] rounded-lg shadow-md border border-gray-300 z-10`}>
+                    <div className={`absolute min-w-[150px] bg-[#F4F2ED] rounded-lg shadow-md border border-gray-300 z-10`}>
                         {build.map((item, idx) => (
                             <div
                                 key={idx}
@@ -72,7 +72,7 @@ const BuildingFilter = ({ isMobile, setBuildingName }) => {
                                 //     setOpen(false);
                                 // }}
                                 onClick={() => handleSelect(item)}
-                                className={`${isMobile ? "p-[2px] text-[7px]" : "p-[2px] text-[9px]"}  text-[#837958] text-center border-b-[1px] border-[#837958]/20 last:border-b-0 hover:bg-[#BC9D72] hover:text-white cursor-pointer`}
+                                className={`${isMobile ? "p-[2px] text-[7px]" : "p-[2px] text-[9px]"}  text-[#837958] text-center text-sm border-b-[1px] border-[#837958]/20 last:border-b-0 hover:bg-[#BC9D72] hover:text-white cursor-pointer`}
                             >
                                 {item}
                             </div>

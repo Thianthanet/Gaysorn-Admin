@@ -216,7 +216,7 @@ const UserPopup = ({
               <div className="flex flex-col">
                 <button
                   type="submit"
-                  className={`w-full mb-2 mt-2 bg-[#837958] text-white text-[12px] font-bold py-2 rounded-xl hover:opacity-90 transition
+                  className={`w-full mb-2 mt-2 bg-[#837958] text-white text-sm font-bold py-2 rounded-xl hover:opacity-90 transition
                     ${activeTab === "technicians" ? (technicianData.id ? "mt-[134px]" : "mt-[262px]") : activeTab === "admin" ? "mt-[262px]" : ""}`}
                   // ลบการกำหนด mt- ที่ซับซ้อนออก ให้ใช้ margin-top ค่ากลางๆ แล้วให้เนื้อหาดันปุ่มลงมาเอง
                 >
@@ -227,7 +227,7 @@ const UserPopup = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full mb-2 bg-white text-[#837958] text-[12px] font-bold border-[1px] border-[#837958] py-2 rounded-xl hover:opacity-90 transition"
+                  className="w-full mb-2 bg-white text-[#837958] text-sm font-bold border-[1px] border-[#837958] py-2 rounded-xl hover:opacity-90 transition"
                 >
                   ปิดหน้าต่างนี้
                 </button>

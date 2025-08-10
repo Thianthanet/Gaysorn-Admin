@@ -1,12 +1,14 @@
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import LogoHeader from "../assets/LogoHeader.png";
 
 const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
+  const navigate = useNavigate()
+
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard" },
@@ -15,6 +17,11 @@ const AdminLayout = ({ children }) => {
     { label: "User", href: "/user" },
     { label: "Setting", href: "/setting" },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    navigate('/login')
+  }
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
@@ -52,6 +59,16 @@ const AdminLayout = ({ children }) => {
               {item.label}
             </a>
           ))}
+
+          {/* ปุ่มออกจากระบบ */}
+          <hr />
+          <button
+            onClick={handleLogout}
+            className="mt-2 p-2 pl-8 flex items-center gap-2 text-red-600 hover:bg-red-100 rounded font-bold"
+          >
+            {/* <LogOut className="w-5 h-5" /> */}
+            Logout
+          </button>
         </nav>
       </aside>
 
