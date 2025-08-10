@@ -12,6 +12,7 @@ import ReportTechnician from "./ReportTechnician";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { BiSearchAlt2 } from "react-icons/bi";
+import { HiChevronDown } from "react-icons/hi";
 
 dayjs.extend(isBetween);
 dayjs.extend(isoWeek);
@@ -40,10 +41,12 @@ const Report = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [buildings, setBuildings] = useState([]);
-  const [selectedBuilding, setSelectedBuilding] = useState(""); // อาคารที่เลือก
+  const [selectedBuilding, setSelectedBuilding] = useState("");
+  const [selected, setSelected] = useState("อาคาร");
 
   const [selectedCompanyId, setSelectedCompanyId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
   const [isTechnicianModalOpen, setIsTechnicianModalOpen] = useState(false);
@@ -774,32 +777,51 @@ const Report = () => {
           </button>
 
           {/* select อาคาร */}
-          <select
-            className="
-      px-3 pr-8 h-[28px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] cursor-pointer
-      appearance-none
-      min-w-[90px] max-w-[300px]
-      transition-all duration-300 ease-in-out
-    "
-            style={{
-              border: "2px solid #837958",
-              width: selectedBuilding ? "auto" : "90px",
-            }}
-            value={selectedBuilding}
-            onChange={(e) => setSelectedBuilding(e.target.value)}
-          >
-            <option value="">อาคาร</option>
-            {buildings.map((building) => (
-              <option
-                key={building.id}
-                value={building.buildingName}
-                style={{ backgroundColor: "white", color: "black" }}
-              >
-                {building.buildingName}
-              </option>
-            ))}
-          </select>
+          <div className="relative inline-block">
+            <button
+              onClick={() => setOpen(!open)}
+              className="px-3 h-[28px] w-[90px] bg-[#837958] text-white text-left rounded-full shadow text-ellipsis overflow-hidden whitespace-nowrap font-normal "
+            >
+              อาคาร
+            </button>
 
+            {open && (
+              <ul className="absolute mt-1 bg-[#F4F2ED] text-center rounded-xl shadow-lg overflow-hidden w-[150px] text-[14px] z-10 border border-gray-300">
+                <li
+                  onClick={() => {
+                    setSelected("อาคาร");
+                    setSelectedBuilding("");
+                    setOpen(false);
+                  }}
+                  className="px-3 h-[28px] text-[#837958] font-normal border-b border-gray-300 hover:bg-[#BC9D72] hover:text-white cursor-pointer"
+                >
+                  อาคาร
+                </li>
+                {buildings.map((b, index) => (
+                  <li
+                    key={b.id}
+                    onClick={() => {
+                      setSelected(b.buildingName);
+                      setSelectedBuilding(b.buildingName);
+                      setOpen(false);
+                    }}
+                    className={`px-3 h-[28px] text-[#837958] font-normal hover:bg-[#BC9D72] hover:text-white cursor-pointer ${
+                      index !== buildings.length - 1
+                        ? "border-b border-[#837958]/20"
+                        : ""
+                    }`}
+                  >
+                    {b.buildingName}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <HiChevronDown
+              size={18}
+              className="text-white pointer-events-none absolute top-1/2 right-2 -translate-y-1/2"
+            />
+          </div>
           {/* ปุ่มส่งข้อมูลออก */}
           <button
             className="px-4 h-[32px] bg-[#F4F2ED] text-black text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] hover:bg-gray-300"
