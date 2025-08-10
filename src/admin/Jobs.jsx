@@ -42,6 +42,24 @@ const Jobs = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [selected, setSelected] = useState("อาคาร");
+  const [open, setOpen] = useState(false);
+
+   const [statusOpen, setStatusOpen] = useState(false);
+
+  const statusLabel = (status) => {
+    switch (status) {
+      case "pending":
+        return "รอดำเนินการ";
+      case "in_progress":
+        return "อยู่ระหว่างดำเนินการ";
+      case "completed":
+        return "เสร็จสิ้น";
+      default:
+        return "สถานะ";
+    }
+  };
+
   console.log("selectedJob", selectedJob);
 
   const openJobModal = (job) => {
@@ -184,7 +202,6 @@ const Jobs = () => {
     เสร็จสิ้น: "completed",
   };
 
-
   const filterJobsBySearch = (jobs) => {
     let filteredJobs = jobs;
 
@@ -290,7 +307,7 @@ const Jobs = () => {
 
       setJobs(res.data.data);
       setCurrentPage(1);
-    //  setShowFilters(false); // ปิดฟิลเตอร์หลังจากค้นหา
+      //  setShowFilters(false); // ปิดฟิลเตอร์หลังจากค้นหา
     } catch (err) {
       console.error("Error fetching filtered jobs:", err);
     }
@@ -425,31 +442,44 @@ const Jobs = () => {
 
           {/* ปุ่มอาคาร */}
           <div className="relative inline-block">
-            <select
-              value={selectedBuilding}
-              onChange={(e) => {
-                setSelectedBuilding(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="
-                px-3 pr-8 h-[28px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] cursor-pointer
-                appearance-none
-                w-auto min-w-[80px] max-w-[300px]
-                transition-all duration-300 ease-in-out
-                "
-              style={{ width: selectedBuilding ? "auto" : "90px" }}
+            <button
+              onClick={() => setOpen(!open)}
+              className="px-3 h-[28px] w-[90px] bg-[#837958] text-white text-left rounded-full shadow text-ellipsis overflow-hidden whitespace-nowrap font-normal "
             >
-              <option value="all">อาคาร</option>
-              {building.map((b) => (
-                <option
-                  key={b.id}
-                  value={b.buildingName}
-                  style={{ backgroundColor: "white", color: "black" }}
+              อาคาร
+            </button>
+
+            {open && (
+              <ul className="absolute mt-1 bg-[#F4F2ED] text-center rounded-xl shadow-lg overflow-hidden w-[150px] text-[14px] z-10 border border-gray-300">
+                <li
+                  onClick={() => {
+                    setSelected("อาคาร");
+                    setSelectedBuilding("all");
+                    setOpen(false);
+                  }}
+                  className="px-3 h-[28px] text-[#837958] font-normal border-b border-gray-300 hover:bg-[#BC9D72] hover:text-white cursor-pointer"
                 >
-                  {b.buildingName}
-                </option>
-              ))}
-            </select>
+                  อาคาร
+                </li>
+                {building.map((b, index) => (
+                  <li
+                    key={b.id}
+                    onClick={() => {
+                      setSelected(b.buildingName);
+                      setSelectedBuilding(b.buildingName);
+                      setOpen(false);
+                    }}
+                    className={`px-3 h-[28px] text-[#837958] font-normal hover:bg-[#BC9D72] hover:text-white cursor-pointer ${
+                      index !== building.length - 1
+                        ? "border-b border-[#837958]/20"
+                        : ""
+                    }`}
+                  >
+                    {b.buildingName}
+                  </li>
+                ))}
+              </ul>
+            )}
 
             <HiChevronDown
               size={18}
@@ -459,39 +489,57 @@ const Jobs = () => {
 
           {/* ปุ่มสถานะ */}
           <div className="relative inline-block">
-            <select
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 pr-8 h-[28px] bg-[#837958] text-white text-[14px] rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] cursor-pointer
-                appearance-none
-                w-auto min-w-[80px] max-w-[300px]
-                transition-all duration-300 ease-in-out
-                "
-              style={{ width: selectedBuilding ? "auto" : "90px" }}
+            <button
+              onClick={() => setStatusOpen(!statusOpen)}
+              className="px-3 h-[28px] w-[90px] bg-[#837958] text-white text-left rounded-full shadow text-ellipsis overflow-hidden whitespace-nowrap font-normal"
             >
-              <option value="all">สถานะ</option>
-              <option
-                value="pending"
-                style={{ backgroundColor: "white", color: "black" }}
-              >
-                รอดำเนินการ
-              </option>
-              <option
-                value="in_progress"
-                style={{ backgroundColor: "white", color: "black" }}
-              >
-                อยู่ระหว่างดำเนินการ
-              </option>
-              <option
-                value="completed"
-                style={{ backgroundColor: "white", color: "black" }}
-              >
-                เสร็จสิ้น
-              </option>
-            </select>
+              {selectedStatus === "all" ? "สถานะ" : statusLabel(selectedStatus)}
+            </button>
+
+            {statusOpen && (
+              <ul className="absolute mt-1 bg-[#F4F2ED] text-center rounded-xl shadow-lg overflow-hidden w-[150px] text-[14px] z-10 border border-gray-300">
+                <li
+                  onClick={() => {
+                    setSelectedStatus("all");
+                    setCurrentPage(1);
+                    setStatusOpen(false);
+                  }}
+                  className="px-3 h-[28px] text-[#837958] font-normal border-b border-gray-300 hover:bg-[#BC9D72] hover:text-white cursor-pointer"
+                >
+                  สถานะ
+                </li>
+                <li
+                  onClick={() => {
+                    setSelectedStatus("pending");
+                    setCurrentPage(1);
+                    setStatusOpen(false);
+                  }}
+                  className="px-3 h-[28px] text-[#837958] font-normal border-b border-gray-300 hover:bg-[#BC9D72] hover:text-white cursor-pointer"
+                >
+                  รอดำเนินการ
+                </li>
+                <li
+                  onClick={() => {
+                    setSelectedStatus("in_progress");
+                    setCurrentPage(1);
+                    setStatusOpen(false);
+                  }}
+                  className="px-3 h-[28px] text-[#837958] font-normal border-b border-gray-300 hover:bg-[#BC9D72] hover:text-white cursor-pointer"
+                >
+                  อยู่ระหว่างดำเนินการ
+                </li>
+                <li
+                  onClick={() => {
+                    setSelectedStatus("completed");
+                    setCurrentPage(1);
+                    setStatusOpen(false);
+                  }}
+                  className="px-3 h-[28px] text-[#837958] font-normal hover:bg-[#BC9D72] hover:text-white cursor-pointer"
+                >
+                  เสร็จสิ้น
+                </li>
+              </ul>
+            )}
 
             <HiChevronDown
               size={18}

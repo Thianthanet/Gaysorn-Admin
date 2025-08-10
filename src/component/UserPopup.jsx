@@ -112,7 +112,7 @@ const UserPopup = ({
                   />
 
                   <div className="mb-2">
-                    <label className="block text-[#BC9D72] mb-1 text-[12px]">
+                    <label className="block text-[#BC9D72] mb-1 text-[14px]">
                       อาคาร<span className="text-red-500">*</span>
                     </label>
                     <select

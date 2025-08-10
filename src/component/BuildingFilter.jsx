@@ -55,7 +55,7 @@ const BuildingFilter = ({ isMobile, setBuildingName }) => {
                     onClick={() => setOpen(!open)}
                     className={`bg-[#837958] text-white rounded-full flex items-center justify-center shadow-md hover:bg-[#6f684c] transition-all ${isMobile ? "w-[ุ50px] h-[22px] p-[8px] " : "w-[ุ64px] h-[28px] p-3"} `}
                 >
-                    <span className={`truncate ${isMobile ? "text-[10px]" : "text-[12px]"} mr-1`}>
+                    <span className={`truncate ${isMobile ? "text-[10px]" : "text-[14px]"} mr-1`}>
                         {setSelected === "ทั้งหมด" ? "อาคาร" : "อาคาร"} {/*selected*/}
                     </span>
                     <ChevronDown size={16} />
@@ -72,7 +72,7 @@ const BuildingFilter = ({ isMobile, setBuildingName }) => {
                                 //     setOpen(false);
                                 // }}
                                 onClick={() => handleSelect(item)}
-                                className={`${isMobile ? "p-[2px] text-[7px]" : "p-[2px] text-[9px]"}  text-[#837958] text-center text-xm border-b-[1px] border-[#837958]/20 last:border-b-0 hover:bg-[#BC9D72] hover:text-white cursor-pointer`}
+                                className={`${isMobile ? "p-[2px] text-[7px]" : "p-[2px] text-[14px]"}  text-[#837958] text-center text-xm border-b-[1px] border-[#837958]/20 last:border-b-0 hover:bg-[#BC9D72] hover:text-white cursor-pointer`}
                             >
                                 {item}
                             </div>
