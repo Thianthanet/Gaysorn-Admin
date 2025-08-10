@@ -1014,7 +1014,7 @@ const Report = () => {
 
           {/* Technician Table */}
           {activeTab === "technician" && (
-            <table className="min-w-full bg-white border border-gray-300 rounded-lg">
+            <table className="min-w-full bg-white text-sm border border-gray-300 rounded-lg">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle sticky left-0 bg-[#BC9D72]/50 z-10">
