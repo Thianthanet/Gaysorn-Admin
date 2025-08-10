@@ -655,34 +655,34 @@ const Jobs = () => {
                       }`}
                     ></span>
                   </td>
-                  <td className="align-text-top">
+                  <td className="align-text-top text-sm">
                     {(currentPage - 1) * itemsPerPage + index + 1}
                   </td>
-                  <td className=" px-4 py-2 align-text-top">
+                  <td className=" px-4 py-2 align-text-top text-sm">
                     {job?.workStar || "-"}
                   </td>
-                  <td className=" px-4 py-2 align-text-top">
+                  <td className=" px-4 py-2 align-text-top text-sm">
                     {job?.jobNo || "-"}
                   </td>
-                  <td className=" px-4 py-2 min-w-[160px] align-text-top">
+                  <td className=" px-4 py-2 min-w-[160px] align-text-top text-sm">
                     {job.building?.buildingName || "-"}
                   </td>
-                  <td className=" px-4 py-2 min-w-[160px] align-text-top">
+                  <td className=" px-4 py-2 min-w-[160px] align-text-top text-sm">
                     {job.company?.companyName || "-"}
                   </td>
-                  <td className=" px-4 py-2 min-w-[160px] align-text-top">
+                  <td className=" px-4 py-2 min-w-[160px] align-text-top text-sm">
                     {job?.choiceDesc || "-"}
                   </td>
-                  <td className=" px-4 py-2 min-w-[200px] align-text-top">
+                  <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
                     {formatDateTimeThaiShort(job?.createDate) || "-"}
                   </td>
-                  <td className=" px-4 py-2 min-w-[200px] align-text-top">
+                  <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
                     {formatDateTimeThaiShort(job?.acceptDate) || "-"}
                   </td>
-                  <td className=" px-4 py-2 min-w-[200px] align-text-top">
+                  <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
                     {formatDateTimeThaiShort(job?.completeDate) || "-"}
                   </td>
-                  <td className=" px-4 py-2 min-w-[150px] align-text-top">
+                  <td className=" px-4 py-2 min-w-[150px] align-text-top text-sm">
                     {job?.acceptedBy?.name?.trim() ? job.acceptedBy.name : "-"}{" "}
                     <br />
                     {job?.completedBy?.name?.trim()
@@ -690,7 +690,7 @@ const Jobs = () => {
                       : "-"}
                   </td>
                   <td
-                    className={` px-4 py-2 min-w-[160px] align-text-top ${
+                    className={` px-4 py-2 min-w-[160px] align-text-top text-sm ${
                       job.status === "pending"
                         ? "text-red-500"
                         : job.status === "in_progress"
