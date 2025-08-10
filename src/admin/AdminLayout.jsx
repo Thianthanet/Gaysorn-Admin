@@ -7,8 +7,7 @@ const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const currentPath = location.pathname;
-  const navigate = useNavigate()
-
+  const navigate = useNavigate();
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard" },
@@ -19,9 +18,9 @@ const AdminLayout = ({ children }) => {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem("token")
-    navigate('/login')
-  }
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
@@ -64,7 +63,7 @@ const AdminLayout = ({ children }) => {
           <hr />
           <button
             onClick={handleLogout}
-            className="mt-2 p-2 pl-8 flex items-center gap-2 text-red-600 hover:bg-red-100 rounded font-bold"
+            className="mt-2 p-2 pl-8 flex items-center gap-2 text-[#837958] hover:bg-[#c9bd99] hover:text-white  rounded font-bold"
           >
             {/* <LogOut className="w-5 h-5" /> */}
             Logout
