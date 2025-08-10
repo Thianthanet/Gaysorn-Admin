@@ -923,7 +923,7 @@ const Report = () => {
         <div className="overflow-x-auto">
           {/* Customer Table */}
           {activeTab === "customer" && (
-            <table className="min-w-full bg-white border border-gray-300 rounded-lg">
+            <table className="min-w-full bg-white border border-gray-300 text-sm rounded-lg">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center sticky left-0 bg-[#BC9D72]/50 z-10">
