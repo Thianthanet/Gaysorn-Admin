@@ -39,36 +39,40 @@ const AdminLayout = ({ children }) => {
       {/* Sidebar */}
       <aside
         className={`${sidebarOpen ? "block" : "hidden"} 
-                            md:block w-full md:w-64 bg-[#F5F3EE] border-r pt-4 text-[#837958] flex-shrink-0 h-auto md:h-screen`}
+    md:flex md:flex-col md:justify-between md:w-64 bg-[#F5F3EE] border-r pt-4 text-[#837958] flex-shrink-0 h-screen`}
       >
-        <img src={LogoHeader} alt="Logo" className="w-16 mx-auto mb-2 mt-2" />
-        <nav className="flex flex-col pt-4 pb-4">
-          {navItems.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className={`p-2 pl-8 rounded transition-colors duration-300 font-bold text-[16px]
-                                ${
-                                  currentPath === item.href
-                                    ? "bg-[#837958] bg-opacity-50 text-white"
-                                    : "hover:bg-[#c9bd99] hover:text-white"
-                                }
-                                `}
-            >
-              {item.label}
-            </a>
-          ))}
+        <div>
+          <img src={LogoHeader} alt="Logo" className="w-16 mx-auto mb-2 mt-2" />
+          <nav className="flex flex-col pt-4 pb-4">
+            {navItems.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                className={`p-2 pl-8 rounded transition-colors duration-300 font-bold text-[16px]
+            ${
+              currentPath === item.href
+                ? "bg-[#837958] bg-opacity-50 text-white"
+                : "hover:bg-[#c9bd99] hover:text-white"
+            }
+          `}
+              >
+                {item.label}
+              </a>
+            ))}
 
-          {/* ปุ่มออกจากระบบ */}
-          <hr />
-          <button
-            onClick={handleLogout}
-            className="mt-2 p-2 pl-8 flex items-center gap-2 text-[#837958] hover:bg-[#c9bd99] hover:text-white  rounded font-bold"
-          >
-            {/* <LogOut className="w-5 h-5" /> */}
-            Logout
-          </button>
-        </nav>
+            <hr />
+            <button
+              onClick={handleLogout}
+              className="mt-2 p-2 pl-8 flex items-center gap-2 text-[#837958] hover:bg-[#c9bd99] hover:text-white rounded font-bold"
+            >
+              Logout
+            </button>
+          </nav>
+        </div>
+
+        <footer className="bg-[#F5F3EE] shadow p-3 text-center text-sm text-gray-600 border-t-[2px]">
+          © 2025 DevX (Thailand) Co., Ltd.
+        </footer>
       </aside>
 
       {/* Main */}
@@ -87,9 +91,6 @@ const AdminLayout = ({ children }) => {
         </div>
 
         {/* Footer */}
-        <footer className="bg-white shadow p-3 text-center text-sm text-gray-600 border-t-[2px]">
-          © 2025 DevX (Thailand) Co., Ltd.
-        </footer>
       </div>
     </div>
   );
