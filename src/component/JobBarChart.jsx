@@ -75,7 +75,7 @@ const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
   return (
     <div className="bg-[#F4F2ED] border-[1px] border-[#BC9D72] rounded-2xl pl-6 pt-4 mb-4 relative">
       <h2 className={`font-semibold text-[#837958] ${isMobile ? "text-[20px]" : "text-[26px]"}`}>
-        จำนวนงานทั้งหมดแยกตามกลุ่มงานและสถานะของงาน
+        จำนวนงานทั้งหมด
       </h2>
 
       {/* ✅ Legend ที่ลอยมุมขวาบน */}
@@ -85,7 +85,7 @@ const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
       <CustomLegend />
 
       <div className="overflow-x-auto">
-        <div style={{ width: `${data.length * 110}px` }}>
+        <div style={{ width: `${data.length * 100}px` }}>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart
               data={data}
@@ -121,21 +121,21 @@ const JobBarChart = ({ data, STATUS_LABELS, STATUS_COLORS, isMobile }) => {
 
               <Bar
                 dataKey="pending"
-                barSize={30}
+                barSize={25}
                 name={STATUS_LABELS.pending}
                 fill={STATUS_COLORS.pending}
                 radius={[2, 2, 0, 0]}
               />
               <Bar
                 dataKey="in_progress"
-                barSize={30}
+                barSize={25}
                 name={STATUS_LABELS.in_progress}
                 fill={STATUS_COLORS.in_progress}
                 radius={[2, 2, 0, 0]}
               />
               <Bar
                 dataKey="completed"
-                barSize={30}
+                barSize={25}
                 name={STATUS_LABELS.completed}
                 fill={STATUS_COLORS.completed}
                 radius={[2, 2, 0, 0]}
