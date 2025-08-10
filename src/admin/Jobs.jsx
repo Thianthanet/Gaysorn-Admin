@@ -17,6 +17,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import th from "date-fns/locale/th";
 
+
 registerLocale("th", th);
 
 const Jobs = () => {

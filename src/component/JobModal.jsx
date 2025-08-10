@@ -2,6 +2,9 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { FaStar, FaRegStar, FaTimes } from "react-icons/fa";
 
+//วันที่
+import { formatDateTimeThaiShort } from "../component/Date";
+
 const JobModal = ({ jobId, onClose }) => {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -131,60 +134,110 @@ const JobModal = ({ jobId, onClose }) => {
         </h1>
 
         <div className="text-[14px]">
-          <h1>วันที่แจ้ง : {job?.createDate}</h1>
-          <h1>วันที่นัดเข้าซ่อม : {job?.preworkDate || "-"}</h1>
-          <h1>บริษัท : {job?.company?.companyName || "-"}</h1>
-          <h1>
-            สถานที่ : {job?.building?.buildingName || "-"},{" "}
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              วันที่แจ้ง :
+            </span>
+            {formatDateTimeThaiShort(job?.createDate)}
+          </p>
+
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              วันที่นัดเข้าซ่อม :
+            </span>
+            {formatDateTimeThaiShort(job?.preworkDate) || "-"}
+          </p>
+
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              บริษัท :
+            </span>
+            {job?.company?.companyName || "-"}
+          </p>
+
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              สถานที่ :
+            </span>
+            {job?.building?.buildingName || "-"},{" "}
             {job?.company?.companyName || "-"}, {job?.unit?.unitName || "-"}
-          </h1>
-          <h1>
-            ผู้แจ้ง : {job?.customer?.name || "-"} (
-            {job?.customer?.phone || "-"})
-          </h1>
-          <h1>กลุ่มงาน : {job?.choiceDesc || "-"}</h1>
-          <h1 className="whitespace-pre-line">
-            รายละเอียด : {job?.detail || "-"}
-          </h1>
+          </p>
+
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              ผู้แจ้ง :
+            </span>
+            {job?.customer?.name || "-"} ({job?.customer?.phone || "-"})
+          </p>
+
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              กลุ่มงาน :
+            </span>
+            {job?.choiceDesc || "-"}
+          </p>
+
+          <p className="whitespace-pre-line">
+            <span style={{ display: "inline-block", width: "150px" }}>
+              รายละเอียด :
+            </span>
+            {job?.detail || "-"}
+          </p>
 
           {/* ภาพแจ้งซ่อม */}
           <div>
             <h1>ภาพแจ้งซ่อม:</h1>
-            <div className="flex flex-wrap gap-3 mt-2">
+            <div className="flex flex-wrap gap-3 mt-2 pb-2">
               {allImages?.length > 0 ? (
                 allImages.map((img) => (
                   <img
                     key={img.id}
                     src={img.url}
                     alt="repair"
-                    className="w-40 h-40 object-cover rounded-lg border cursor-pointer hover:opacity-80"
+                    className="w-40 h-40 object-cover rounded-lg border cursor-pointer hover:opacity-80 "
                     onClick={() => window.open(img.url, "_blank")}
                   />
                 ))
               ) : (
-                <p className="text-sm text-gray-500">ไม่มีภาพแจ้งซ่อม</p>
+                <div className="w-32 h-32 border rounded flex items-center justify-center text-xs text-gray-500">
+                  ไม่มีภาพ
+                </div>
               )}
             </div>
           </div>
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              ผู้ดำเนินการ :{" "}
+            </span>
+            {job?.acceptedBy?.name || "-"}
+          </p>
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              วันที่รับงาน :{" "}
+            </span>
+            {formatDateTimeThaiShort(job?.acceptDate) || "-"}
+          </p>
 
-          <h1>ผู้ดำเนินการ : {job?.acceptedBy?.name || "-"}</h1>
-          <h1>วันที่รับงาน : {job?.acceptDate || "-"}</h1>
-
-          <h1>
-            สถานะ :{" "}
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              สถานะ :
+            </span>
             <span className={getStatusInfo(job?.status).color}>
               {getStatusInfo(job?.status).label}
             </span>
-          </h1>
+          </p>
 
-          <h1 className="whitespace-pre-line">
-            ข้อมูลการดำเนินการ: {job?.actionDetail || "-"}
-          </h1>
+          <p className="whitespace-pre-line">
+            <span style={{ display: "inline-block", width: "150px" }}>
+              ข้อมูลการดำเนินการ :{" "}
+            </span>
+            {job?.actionDetail || "-"}
+          </p>
 
           {/* ภาพดำเนินการโดยช่าง */}
           <div>
-            <h1>ภาพ:</h1>
-            <div className="flex flex-wrap gap-3 mt-2">
+            <h1>ภาพดำเนินการ :</h1>
+            <div className="flex flex-wrap gap-3 mt-2 pb-2">
               {techImages?.length > 1 ? (
                 techImages
                   .slice(0, -1) // ตัดรูปสุดท้ายออก เพราะเป็นลายเซ็น
@@ -198,7 +251,9 @@ const JobModal = ({ jobId, onClose }) => {
                     />
                   ))
               ) : (
-                <p className="text-sm text-gray-500">ไม่มีภาพจากช่างซ่อม</p>
+                <div className="w-32 h-32 border rounded flex items-center justify-center text-xs text-gray-500">
+                  ไม่มีภาพ
+                </div>
               )}
             </div>
           </div>
@@ -206,21 +261,30 @@ const JobModal = ({ jobId, onClose }) => {
           {/* ลายเซ็นลูกค้า */}
           <div>
             <h1>ลายเซ็นลูกค้า :</h1>
-            {signatureImage ? (
-              <img
-                src={signatureImage.url}
-                alt="customer-signature"
-                className="w-40 h-40 object-contain rounded-lg border bg-white p-2 cursor-pointer hover:opacity-80"
-                onClick={() => window.open(signatureImage.url, "_blank")}
-              />
-            ) : (
-              <p className="text-sm text-gray-500">ไม่มีลายเซ็นลูกค้า</p>
-            )}
+            <div className="flex flex-wrap gap-3 mt-2 pb-2">
+              {signatureImage ? (
+                <img
+                  src={signatureImage.url}
+                  alt="customer-signature"
+                  className="w-40 h-40 object-contain rounded-lg border bg-white p-2 cursor-pointer hover:opacity-80"
+                  onClick={() => window.open(signatureImage.url, "_blank")}
+                />
+              ) : (
+                <div className="w-32 h-32 border rounded flex items-center justify-center text-xs text-gray-500">
+                  ไม่มีภาพ
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ความพึงพอใจ */}
           <div className="flex items-center gap-2">
-            <h1 className="whitespace-nowrap">ความพึงพอใจ :</h1>
+            <p className="whitespace-nowrap">
+              {" "}
+              <span style={{ display: "inline-block", width: "150px" }}>
+                ความพึงพอใจ :
+              </span>{" "}
+            </p>
             <div className="flex gap-1 items-center">
               {[...Array(5)].map((_, index) =>
                 index < (job?.workStar || 0) ? (
@@ -230,6 +294,7 @@ const JobModal = ({ jobId, onClose }) => {
                 )
               )}
             </div>
+
             <span className="text-sm text-gray-600 whitespace-nowrap">
               {job?.workStar ? `${job.workStar} ดาว` : "ยังไม่มีการประเมิน"}
             </span>

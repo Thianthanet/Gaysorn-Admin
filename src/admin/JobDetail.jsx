@@ -4,6 +4,9 @@ import { useNavigate, useParams } from "react-router-dom";
 import AdminLayout from "./AdminLayout";
 import { FaStar, FaRegStar } from "react-icons/fa";
 
+//วันที่
+import { formatDateTimeThaiShort } from "../component/Date";
+
 const JobDetail = () => {
   const { id } = useParams();
   const [job, setJob] = useState([]);
@@ -51,7 +54,7 @@ const JobDetail = () => {
       <div className="bg-white rounded-lg shadow-md p-6 max-w-4xl mx-auto">
         <h1 className="text-[#837958] font-bold">หมายเลขงาน : {job.jobNo}</h1>
         <div>
-          <h1>วันที่แจ้ง : {job?.createDate}</h1>
+          <h1>วันที่แจ้ง : {formatDateTimeThaiShort(job?.createDate)}</h1>
           <h1>วันที่นัดเข้าซ่อม : {job?.preworkDate || "-"}</h1>
           <h1>บริษัท : {job?.company?.companyName || "-"}</h1>
           <h1>
@@ -136,7 +139,7 @@ const JobDetail = () => {
               <p className="text-sm text-gray-500">ไม่มีลายเซ็นลูกค้า</p>
             )}
           </div>
-          
+
           {/* ความพึงพอใจ */}
           <div className="mt-4">
             <h1 className="font-semibold text-black mb-1">ความพึงพอใจ :</h1>
