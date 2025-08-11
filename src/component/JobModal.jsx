@@ -66,7 +66,10 @@ const JobModal = ({ jobId, onClose }) => {
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+        onClick={onClose}
+      >
         <div className="bg-white max-w-4xl w-full rounded-lg p-6 relative">
           <button
             onClick={onClose}
@@ -120,8 +123,14 @@ const JobModal = ({ jobId, onClose }) => {
   const signatureImage = techImages?.slice(-1)[0];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center ">
-      <div className="bg-white max-w-2xl w-full rounded-lg p-12 overflow-y-auto max-h-[90vh] relative">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+      onClick={onClose} 
+    >
+      <div
+        className="bg-white max-w-2xl w-full rounded-lg p-12 overflow-y-auto max-h-[90vh] relative"
+        onClick={(e) => e.stopPropagation()} 
+      >
         <button
           onClick={onClose}
           className="absolute top-3 right-3 bg-red-600 rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-700"
