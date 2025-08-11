@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import AdminLayout from "./AdminLayout";
 import axios from "axios";
 import dayjs from "dayjs";
 
@@ -10,35 +9,34 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("");
 
-  useEffect(() => {
-    handleGetTechnicianReport();
-  }, [userId, startDate, endDate]);
+  // State สำหรับ Modal รูปภาพ
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState(null);
 
+  // ฟอร์แมตช่วงเวลาแสดงเป็น พ.ศ.
   const formatDateRange = () => {
     if (!startDate || !endDate) return "ทั้งหมด";
     const start = dayjs(startDate);
     const end = dayjs(endDate);
 
-    const toBuddhistYear = (date, format) => {
-      return date.format(format).replace(
-        date.year().toString(),
-        (date.year() + 543).toString()
-      );
-    };
+    const toBuddhistYear = (date, format) =>
+      date
+        .format(format)
+        .replace(date.year().toString(), (date.year() + 543).toString());
 
-    if (start.isSame(end, "day")) {
+    if (start.isSame(end, "day"))
       return `วันที่ ${toBuddhistYear(start, "D MMMM YYYY")}`;
-    }
-    if (start.isSame(end, "month")) {
+    if (start.isSame(end, "month"))
       return `${start.format("D")} - ${toBuddhistYear(end, "D MMMM YYYY")}`;
-    }
-    if (start.isSame(end, "year")) {
+    if (start.isSame(end, "year"))
       return `${start.format("D MMM")} - ${toBuddhistYear(end, "D MMM YYYY")}`;
-    }
-    return `${toBuddhistYear(start, "D MMM YYYY")} - ${toBuddhistYear(end, "D MMM YYYY")}`;
+    return `${toBuddhistYear(start, "D MMM YYYY")} - ${toBuddhistYear(
+      end,
+      "D MMM YYYY"
+    )}`;
   };
 
-
+  // ดึงข้อมูลรายงาน
   const handleGetTechnicianReport = async () => {
     try {
       setLoading(true);
@@ -47,8 +45,7 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
         {
           params: {
             startDate: startDate || "2000-01-01",
-            endDate:
-              endDate || dayjs().add(10, "year").format("YYYY-MM-DD"),
+            endDate: endDate || dayjs().add(10, "year").format("YYYY-MM-DD"),
           },
         }
       );
@@ -57,7 +54,6 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
       setAcceptedJobs(data.accepted || []);
       setCompletedJobs(data.completed || []);
       setTimeRange(formatDateRange());
-      console.log("Loaded technician report with date range:", data);
     } catch (error) {
       console.error("Error fetching technician report:", error);
     } finally {
@@ -65,6 +61,11 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
     }
   };
 
+  useEffect(() => {
+    handleGetTechnicianReport();
+  }, [userId, startDate, endDate]);
+
+  // ช่วยจำแนกรูปตามประเภทเหมือนใน ReportCustomer
   const getImageType = (image) => {
     if (image.mark === "cusRepair" || image.uploadBy === "cus") return "แจ้งซ่อม";
     if (image.mark === "techRepair" || image.uploadBy === "tech") return "ดำเนินการ";
@@ -72,6 +73,19 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
     return "อื่นๆ";
   };
 
+  // เปิด modal รูปภาพ
+  const openImageModal = (url) => {
+    setSelectedImageUrl(url);
+    setIsImageModalOpen(true);
+  };
+
+  // ปิด modal รูปภาพ
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    setSelectedImageUrl(null);
+  };
+
+  // แสดงรูปภาพแบบคลิกได้และขยาย
   const renderImagesByType = (job, typeLabel) => {
     const filteredImages =
       job.images?.filter((img) => getImageType(img) === typeLabel) || [];
@@ -88,20 +102,23 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
       const isFullUrl = image.url.startsWith("http");
       const imageUrl = isFullUrl
         ? image.url
-        : `${import.meta.env.VITE_API_BASE_URL}/api${image.url.startsWith("/") ? image.url : `/${image.url}`
-        }`;
+        : `${import.meta.env.VITE_API_BASE_URL}/api${
+            image.url.startsWith("/") ? image.url : `/${image.url}`
+          }`;
 
       return (
         <img
           key={`${typeLabel}-${idx}`}
           src={imageUrl}
           alt={`${typeLabel} รูปที่ ${idx + 1}`}
-          className="w-32 h-32 object-cover rounded-lg"
+          className="w-32 h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition"
+          onClick={() => openImageModal(imageUrl)}
         />
       );
     });
   };
 
+  // แสดงข้อมูลงานแต่ละงาน
   const renderJobCard = (job) => (
     <div key={job.id} className="border border-[#C3A96B] rounded-md p-4 mb-4">
       <div className="flex justify-between items-start mb-2">
@@ -109,22 +126,23 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
           หมายเลขงาน : {job.jobNo || "-"}
         </h2>
         <span
-          className={`px-2 py-1 rounded text-sm ${job.status === "pending"
-            ? "bg-red-100 text-red-800"
-            : job.status === "in_progress"
+          className={`px-2 py-1 rounded text-sm ${
+            job.status === "pending"
+              ? "bg-red-100 text-red-800"
+              : job.status === "in_progress"
               ? "bg-yellow-100 text-yellow-800"
               : job.status === "completed"
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
+              ? "bg-green-100 text-green-800"
+              : "bg-gray-100 text-gray-800"
+          }`}
         >
           {job.status === "pending"
             ? "รอดำเนินการ"
             : job.status === "in_progress"
-              ? "อยู่ระหว่างดำเนินการ"
-              : job.status === "completed"
-                ? "เสร็จสิ้น"
-                : job.status}
+            ? "อยู่ระหว่างดำเนินการ"
+            : job.status === "completed"
+            ? "เสร็จสิ้น"
+            : job.status}
         </span>
       </div>
 
@@ -175,10 +193,10 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
           <span>
             {job.acceptDate
               ? new Date(job.acceptDate).toLocaleDateString("th-TH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
               : "-"}
           </span>
         </div>
@@ -257,6 +275,31 @@ const ReportTechnician = ({ userId, startDate, endDate }) => {
         </div>
       ) : (
         completedJobs.map((job) => renderJobCard(job))
+      )}
+
+      {/* Modal รูปภาพ */}
+      {isImageModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={closeImageModal}
+        >
+          <div
+            className="bg-white max-h-[90vh] overflow-auto w-[90vw] max-w-5xl rounded-lg shadow-lg relative p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={closeImageModal}
+              className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow"
+            >
+              ✕
+            </button>
+            <img
+              src={selectedImageUrl}
+              alt="ภาพขยาย"
+              className="w-full h-auto max-h-[80vh] object-contain rounded"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import AdminLayout from "./AdminLayout";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -10,7 +9,11 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState("");
-  const [data, setDate] = useState([])
+  const [data, setDate] = useState([]);
+
+  // สร้าง state สำหรับ Modal รูปภาพ
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState(null);
 
   const getImageType = (image) => {
     if (image.mark === "cusRepair" || image.uploadBy === "cus") {
@@ -25,6 +28,19 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
     return "อื่นๆ";
   };
 
+  // เปิด modal รูปภาพ
+  const openImageModal = (url) => {
+    setSelectedImageUrl(url);
+    setIsImageModalOpen(true);
+  };
+
+  // ปิด modal รูปภาพ
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+    setSelectedImageUrl(null);
+  };
+
+  // ฟังก์ชัน render รูปภาพ พร้อม onClick เพื่อเปิด modal
   const renderImagesByType = (job, typeLabel) => {
     const filteredImages =
       job.images?.filter((img) => getImageType(img) === typeLabel) || [];
@@ -41,15 +57,15 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
       const isFullUrl = image.url.startsWith("http");
       const imageUrl = isFullUrl
         ? image.url
-        : `${import.meta.env.VITE_API_BASE_URL}/api${image.url.startsWith("/") ? image.url : `/${image.url}`
-        }`;
+        : `${import.meta.env.VITE_API_BASE_URL}/api${image.url.startsWith("/") ? image.url : `/${image.url}`}`;
 
       return (
         <img
           key={`${typeLabel}-${idx}`}
           src={imageUrl}
           alt={`${typeLabel} รูปที่ ${idx + 1}`}
-          className="w-32 h-32 object-cover rounded-lg"
+          className="w-32 h-32 object-cover rounded-lg cursor-pointer hover:opacity-80 transition"
+          onClick={() => openImageModal(imageUrl)}
         />
       );
     });
@@ -83,7 +99,6 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
     return `${toBuddhistYear(start, "D MMM YYYY")} - ${toBuddhistYear(end, "D MMM YYYY")}`;
   };
 
-
   const handleGetCompanyReport = async () => {
     try {
       setLoading(true);
@@ -92,13 +107,13 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
         {
           params: {
             startDate: startDate || "2000-01-01",
-            endDate: endDate || dayjs().add(10, "year").format("YYYY-MM-DD")
-          }
+            endDate: endDate || dayjs().add(10, "year").format("YYYY-MM-DD"),
+          },
         }
       );
       setJobs(response.data.data);
       setTimeRange(formatDateRange());
-      console.log("Loaded jobs with date range:", { startDate, endDate }, response.data.data);
+      // console.log("Loaded jobs with date range:", { startDate, endDate }, response.data.data);
     } catch (error) {
       console.error("Error fetching company report:", error);
     } finally {
@@ -107,18 +122,20 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
   };
 
   useEffect(() => {
-    getData()
-  }, [id])
+    getData();
+  }, [id]);
 
   const getData = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/getCompanyAllRepair/${id}`)
-      setDate(res.data.data)
-      console.log("Company data:", res.data.data);
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_BASE_URL}/api/getCompanyAllRepair/${id}`
+      );
+      setDate(res.data.data);
+      // console.log("Company data:", res.data.data);
     } catch (error) {
       console.error("Error fetching company data:", error);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -137,12 +154,10 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
     <div className="p-6 mr-5">
       {/* ข้อมูลบริษัท */}
       <div className="sticky top-0 bg-white z-10 pt-2 pb-6 mb-6 border-b border-[#C3A96B] -mt-4">
-        <h1 className="text-xl font-bold text-[#86754D] mb-2">
-          {companyName}
-        </h1>
+        <h1 className="text-xl font-bold text-[#86754D] mb-2">{companyName}</h1>
         <p className="text-sm mb-1">
-          <span className="font-semibold">สถานที่ :</span> {buildingName},{" "}
-          {companyName}, {unitName}
+          <span className="font-semibold">สถานที่ :</span> {buildingName}, {companyName},{" "}
+          {unitName}
         </p>
         <div className="flex justify-between items-center">
           <p className="text-sm">
@@ -162,30 +177,19 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
         </div>
       ) : (
         jobs.map((job) => (
-          <div
-            key={job.id}
-            className="border border-[#C3A96B] rounded-md p-4 mb-4"
-          >
-            <h2 className="text-[#C3A96B] font-semibold mb-2">
-              หมายเลขงาน : {job.jobNo || "-"}
-            </h2>
+          <div key={job.id} className="border border-[#C3A96B] rounded-md p-4 mb-4">
+            <h2 className="text-[#C3A96B] font-semibold mb-2">หมายเลขงาน : {job.jobNo || "-"}</h2>
 
             {/* รูปภาพ */}
             <div>
               <h3 className="font-semibold mb-1">ภาพแจ้งซ่อม</h3>
-              <div className="flex gap-2 mb-4">
-                {renderImagesByType(job, "แจ้งซ่อม")}
-              </div>
+              <div className="flex gap-2 mb-4">{renderImagesByType(job, "แจ้งซ่อม")}</div>
 
               <h3 className="font-semibold mb-1">ภาพดำเนินการ</h3>
-              <div className="flex gap-2 mb-4">
-                {renderImagesByType(job, "ดำเนินการ")}
-              </div>
+              <div className="flex gap-2 mb-4">{renderImagesByType(job, "ดำเนินการ")}</div>
 
               <h3 className="font-semibold mb-1">ลายเซ็น</h3>
-              <div className="flex gap-2 mb-4">
-                {renderImagesByType(job, "ลายเซ็น")}
-              </div>
+              <div className="flex gap-2 mb-4">{renderImagesByType(job, "ลายเซ็น")}</div>
             </div>
 
             {/* รายละเอียดตรงบรรทัด */}
@@ -201,22 +205,23 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
               <div className="flex">
                 <span className="w-32 font-semibold">สถานะ :</span>
                 <span
-                  className={`${job.status === "pending"
+                  className={`${
+                    job.status === "pending"
                       ? "text-red-500"
                       : job.status === "in_progress"
-                        ? "text-yellow-500"
-                        : job.status === "completed"
-                          ? "text-green-500"
-                          : ""
-                    }`}
+                      ? "text-yellow-500"
+                      : job.status === "completed"
+                      ? "text-green-500"
+                      : ""
+                  }`}
                 >
                   {job.status === "pending"
                     ? "รอดำเนินการ"
                     : job.status === "in_progress"
-                      ? "อยู่ระหว่างดำเนินการ"
-                      : job.status === "completed"
-                        ? "เสร็จสิ้น"
-                        : job.status}
+                    ? "อยู่ระหว่างดำเนินการ"
+                    : job.status === "completed"
+                    ? "เสร็จสิ้น"
+                    : job.status}
                 </span>
                 {job.updatedAt && (
                   <span className="text-gray-400 ml-2">
@@ -256,6 +261,31 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
             </div>
           </div>
         ))
+      )}
+
+      {/* Modal แสดงรูปภาพแบบขยาย */}
+      {isImageModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={closeImageModal}
+        >
+          <div
+            className="bg-white max-h-[90vh] overflow-auto w-[90vw] max-w-5xl rounded-lg shadow-lg relative p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={closeImageModal}
+              className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow"
+            >
+              ✕
+            </button>
+            <img
+              src={selectedImageUrl}
+              alt="ภาพขยาย"
+              className="w-full h-auto max-h-[80vh] object-contain rounded"
+            />
+          </div>
+        </div>
       )}
     </div>
   );
