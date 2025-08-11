@@ -679,9 +679,26 @@ const Report = () => {
   };
 
   // Generate year options
+  // const generateYears = () => {
+  //   const currentYear = dayjs().year();
+  //   return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+  // };
+
+  //   const generateYears = () => {
+  //   const currentYear = dayjs().year(); // ปีปัจจุบัน (ค.ศ.)
+  //   const buddhistYear = currentYear + 543; // แปลงเป็น พ.ศ.
+  //   return Array.from({ length: 5 }, (_, i) => buddhistYear + i);
+  // };
+
   const generateYears = () => {
-    const currentYear = dayjs().year();
-    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+    const currentBuddhistYear = dayjs().year() + 543; // ปีปัจจุบันในรูปแบบ พ.ศ.
+    const startYear = 2568; // ปีเริ่มต้นที่ต้องการ (2568)
+
+    // คำนวณจำนวนปีที่ต้องแสดง (ตั้งแต่ 2568 ถึงปีปัจจุบัน)
+    const yearCount = currentBuddhistYear - startYear + 1;
+
+    // สร้าง array ของปี (ตั้งแต่ 2568 ถึงปีปัจจุบัน)
+    return Array.from({ length: Math.max(1, yearCount) }, (_, i) => startYear + i);
   };
 
   // Generate month options
@@ -890,8 +907,8 @@ const Report = () => {
                 className="px-3 h-[32px] border rounded"
               >
                 {generateYears().map((year) => (
-                  <option key={year} value={year}>
-                    {year + 543}
+                  <option key={year} value={year - 543}>
+                    {year}
                   </option>
                 ))}
               </select>
@@ -1027,11 +1044,11 @@ const Report = () => {
                 >
                   ✕
                 </button>
-                <ReportCustomer 
+                <ReportCustomer
                   id={selectedCompanyId}
                   startDate={getStartAndEndDate().startDate}
                   endDate={getStartAndEndDate().endDate}
-                  />
+                />
               </div>
             </div>
           )}
@@ -1173,11 +1190,11 @@ const Report = () => {
                 >
                   ✕
                 </button>
-                <ReportTechnician 
+                <ReportTechnician
                   userId={selectedTechnicianId}
                   startDate={getStartAndEndDate().startDate}
                   endDate={getStartAndEndDate().endDate}
-                  />
+                />
               </div>
             </div>
           )}
