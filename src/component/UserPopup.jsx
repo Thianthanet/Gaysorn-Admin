@@ -117,12 +117,13 @@ const UserPopup = ({
                     </label>
                     <select
                       name="buildingId"
+                      
                       value={customerData.buildingId}
                       onChange={handleCustomerChange}
-                      className={`w-[320px] text-[12px] text-[#BC9D72]/50 border ${errors.buildingName
-                          ? "border-red-500"
-                          : "border-[#837958]"
-                        } rounded-lg px-2 py-1.5 focus:outline-none`}
+                      // className={`w-[320px] text-sm border ${errors.buildingName
+                      //     ? "border-red-500"
+                      //     : "border-[#837958]"
+                      //   } rounded-lg px-2 py-1.5 focus:outline-none`}
                     >
                       <option value="">เลือกอาคาร</option>
                       {buildings.map((building) => (
@@ -181,7 +182,7 @@ const UserPopup = ({
                               onChange={() => handleBuildingToggle(building.id)}
                               className="h-3 w-3 text-[#BC9D72] accent-[#BC9D72] border-[1px] border-[#BC9D72] checked:bg-[#BC9D72] checked:border-[#BC9D72] cursor-pointer"
                             />
-                            <span className="text-[#837958] text-[12px] font-medium">{building.buildingName}</span>
+                            <span className="text-[#837958] text-sm font-medium">{building.buildingName}</span>
                           </label>
                         ))}
                       </div>

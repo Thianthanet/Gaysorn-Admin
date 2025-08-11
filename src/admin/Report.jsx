@@ -135,9 +135,8 @@ const Report = () => {
       isCustomerTab ? "ลูกค้า" : "เจ้าหน้าที่"
     );
 
-    const fileName = `report_${
-      isCustomerTab ? "customer" : "technician"
-    }_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    const fileName = `report_${isCustomerTab ? "customer" : "technician"
+      }_${new Date().toISOString().slice(0, 10)}.xlsx`;
 
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
@@ -194,26 +193,26 @@ const Report = () => {
 
     const adjustedStartDate = startDate
       ? new Date(
-          startDate.getFullYear(),
-          startDate.getMonth(),
-          startDate.getDate(),
-          0,
-          0,
-          0,
-          0
-        )
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate(),
+        0,
+        0,
+        0,
+        0
+      )
       : null;
 
     const adjustedEndDate = endDate
       ? new Date(
-          endDate.getFullYear(),
-          endDate.getMonth(),
-          endDate.getDate(),
-          23,
-          59,
-          59,
-          999
-        )
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      )
       : null;
 
     // ✅ FIXED: ใช้ filteredJobs ต่อจากที่กรองไว้แล้ว ไม่ใช่ jobs ดิบ
@@ -561,9 +560,8 @@ const Report = () => {
         columns.push({
           key: `day_${i + 1}`,
           label: `${thaiDayNames[currentDay.day()]} ${currentDay.date()}`,
-          fullLabel: `วันที่ ${currentDay.date()} ${
-            thaiMonthNames[currentDay.month()]
-          } (${thaiDayNames[currentDay.day()]})`,
+          fullLabel: `วันที่ ${currentDay.date()} ${thaiMonthNames[currentDay.month()]
+            } (${thaiDayNames[currentDay.day()]})`,
           date: currentDay,
         });
       }
@@ -805,11 +803,10 @@ const Report = () => {
                       setSelectedBuilding(b.buildingName);
                       setOpen(false);
                     }}
-                    className={`px-3 h-[28px] text-[#837958] font-normal hover:bg-[#BC9D72] hover:text-white cursor-pointer ${
-                      index !== buildings.length - 1
-                        ? "border-b border-[#837958]/20"
-                        : ""
-                    }`}
+                    className={`px-3 h-[28px] text-[#837958] font-normal hover:bg-[#BC9D72] hover:text-white cursor-pointer ${index !== buildings.length - 1
+                      ? "border-b border-[#837958]/20"
+                      : ""
+                      }`}
                   >
                     {b.buildingName}
                   </li>
@@ -833,21 +830,19 @@ const Report = () => {
           {/* ปุ่มเปลี่ยน Tab */}
           <button
             onClick={() => handleTabChange("customer")}
-            className={`px-4 h-[32px] rounded-2xl text-sm shadow-md ${
-              activeTab === "customer"
-                ? "bg-[#BC9D72] text-white"
-                : "bg-[#F5F3EE]"
-            }`}
+            className={`px-4 h-[32px] rounded-2xl text-sm shadow-md ${activeTab === "customer"
+              ? "bg-[#BC9D72] text-white"
+              : "bg-[#F5F3EE]"
+              }`}
           >
             ลูกค้า
           </button>
           <button
             onClick={() => handleTabChange("technician")}
-            className={`px-4 h-[32px] rounded-2xl text-sm shadow-md ${
-              activeTab === "technician"
-                ? "bg-[#BC9D72] text-white"
-                : "bg-[#F5F3EE]"
-            }`}
+            className={`px-4 h-[32px] rounded-2xl text-sm shadow-md ${activeTab === "technician"
+              ? "bg-[#BC9D72] text-white"
+              : "bg-[#F5F3EE]"
+              }`}
           >
             เจ้าหน้าที่
           </button>
@@ -860,31 +855,28 @@ const Report = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => handleTimePeriodChange("weekly")}
-                className={`px-3 py-1.5 rounded-2xl text-xs border border-[#837958]/50 ${
-                  timePeriod === "weekly"
-                    ? "bg-[#837958] text-white"
-                    : "bg-[#FEFEFE] text-[#837958]/50"
-                }`}
+                className={`px-3 py-1.5 rounded-2xl text-xs border border-[#837958]/50 ${timePeriod === "weekly"
+                  ? "bg-[#837958] text-white"
+                  : "bg-[#FEFEFE] text-[#837958]/50"
+                  }`}
               >
                 รายสัปดาห์
               </button>
               <button
                 onClick={() => handleTimePeriodChange("monthly")}
-                className={`px-3 py-1 rounded-2xl text-xs border border-[#837958]/50 ${
-                  timePeriod === "monthly"
-                    ? "bg-[#837958] text-white"
-                    : "bg-[#FEFEFE] text-[#837958]/50"
-                }`}
+                className={`px-3 py-1 rounded-2xl text-xs border border-[#837958]/50 ${timePeriod === "monthly"
+                  ? "bg-[#837958] text-white"
+                  : "bg-[#FEFEFE] text-[#837958]/50"
+                  }`}
               >
                 รายเดือน
               </button>
               <button
                 onClick={() => handleTimePeriodChange("yearly")}
-                className={`px-3 py-1 rounded-2xl text-xs border border-[#837958]/50 ${
-                  timePeriod === "yearly"
-                    ? "bg-[#837958] text-white"
-                    : "bg-[#FEFEFE] text-[#837958]/50"
-                }`}
+                className={`px-3 py-1 rounded-2xl text-xs border border-[#837958]/50 ${timePeriod === "yearly"
+                  ? "bg-[#837958] text-white"
+                  : "bg-[#FEFEFE] text-[#837958]/50"
+                  }`}
               >
                 รายปี
               </button>
@@ -1021,18 +1013,29 @@ const Report = () => {
           )}
 
           {isModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white max-h-[90vh] overflow-y-auto w-[90vw] max-w-5xl rounded-lg shadow-lg relative">
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+              onClick={handleCloseModalCustomer} // กดนอก modal ปิด
+            >
+              <div
+                className="bg-white max-h-[90vh] overflow-y-auto w-[90vw] max-w-5xl rounded-lg shadow-lg relative"
+                onClick={(e) => e.stopPropagation()} // กันไม่ให้คลิกข้างในแล้วปิด
+              >
                 <button
                   onClick={handleCloseModalCustomer}
                   className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow"
                 >
                   ✕
                 </button>
-                <ReportCustomer id={selectedCompanyId} />
+                <ReportCustomer 
+                  id={selectedCompanyId}
+                  startDate={getStartAndEndDate().startDate}
+                  endDate={getStartAndEndDate().endDate}
+                  />
               </div>
             </div>
           )}
+
 
           {/* Technician Table */}
           {activeTab === "technician" && (
@@ -1087,7 +1090,7 @@ const Report = () => {
                       (item.acceptedJobs +
                         (item.tekenFromOtherCount || 0) -
                         (item.takenByOtherCount || 0))) *
-                      100 || 0;
+                    100 || 0;
                   return (
                     <tr
                       key={index}
@@ -1141,7 +1144,7 @@ const Report = () => {
             </table>
           )}
 
-          {isTechnicianModalOpen && (
+          {/* {isTechnicianModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
               <div className="bg-white max-h-[90vh] overflow-y-auto w-[90vw] max-w-5xl rounded-lg shadow-lg relative">
                 <button
@@ -1153,7 +1156,32 @@ const Report = () => {
                 <ReportTechnician userId={selectedTechnicianId} />
               </div>
             </div>
+          )} */}
+
+          {isTechnicianModalOpen && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+              onClick={handleCloseModalTechnician} // คลิกที่พื้นหลังเพื่อปิด
+            >
+              <div
+                className="bg-white max-h-[90vh] overflow-y-auto w-[90vw] max-w-5xl rounded-lg shadow-lg relative"
+                onClick={(e) => e.stopPropagation()} // กันการปิดเมื่อคลิกใน modal
+              >
+                <button
+                  onClick={handleCloseModalTechnician}
+                  className="absolute top-2 right-2 text-white bg-red-500 hover:bg-red-600 rounded-full w-8 h-8 flex items-center justify-center text-lg shadow"
+                >
+                  ✕
+                </button>
+                <ReportTechnician 
+                  userId={selectedTechnicianId}
+                  startDate={getStartAndEndDate().startDate}
+                  endDate={getStartAndEndDate().endDate}
+                  />
+              </div>
+            </div>
           )}
+
         </div>
       </div>
     </AdminLayout>
