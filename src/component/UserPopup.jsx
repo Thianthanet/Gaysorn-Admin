@@ -116,9 +116,9 @@ const UserPopup = ({
                       อาคาร<span className="text-red-500">*</span>
                     </label>
                     <select
-                      name="buildingId"
+                      name="buildingName"
                       
-                      value={customerData.buildingId}
+                      value={customerData.buildingName}
                       onChange={handleCustomerChange}
                      className="w-[320px] text-sm border border-[#837958] rounded-lg px-2 py-1.5 focus:outline-none"
                     >
@@ -126,7 +126,7 @@ const UserPopup = ({
                       {buildings.map((building) => (
                         <option
                           key={building.id}
-                          value={building.id}
+                          value={building.buildingName}
                         >
                           {building.buildingName}
                         </option>
