@@ -269,7 +269,7 @@ const User = () => {
 
   const handleCustomerChange = useCallback(
     async (e) => {
-      const { name, value } = e.target;
+      const { name, value, options, selectedIndex } = e.target;
 
       // Phone number input formatting
       if (name === "phone") {
@@ -312,21 +312,40 @@ const User = () => {
       //   }));
       //   return;
       // }
+      // if (name === "buildingName") {
+      //   const selectedBuilding = buildings.find(
+      //     (b) => b.buildingName === value
+      //   );
+      //   setCustomerFormData((prev) => ({
+      //     ...prev,
+      //     buildingName: value,
+      //     buildingId: selectedBuilding ? selectedBuilding.id : "", // ยังเก็บ ID ไว้ใช้หากจำเป็น
+      //     companyId: "",
+      //     // companyName: "",
+      //     unitId: "",
+      //     // unitName: "",
+      //   }));
+      //   return;
+
+      // }
       if (name === "buildingName") {
-        const selectedBuilding = buildings.find(
-          (b) => b.buildingName === value
-        );
-        setCustomerFormData((prev) => ({
-          ...prev,
-          buildingName: value,
-          buildingId: selectedBuilding ? selectedBuilding.id : "", // ยังเก็บ ID ไว้ใช้หากจำเป็น
-          companyId: "",
-          // companyName: "",
-          unitId: "",
-          // unitName: "",
-        }));
-        return;
-      }
+      // รับ ID จาก attribute data-id
+      const selectedId = selectedIndex > 0 ? options[selectedIndex].getAttribute('data-id') : "";
+      const selectedBuilding = buildings.find(
+        (b) => b.buildingName === value
+      );
+      
+      setCustomerFormData((prev) => ({
+        ...prev,
+        buildingName: value,
+        buildingId: selectedId || (selectedBuilding ? selectedBuilding.id : ""),
+        companyId: "",
+        // companyName: "",
+        unitId: "",
+        // unitName: "",
+      }));
+      return;
+    }
 
       // สำหรับ dropdown company
       if (name === "companyName") {
@@ -443,7 +462,7 @@ const User = () => {
         }
       }
     },
-    [setErrors, setCustomerFormData, setCompanies, setUnits]
+    [setErrors, setCustomerFormData, setCompanies, setUnits, buildings]
   );
 
   const handleTechnicianChange = useCallback((e) => {
@@ -481,12 +500,13 @@ const User = () => {
           `${API_BASE_URL}/api/getCustomerById/${userId}`
         );
         const customer = res.data.data;
+        console.log(customerFormData);
 
         setCustomerFormData({
           id: customer.id,
           name: customer.name,
           phone: customer.phone,
-          buildingId: customer.unit?.company?.buildingId || "",
+          buildingId: customer.unit?.company?.building.id || "",
           companyId: customer.unit?.companyId || "",
           companyName: customer.unit?.company?.companyName || "",
           unitId: customer.unitId || "",
