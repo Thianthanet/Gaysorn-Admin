@@ -17,6 +17,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { registerLocale } from "react-datepicker";
 import th from "date-fns/locale/th";
 
+import { useLocation } from "react-router-dom";
 
 registerLocale("th", th);
 
@@ -26,16 +27,27 @@ const Jobs = () => {
     keys: ["createDate"], // Array to support multiple sort keys
     directions: ["desc"], // Corresponding directions for each key
   });
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+
+  const initialStatus = queryParams.get("status") || "all";
+  const initialStartDate = queryParams.get("startDate")
+    ? new Date(queryParams.get("startDate"))
+    : "";
+  const initialEndDate = queryParams.get("endDate")
+    ? new Date(queryParams.get("endDate"))
+    : "";
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [building, setBuilding] = useState([]);
   const [selectedBuilding, setSelectedBuilding] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState(initialStatus);
   const [showFilters, setShowFilters] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
   const [choices, setChoices] = useState([]);
   //const [selectedChoices, setSelectedChoices] = useState([]);
   const [selectedChoice, setSelectedChoice] = useState("");
@@ -46,7 +58,7 @@ const Jobs = () => {
   const [selected, setSelected] = useState("อาคาร");
   const [open, setOpen] = useState(false);
 
-   const [statusOpen, setStatusOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
 
   const statusLabel = (status) => {
     switch (status) {
@@ -80,7 +92,13 @@ const Jobs = () => {
   };
 
   useEffect(() => {
-    handleGetAllJobs();
+    if (initialStartDate || initialEndDate || initialStatus !== "all") {
+      // มี query มาจาก Dashboard → ดึงงานตาม filter
+      handleGetFilteredJobs();
+    } else {
+      // ถ้าไม่มี query → โหลดทั้งหมด
+      handleGetAllJobs();
+    }
     handleGetBuilding();
     handleGetChoices();
   }, []);
@@ -297,8 +315,11 @@ const Jobs = () => {
     try {
       const params = new URLSearchParams();
 
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
+      if (startDate) params.append("startDate", startDate.toISOString());
+      if (endDate) params.append("endDate", endDate.toISOString());
+      if (selectedStatus !== "all") {
+        params.append("status", selectedStatus);
+      }
 
       const res = await axios.get(
         `${
@@ -308,7 +329,6 @@ const Jobs = () => {
 
       setJobs(res.data.data);
       setCurrentPage(1);
-      //  setShowFilters(false); // ปิดฟิลเตอร์หลังจากค้นหา
     } catch (err) {
       console.error("Error fetching filtered jobs:", err);
     }
@@ -492,9 +512,11 @@ const Jobs = () => {
           <div className="relative inline-block">
             <button
               onClick={() => setStatusOpen(!statusOpen)}
-              className="px-3 h-[28px] w-[90px] bg-[#837958] text-white text-left rounded-full shadow text-ellipsis overflow-hidden whitespace-nowrap font-normal"
+              className="px-3 h-[28px] w-[90px] bg-[#837958] text-white text-left rounded-full shadow"
             >
-              {selectedStatus === "all" ? "สถานะ" : statusLabel(selectedStatus)}
+              {selectedStatus === "all"
+                ? "ทั้งหมด"
+                : statusLabel(selectedStatus)}
             </button>
 
             {statusOpen && (
