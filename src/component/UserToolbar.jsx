@@ -49,46 +49,6 @@ const UserToolbar = ({
         ค้นหา
       </button>
 
-      {/* ปุ่มอาคาร */}
-      {/* <div className="relative inline-block">
-        <select
-          value={filterBuilding}
-          onChange={(e) => setFilterBuilding(e.target.value)}
-          className={`
-            peer
-            h-[28px] bg-[#837958] text-white rounded-full pl-2 pr-8
-            text-center focus:outline-none
-            appearance-none
-            min-w-[90px] max-w-[300px]
-            transition-all duration-300 ease-in-out
-            ${filterBuilding ? "text-[13px]" : "text-sm"}
-          `}
-          style={{ width: filterBuilding && filterBuilding !== "" ? "140px" : "90px" }}
-        >
-          <option value="" disabled hidden>
-            อาคาร
-          </option>
-          <option value="all" className="bg-[#F4F2ED] text-black text-xs">
-            ทั้งหมด
-          </option>
-          {buildings.map((b) => (
-            <option
-              key={b.id}
-              value={b.buildingName}
-              className="bg-[#F4F2ED] text-black text-xs"
-            >
-              {b.buildingName}
-            </option>
-          ))}
-        </select>
-
-        {/* dropdown arrow 
-        <HiChevronDown
-          size={18}
-          className="text-white pointer-events-none absolute top-1/2 right-2 -translate-y-1/2"
-        />
-      </div> */}
-
       <div className="mb-3">
         <BuildingFilter isMobile={false} setBuildingName={setFilterBuilding} />
       </div>

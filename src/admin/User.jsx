@@ -329,23 +329,27 @@ const User = () => {
 
       // }
       if (name === "buildingName") {
-      // รับ ID จาก attribute data-id
-      const selectedId = selectedIndex > 0 ? options[selectedIndex].getAttribute('data-id') : "";
-      const selectedBuilding = buildings.find(
-        (b) => b.buildingName === value
-      );
-      
-      setCustomerFormData((prev) => ({
-        ...prev,
-        buildingName: value,
-        buildingId: selectedId || (selectedBuilding ? selectedBuilding.id : ""),
-        companyId: "",
-        // companyName: "",
-        unitId: "",
-        // unitName: "",
-      }));
-      return;
-    }
+        // รับ ID จาก attribute data-id
+        const selectedId =
+          selectedIndex > 0
+            ? options[selectedIndex].getAttribute("data-id")
+            : "";
+        const selectedBuilding = buildings.find(
+          (b) => b.buildingName === value
+        );
+
+        setCustomerFormData((prev) => ({
+          ...prev,
+          buildingName: value,
+          buildingId:
+            selectedId || (selectedBuilding ? selectedBuilding.id : ""),
+          companyId: "",
+          // companyName: "",
+          unitId: "",
+          // unitName: "",
+        }));
+        return;
+      }
 
       // สำหรับ dropdown company
       if (name === "companyName") {
@@ -624,6 +628,7 @@ const User = () => {
   const confirmDelete = useCallback((id) => {
     setConfirmDeleteId(id);
     setShowConfirmPopup(true);
+   //  window.location.reload();
   }, []);
 
   const cancelDelete = useCallback(() => {
@@ -1127,7 +1132,7 @@ const User = () => {
                               />
                             )}
                           </td>
-                          <td className="flex gap-2 px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                          <td className="flex gap-2 px-5 py-4 text-center border-b border-gray-200 bg-white text-sm">
                             <button
                               className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600"
                               onClick={() => handleApproveAuto(user.userId)}
@@ -1135,7 +1140,16 @@ const User = () => {
                               อนุมัติ
                             </button>
                             <button
-                              onClick={() => handleDeleteApprove(user.id)}
+                              onClick={async () => {
+                                if (
+                                  window.confirm(
+                                    "คุณแน่ใจว่าต้องการลบรายการนี้?"
+                                  )
+                                ) {
+                                  await handleDeleteApprove(user.id);
+                                  window.location.reload();
+                                }
+                              }}
                             >
                               <Trash2 className="text-red-500" />
                             </button>
@@ -1144,10 +1158,7 @@ const User = () => {
                       ))
                     ) : (
                       <tr>
-                        <td
-                          colSpan="5"
-                          className="px-5 py-4 text-center text-gray-500"
-                        >
+                        <td colSpan="5" className="px-5 py-4  text-gray-500">
                           ไม่พบข้อมูลรออนุมัติ
                         </td>
                       </tr>
