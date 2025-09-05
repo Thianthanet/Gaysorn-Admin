@@ -176,7 +176,7 @@ const JobModal = ({ jobId, onClose }) => {
             <span style={{ display: "inline-block", width: "150px" }}>
               ผู้แจ้ง :
             </span>
-            {job?.customer?.name || "-"} ({job?.customer?.phone || "-"})
+            {job?.customer?.name || job?.owner?.name || "-"} ({job?.customer?.phone || job?.owner?.phone || "-"})
           </p>
 
           <p>
