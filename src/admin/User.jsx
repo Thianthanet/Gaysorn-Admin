@@ -375,20 +375,20 @@ const User = () => {
           // อัปเดต companyName จาก unit ที่เลือก
           companyName: selectedUnit
             ? companies.find((c) => c.id === selectedUnit.companyId)
-                ?.companyName || ""
+              ?.companyName || ""
             : prev.companyName,
           // อัปเดต buildingName และ buildingId จาก company ที่เกี่ยวข้อง
           buildingName: selectedUnit
             ? buildings.find(
-                (b) =>
-                  b.id ===
-                  (companies.find((c) => c.id === selectedUnit.companyId)
-                    ?.buildingId || "")
-              )?.buildingName || ""
+              (b) =>
+                b.id ===
+                (companies.find((c) => c.id === selectedUnit.companyId)
+                  ?.buildingId || "")
+            )?.buildingName || ""
             : prev.buildingName,
           buildingId: selectedUnit
             ? companies.find((c) => c.id === selectedUnit.companyId)
-                ?.buildingId || ""
+              ?.buildingId || ""
             : prev.buildingId,
         }));
         return;
@@ -628,7 +628,7 @@ const User = () => {
   const confirmDelete = useCallback((id) => {
     setConfirmDeleteId(id);
     setShowConfirmPopup(true);
-   //  window.location.reload();
+    //  window.location.reload();
   }, []);
 
   const cancelDelete = useCallback(() => {
@@ -660,7 +660,14 @@ const User = () => {
           newErrors.companyName = "กรุณากรอกบริษัท";
         if (!customerFormData.buildingName)
           newErrors.buildingName = "กรุณากรอกอาคาร";
-        payload = customerFormData;
+
+        // ถ้า unitName เป็นค่าว่าง ให้ตั้งค่าเป็น "-"
+        const formDataWithDash = {
+          ...customerFormData,
+          unitName: customerFormData.unitName || "-"
+        };
+        // payload = customerFormData;
+        payload = formDataWithDash
         apiCall = customerFormData.id
           ? axios.patch(`${API_BASE_URL}/api/updateCustomer`, payload)
           : axios.post(`${API_BASE_URL}/api/createCustomer`, payload);
@@ -1355,8 +1362,8 @@ const User = () => {
                     {activeTab === "customers"
                       ? "ลูกค้า"
                       : activeTab === "technicians"
-                      ? "เจ้าหน้าที่"
-                      : "แอดมิน"}
+                        ? "เจ้าหน้าที่"
+                        : "แอดมิน"}
                   </p>
                   <div className="flex flex-rows items-center justify-center text-[#837958] text-center mt-6 gap-x-4">
                     <button
@@ -1392,8 +1399,8 @@ const User = () => {
                         {activeTab === "customers"
                           ? "เพิ่มข้อมูลลูกค้าสำเร็จ"
                           : activeTab === "technicians"
-                          ? "เพิ่มข้อมูลเจ้าหน้าที่สำเร็จ"
-                          : "เพิ่มข้อมูลแอดมินสำเร็จ"}
+                            ? "เพิ่มข้อมูลเจ้าหน้าที่สำเร็จ"
+                            : "เพิ่มข้อมูลแอดมินสำเร็จ"}
                       </h2>
                     </div>
                   ) : popupStatus === "delete" ? (
@@ -1403,8 +1410,8 @@ const User = () => {
                         {activeTab === "customers"
                           ? "ลบข้อมูลลูกค้าสำเร็จ"
                           : activeTab === "technicians"
-                          ? "ลบข้อมูลเจ้าหน้าที่สำเร็จ"
-                          : "ลบข้อมูลแอดมินสำเร็จ"}
+                            ? "ลบข้อมูลเจ้าหน้าที่สำเร็จ"
+                            : "ลบข้อมูลแอดมินสำเร็จ"}
                       </h2>
                     </div>
                   ) : (
@@ -1414,8 +1421,8 @@ const User = () => {
                         {activeTab === "customers"
                           ? "แก้ไขข้อมูลลูกค้าสำเร็จ"
                           : activeTab === "technicians"
-                          ? "แก้ไขข้อมูลเจ้าหน้าที่สำเร็จ"
-                          : "แก้ไขข้อมูลแอดมินไม่สำเร็จ"}
+                            ? "แก้ไขข้อมูลเจ้าหน้าที่สำเร็จ"
+                            : "แก้ไขข้อมูลแอดมินไม่สำเร็จ"}
                       </h2>
                     </div>
                   )}
