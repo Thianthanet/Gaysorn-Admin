@@ -272,11 +272,19 @@ const User = () => {
       const { name, value, options, selectedIndex } = e.target;
 
       // Phone number input formatting
+      // if (name === "phone") {
+      //   const onlyNums = value.replace(/\D/g, "");
+      //   setCustomerFormData((prev) => ({
+      //     ...prev,
+      //     phone: onlyNums.slice(0, 15),
+      //   }));
+      //   return;
+      // }
+
       if (name === "phone") {
-        const onlyNums = value.replace(/\D/g, "");
         setCustomerFormData((prev) => ({
           ...prev,
-          phone: onlyNums.slice(0, 15),
+          phone: value.slice(0, 15), // ตัดความยาวสูงสุด 15 ตัวอักษร
         }));
         return;
       }
