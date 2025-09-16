@@ -279,6 +279,7 @@ const Report = () => {
             },
           }
         );
+        // console.log("All customers data:", customerResponse.data.data);
         setAllCustomers(customerResponse.data.data);
         setJobs(customerResponse.data.data);
 
@@ -314,7 +315,7 @@ const Report = () => {
       const res = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/api/getBuilding`
       );
-      console.log(res.data.data);
+      // console.log(res.data.data);
       setBuildings(res.data.data);
       setJobs(res.data.data);
     } catch (error) {
@@ -1081,7 +1082,13 @@ const Report = () => {
                     </th>
                   ))}
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
+                    งานที่เปิด
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
                     งานที่รับ
+                  </th>
+                  <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
+                    งานที่ค้าง
                   </th>
                   <th className="py-2 px-4 bg-[#BC9D72]/50 border-b text-center align-middle">
                     งานที่ดำเนินการเอง
@@ -1140,7 +1147,13 @@ const Report = () => {
                         </td>
                       ))}
                       <td className="py-2 px-4 border-b text-center align-middle">
+                        {item.ownerJobs || 0}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
                         {item.acceptedJobs || 0}
+                      </td>
+                      <td className="py-2 px-4 border-b text-center align-middle">
+                        {item.totalUnfinishedJobs || 0}
                       </td>
                       <td className="py-2 px-4 border-b text-center align-middle">
                         {completeMe}

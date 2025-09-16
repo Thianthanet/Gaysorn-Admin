@@ -694,10 +694,19 @@ const Jobs = () => {
                   )}
                 </th>
                 <th
+                  onClick={() => requestSort("acceptDate")}
+                  className="cursor-pointer hover:underline"
+                >
+                  วันที่เสร็จงาน {getSortIndicator("acceptDate")}
+                  {getSortPriority("acceptDate") && (
+                    <sup>{getSortPriority("acceptDate")}</sup>
+                  )}
+                </th>
+                <th
                   onClick={() => requestSort("completeDate")}
                   className="cursor-pointer hover:underline"
                 >
-                  วันที่เสร็จสิ้น {getSortIndicator("completeDate")}
+                  วันที่ปิดงาน {getSortIndicator("completeDate")}
                   {getSortPriority("completeDate") && (
                     <sup>{getSortPriority("completeDate")}</sup>
                   )}
@@ -749,6 +758,9 @@ const Jobs = () => {
                   </td>
                   <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
                     {formatDateTimeThaiShort(job?.acceptDate) || "-"}
+                  </td>
+                  <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
+                    {formatDateTimeThaiShort(job?.draftDate) || "-"}
                   </td>
                   <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
                     {formatDateTimeThaiShort(job?.completeDate) || "-"}

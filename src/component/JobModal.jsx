@@ -193,6 +193,13 @@ const JobModal = ({ jobId, onClose }) => {
             {job?.detail || "-"}
           </p>
 
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              หมายเหตุ :{" "}
+            </span>
+            {job?.contractorNote || "-"}
+          </p>
+
           {/* ภาพแจ้งซ่อม */}
           <div>
             <h1>ภาพแจ้งซ่อม:</h1>
@@ -219,6 +226,12 @@ const JobModal = ({ jobId, onClose }) => {
               ผู้ดำเนินการ :{" "}
             </span>
             {job?.acceptedBy?.name || "-"}
+          </p>
+          <p>
+            <span style={{ display: "inline-block", width: "150px" }}>
+              ผู้จบงาน :{" "}
+            </span>
+            {job?.completedBy?.name || "-"}
           </p>
           <p>
             <span style={{ display: "inline-block", width: "150px" }}>
