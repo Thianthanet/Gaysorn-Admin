@@ -178,10 +178,10 @@ const Jobs = () => {
         job.status === "pending"
           ? "รอดำเนินการ"
           : job.status === "in_progress"
-          ? "อยู่ระหว่างดำเนินการ"
-          : job.status === "completed"
-          ? "เสร็จสิ้น"
-          : job.status || "-",
+            ? "อยู่ระหว่างดำเนินการ"
+            : job.status === "completed"
+              ? "เสร็จสิ้น"
+              : job.status || "-",
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
 
@@ -267,26 +267,26 @@ const Jobs = () => {
 
     const adjustedStartDate = startDate
       ? new Date(
-          startDate.getFullYear(),
-          startDate.getMonth(),
-          startDate.getDate(),
-          0,
-          0,
-          0,
-          0
-        )
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate(),
+        0,
+        0,
+        0,
+        0
+      )
       : null;
 
     const adjustedEndDate = endDate
       ? new Date(
-          endDate.getFullYear(),
-          endDate.getMonth(),
-          endDate.getDate(),
-          23,
-          59,
-          59,
-          999
-        )
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate(),
+        23,
+        59,
+        59,
+        999
+      )
       : null;
 
     // ✅ FIXED: ใช้ filteredJobs ต่อจากที่กรองไว้แล้ว ไม่ใช่ jobs ดิบ
@@ -322,8 +322,7 @@ const Jobs = () => {
       }
 
       const res = await axios.get(
-        `${
-          import.meta.env.VITE_API_BASE_URL
+        `${import.meta.env.VITE_API_BASE_URL
         }/api/getAllRepair?${params.toString()}`
       );
 
@@ -490,11 +489,10 @@ const Jobs = () => {
                       setSelectedBuilding(b.buildingName);
                       setOpen(false);
                     }}
-                    className={`px-3 h-[28px] text-[#837958] font-normal hover:bg-[#BC9D72] hover:text-white cursor-pointer ${
-                      index !== building.length - 1
+                    className={`px-3 h-[28px] text-[#837958] font-normal hover:bg-[#BC9D72] hover:text-white cursor-pointer ${index !== building.length - 1
                         ? "border-b border-[#837958]/20"
                         : ""
-                    }`}
+                      }`}
                   >
                     {b.buildingName}
                   </li>
@@ -724,15 +722,14 @@ const Jobs = () => {
                 >
                   <td className=" px-4 py-2 text-center align-text-top">
                     <span
-                      className={`inline-block w-4 h-4 rounded-full mx-auto ${
-                        job.status === "pending"
+                      className={`inline-block w-4 h-4 rounded-full mx-auto ${job.status === "pending"
                           ? "bg-red-500"
                           : job.status === "in_progress"
-                          ? "bg-yellow-500"
-                          : job.status === "completed"
-                          ? "bg-green-500"
-                          : "bg-gray-400"
-                      }`}
+                            ? "bg-yellow-500"
+                            : job.status === "completed"
+                              ? "bg-green-500"
+                              : "bg-gray-400"
+                        }`}
                     ></span>
                   </td>
                   <td className="align-text-top text-sm">
@@ -759,8 +756,10 @@ const Jobs = () => {
                   <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
                     {formatDateTimeThaiShort(job?.acceptDate) || "-"}
                   </td>
-                  <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
-                    {formatDateTimeThaiShort(job?.draftDate) || "-"}
+                  <td className="px-4 py-2 min-w-[200px] align-text-top text-sm">
+                    {job?.draftDate
+                      ? formatDateTimeThaiShort(job.draftDate)
+                      : formatDateTimeThaiShort(job?.completeDate)}
                   </td>
                   <td className=" px-4 py-2 min-w-[200px] align-text-top text-sm">
                     {formatDateTimeThaiShort(job?.completeDate) || "-"}
@@ -773,23 +772,22 @@ const Jobs = () => {
                       : "-"}
                   </td>
                   <td
-                    className={` px-4 py-2 min-w-[160px] align-text-top text-sm ${
-                      job.status === "pending"
+                    className={` px-4 py-2 min-w-[160px] align-text-top text-sm ${job.status === "pending"
                         ? "text-red-500"
                         : job.status === "in_progress"
-                        ? "text-yellow-500"
-                        : job.status === "completed"
-                        ? "text-green-500"
-                        : ""
-                    }`}
+                          ? "text-yellow-500"
+                          : job.status === "completed"
+                            ? "text-green-500"
+                            : ""
+                      }`}
                   >
                     {job.status === "pending"
                       ? "รอดำเนินการ"
                       : job.status === "in_progress"
-                      ? "อยู่ระหว่างดำเนินการ"
-                      : job.status === "completed"
-                      ? "เสร็จสิ้น"
-                      : job.status}
+                        ? "อยู่ระหว่างดำเนินการ"
+                        : job.status === "completed"
+                          ? "เสร็จสิ้น"
+                          : job.status}
                   </td>
                 </tr>
               ))}
