@@ -156,13 +156,62 @@ const TimeDisplay = ({
             placeholderText="ระบุช่วงวันที่"
             popperPlacement="bottom-start"
             className={`rounded-full px-2 py-1 transition-all duration-200
-      ${isMobile ? "text-[10px]" : "text-[12px]"}
-      ${
-        activeButton === "custom"
-          ? "bg-[#837958] text-white border border-[#837958]"
-          : "bg-white text-[#D9D9D9] border border-[#D9D9D9] hover:bg-[#f3f1ed] hover:text-[#837958] "
-      }
-      ${startDate || endDate ? "w-40" : "w-24"}`}
+    ${isMobile ? "text-[10px]" : "text-[12px]"}
+    ${
+      activeButton === "custom"
+        ? "bg-[#837958] text-white border border-[#837958]"
+        : "bg-white text-[#D9D9D9] border border-[#D9D9D9] hover:bg-[#f3f1ed] hover:text-[#837958] "
+    }
+    ${startDate || endDate ? "w-40" : "w-24"}`}
+            renderCustomHeader={({
+              date,
+              changeYear,
+              changeMonth,
+              decreaseMonth,
+              increaseMonth,
+              prevMonthButtonDisabled,
+              nextMonthButtonDisabled,
+            }) => (
+              <div className="flex justify-between items-center px-2 py-1 bg-white">
+                <button
+                  onClick={decreaseMonth}
+                  disabled={prevMonthButtonDisabled}
+                >
+                  {"<"}
+                </button>
+                <select
+                  value={date.getFullYear() + 543} // แสดงปี พ.ศ.
+                  onChange={({ target: { value } }) => changeYear(value - 543)}
+                >
+                  {Array.from({ length: 100 }, (_, i) => {
+                    const year = new Date().getFullYear() - 50 + i;
+                    return (
+                      <option key={year} value={year + 543}>
+                        {year + 543}
+                      </option>
+                    );
+                  })}
+                </select>
+                <select
+                  value={date.getMonth()}
+                  onChange={({ target: { value } }) =>
+                    changeMonth(Number(value))
+                  }
+                >
+                  {moment.months().map((month, index) => (
+                    <option key={month} value={index}>
+                      {month}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={increaseMonth}
+                  disabled={nextMonthButtonDisabled}
+                >
+                  {">"}
+                </button>
+              </div>
+            )}
           />
         </div>
       </div>
