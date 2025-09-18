@@ -18,9 +18,12 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
 
   // ช่วยกำหนดประเภทของรูป
   const getImageType = (image) => {
-    if (image.mark === "cusRepair" || image.uploadBy === "cus") return "แจ้งซ่อม";
-    if (image.mark === "techRepair" || image.uploadBy === "tech") return "ดำเนินการ";
-    if (image.mark === "signature" || image.mark === "sign") return "ลายเซ็น";
+    if (image.mark === "cusRepair" || image.uploadBy === "cus" || (image.mark === "techRepair" && image.uploadBy === "tech")) return "แจ้งซ่อม";
+    if (image.mark === "" || image.uploadBy === "tech" && !image?.url?.toLowerCase().includes("signature")) return "ดำเนินการ";
+    // if (image.mark === "signature" || image.mark === "sign") return "ลายเซ็น";
+    if (image?.url?.toLowerCase().includes("signature")) {
+    return "ลายเซ็น";
+  }
     return "อื่นๆ";
   };
 
@@ -87,6 +90,7 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
             },
           }
         );
+        console.log("res", res.data.data)
         setJobs(res.data.data || []);
         setStatus(res.data.companyData?.statusCount || { pending: 0, inProgress: 0, completed: 0 });
         setTimeRange(formatDateRange(startDate, endDate));
@@ -105,8 +109,8 @@ const ReportCustomer = ({ id: propId, startDate, endDate }) => {
       .set({
         margin: [10, 10, 10, 10],
         filename: "report.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+        image: { type: "jpeg", quality: 0.80 },
+        html2canvas: { scale: 1, useCORS: true, allowTaint: true },
         jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
         pagebreak: { mode: ["css", "legacy"] },
       })
