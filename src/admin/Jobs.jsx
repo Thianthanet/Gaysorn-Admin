@@ -159,7 +159,10 @@ const Jobs = () => {
       วันที่รับงาน: job.acceptDate
         ? formatDateTimeThaiShort(job.acceptDate)
         : "-",
-      วันที่เสร็จสิ้น: job.completeDate
+      วันที่เสร็จสิ้น: job.draftDate
+        ? formatDateTimeThaiShort(job.draftDate)
+        : formatDateTimeThaiShort(job.completeDate),
+      วันที่ปิดงาน: job.completeDate
         ? formatDateTimeThaiShort(job.completeDate)
         : "-",
       // เจ้าหน้าที่: job.acceptedBy?.name?.trim() || "-",
