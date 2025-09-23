@@ -75,6 +75,9 @@ const Jobs = () => {
 
   console.log("selectedJob", selectedJob);
 
+  console.log("jobs", jobs);
+  
+
   const openJobModal = (job) => {
     console.log("Opening modal for job ID:", job?.id); // Debug
     if (!job?.id) {
@@ -114,6 +117,7 @@ const Jobs = () => {
       console.error("Error fetching jobs:", error);
     }
   };
+
 
   const handleGetChoices = async () => {
     try {
@@ -161,7 +165,8 @@ const Jobs = () => {
         : "-",
       วันที่เสร็จสิ้น: job.draftDate
         ? formatDateTimeThaiShort(job.draftDate)
-        : formatDateTimeThaiShort(job.completeDate),
+      //  : formatDateTimeThaiShort(job.completeDate),
+      : "-",
       วันที่ปิดงาน: job.completeDate
         ? formatDateTimeThaiShort(job.completeDate)
         : "-",
